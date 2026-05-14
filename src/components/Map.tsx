@@ -91,14 +91,12 @@ export function Map({ data, onSelectFeature }: MapProps) {
         },
       });
 
-      map.on("click", "clusters", (e) => {
+      map.on("click", "clusters", async (e) => {
         const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
         const clusterId = features[0].properties?.cluster_id;
-        (map.getSource("housing") as maplibregl.GeoJSONSource).getClusterExpansionZoom(clusterId, (err, zoom) => {
-          if (err || zoom == null) return;
-          const coords = (features[0].geometry as GeoJSON.Point).coordinates as [number, number];
-          map.easeTo({ center: coords, zoom });
-        });
+        const zoom = await (map.getSource("housing") as maplibregl.GeoJSONSource).getClusterExpansionZoom(clusterId);
+        const coords = (features[0].geometry as GeoJSON.Point).coordinates as [number, number];
+        map.easeTo({ center: coords, zoom });
       });
 
       map.on("click", "housing-points", (e) => {
