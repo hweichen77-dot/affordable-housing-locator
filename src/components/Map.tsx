@@ -14,6 +14,10 @@ interface MapProps {
 export function Map({ data, onSelectFeature }: MapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const popupRef = useRef<maplibregl.Popup | null>(null);
+  // Ref pattern avoids stale closure in registered map event handlers
+  const onSelectRef = useRef(onSelectFeature);
+  useEffect(() => { onSelectRef.current = onSelectFeature; }, [onSelectFeature]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -29,7 +33,10 @@ export function Map({ data, onSelectFeature }: MapProps) {
     map.addControl(new maplibregl.NavigationControl(), "top-right");
     map.addControl(new maplibregl.ScaleControl(), "bottom-right");
 
-    return () => map.remove();
+    return () => {
+      popupRef.current?.remove();
+      map.remove();
+    };
   }, []);
 
   useEffect(() => {
@@ -38,7 +45,9 @@ export function Map({ data, onSelectFeature }: MapProps) {
 
     const addLayers = () => {
       if (map.getSource("housing")) {
-        (map.getSource("housing") as maplibregl.GeoJSONSource).setData(data as GeoJSON.FeatureCollection);
+        (map.getSource("housing") as maplibregl.GeoJSONSource).setData(
+          data as GeoJSON.FeatureCollection
+        );
         return;
       }
 
@@ -72,7 +81,8 @@ export function Map({ data, onSelectFeature }: MapProps) {
         layout: {
           "text-field": "{point_count_abbreviated}",
           "text-size": 12,
-          "text-font": ["Open Sans Bold"],
+          // Fallback glyph required; "Arial Unicode MS Regular" ships with most tile styles
+          "text-font": ["Open Sans Bold", "Arial Unicode MS Regular"],
         },
         paint: { "text-color": "#fff" },
       });
@@ -93,17 +103,33 @@ export function Map({ data, onSelectFeature }: MapProps) {
 
       map.on("click", "clusters", async (e) => {
         const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
+        if (!features.length) return;
         const clusterId = features[0].properties?.cluster_id;
-        const zoom = await (map.getSource("housing") as maplibregl.GeoJSONSource).getClusterExpansionZoom(clusterId);
+        if (clusterId == null) return;
+        const zoom = await (map.getSource("housing") as maplibregl.GeoJSONSource)
+          .getClusterExpansionZoom(clusterId);
         const coords = (features[0].geometry as GeoJSON.Point).coordinates as [number, number];
         map.easeTo({ center: coords, zoom });
       });
 
       map.on("click", "housing-points", (e) => {
         const feature = e.features?.[0];
-        if (feature?.properties) {
-          onSelectFeature(feature.properties as HousingProperties);
-        }
+        if (!feature?.properties || !feature.geometry) return;
+
+        const props = feature.properties as HousingProperties;
+        const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
+
+        popupRef.current?.remove();
+        popupRef.current = new maplibregl.Popup({
+          closeButton: true,
+          maxWidth: "240px",
+          offset: 12,
+        })
+          .setLngLat(coords)
+          .setHTML(buildPopupHTML(props))
+          .addTo(map);
+
+        onSelectRef.current(props);
       });
 
       map.on("mouseenter", "clusters", () => { map.getCanvas().style.cursor = "pointer"; });
@@ -115,9 +141,25 @@ export function Map({ data, onSelectFeature }: MapProps) {
     if (map.isStyleLoaded()) {
       addLayers();
     } else {
-      map.on("load", addLayers);
+      // 'once' prevents duplicate handler if this effect runs again before style loads
+      map.once("load", addLayers);
     }
-  }, [data, onSelectFeature]);
+  }, [data]);
 
   return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />;
+}
+
+function buildPopupHTML(props: HousingProperties): string {
+  const name = String(props.PROJECT_NAME ?? "Unknown Project");
+  const addr = props.ADDRESS
+    ? `<div class="popup-addr">${String(props.ADDRESS)}</div>`
+    : "";
+  const units =
+    props.TOTAL_UNITS != null
+      ? `<div class="popup-stat">${props.TOTAL_UNITS} total &middot; ${props.AFFORDABLE_UNITS ?? "?"} affordable</div>`
+      : "";
+  const status = props.PROJECT_STATUS
+    ? `<div class="popup-status">${String(props.PROJECT_STATUS)}</div>`
+    : "";
+  return `<div class="popup-content"><strong class="popup-name">${name}</strong>${addr}${units}${status}</div>`;
 }

@@ -32,11 +32,13 @@ pub async fn fetch_housing() -> Result<HousingCollection, HousingError> {
 
     let data = client
         .get(ARCGIS_URL)
+        .header("User-Agent", "sj-housing-locator/1.0")
         .query(&[
             ("where", "1=1"),
             ("outFields", "*"),
             ("returnGeometry", "true"),
             ("f", "geojson"),
+            ("resultRecordCount", "2000"),
         ])
         .send()
         .await

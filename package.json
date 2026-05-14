@@ -18,7 +18,6 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
-    "@types/maplibre-gl": "^1.13.2",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.6.0",

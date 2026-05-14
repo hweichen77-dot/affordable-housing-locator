@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { HousingCollection } from "../types/housing";
 
 export function useHousingData() {
@@ -7,12 +7,16 @@ export function useHousingData() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
     invoke<HousingCollection>("fetch_housing")
       .then(setData)
-      .catch((e) => setError(String(e)))
+      .catch((e) => setError(typeof e === "string" ? e : JSON.stringify(e)))
       .finally(() => setLoading(false));
   }, []);
 
-  return { data, loading, error };
+  useEffect(() => { load(); }, [load]);
+
+  return { data, loading, error, refetch: load };
 }
