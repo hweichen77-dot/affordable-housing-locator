@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Map } from "./components/Map";
 import { SidePanel } from "./components/SidePanel";
@@ -45,6 +45,10 @@ export default function App() {
   const [selected, setSelected] = useState<DisplayProperty | null>(null);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [mapFly, setMapFly] = useState<{ lat: number; lng: number; zoom: number; bbox?: [number, number, number, number] } | null>(null);
+
+  const [panelOpen, setPanelOpen] = useState(true);
+  const exportToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [exportDone, setExportDone] = useState(false);
 
   const [favorites, setFavorites] = useState<Set<string>>(() => {
     try {
@@ -249,13 +253,16 @@ export default function App() {
     a.download = "saved-housing.txt";
     a.click();
     URL.revokeObjectURL(a.href);
+    if (exportToastRef.current) clearTimeout(exportToastRef.current);
+    setExportDone(true);
+    exportToastRef.current = setTimeout(() => setExportDone(false), 2500);
   }, [rawData, favorites]);
 
   const loading = dataLoading || searchLoading;
   const error = dataError || searchError;
 
   return (
-    <div className="app-layout">
+    <div className={`app-layout${panelOpen ? "" : " panel-hidden"}`}>
       <SidePanel
         properties={filtered}
         totalCount={rawData.length}
@@ -267,7 +274,7 @@ export default function App() {
         favorites={favorites}
         onToggleFavorite={toggleFavorite}
         userLocation={userLocation}
-        onSelect={setSelected}
+        onSelect={(p) => { setSelected(p); setPanelOpen(true); }}
         onClear={() => setSelected(null)}
         onRetry={searchQuery ? () => handleSearch(searchQuery) : loadSJ}
         onSearch={handleSearch}
@@ -284,19 +291,37 @@ export default function App() {
           userLocation={userLocation}
           mapFly={mapFly}
           dataSource={dataSource}
-          onSelectFeature={handleSelectFromMap}
+          selectedId={selected?.id ?? null}
+          onSelectFeature={(props) => { handleSelectFromMap(props); setPanelOpen(true); }}
           onLocate={handleLocate}
         />
+        <button
+          className="panel-toggle-btn"
+          onClick={() => setPanelOpen(v => !v)}
+          aria-label={panelOpen ? "Hide panel" : "Show panel"}
+          title={panelOpen ? "Hide panel" : "Show panel"}
+        >
+          {panelOpen ? "◀" : "▶"}
+        </button>
         <div className="map-legend" aria-label="Map legend">
           <div className="legend-item">
             <span className="legend-dot legend-cluster" aria-hidden="true" />
             <span>Cluster</span>
           </div>
           <div className="legend-item">
+            <span className="legend-dot legend-selected" aria-hidden="true" />
+            <span>Selected</span>
+          </div>
+          <div className="legend-item">
             <span className="legend-dot legend-active" aria-hidden="true" />
             <span>{dataSource === "sj" ? "Active" : "LIHTC"}</span>
           </div>
         </div>
+        {exportDone && (
+          <div className="export-toast" role="status" aria-live="polite">
+            ✓ Saved to file
+          </div>
+        )}
       </div>
     </div>
   );

@@ -107,11 +107,10 @@ export function SidePanel({
     setFilters(f => ({
       ...DEFAULT_FILTERS,
       sortBy: f.sortBy === "distance" ? "distance" : "name",
-      householdIncome: f.householdIncome,
-      householdSize: f.householdSize,
     }));
     setNameFilter("");
     setShowFavsOnly(false);
+    setShowIncomeCalc(false);
   }, [setFilters]);
 
   return (
@@ -173,6 +172,11 @@ export function SidePanel({
             {searchDisplay.split(",").slice(0, 3).join(",")}
           </p>
         )}
+        {dataSource === "lihtc" && (
+          <p className="lihtc-info-banner" role="note">
+            Showing HUD LIHTC properties — federally funded affordable housing. Income limits vary by property.
+          </p>
+        )}
 
         <div className="header-stats" aria-live="polite" aria-atomic="true">
           {!loading && !error && (
@@ -198,16 +202,19 @@ export function SidePanel({
               aria-pressed={filters.activeOnly}
             >Active only</button>
           )}
-          <button
-            className={`toggle-pill ${filters.voucherOnly ? "on" : ""}`}
-            onClick={() => setFilters(f => ({ ...f, voucherOnly: !f.voucherOnly }))}
-            aria-pressed={filters.voucherOnly}
-          >Voucher / Sec. 8</button>
+          {dataSource !== "sj" && (
+            <button
+              className={`toggle-pill ${filters.voucherOnly ? "on" : ""}`}
+              onClick={() => setFilters(f => ({ ...f, voucherOnly: !f.voucherOnly }))}
+              aria-pressed={filters.voucherOnly}
+            >Voucher / Sec. 8</button>
+          )}
           <button
             className={`toggle-pill ${showIncomeCalc ? "on" : ""}`}
             onClick={() => setShowIncomeCalc(v => !v)}
             aria-pressed={showIncomeCalc}
             aria-expanded={showIncomeCalc}
+            title="Filter by your household income. AMI = Area Median Income set annually by HUD."
           >My income</button>
           {hasActiveFilters && (
             <button
@@ -222,7 +229,14 @@ export function SidePanel({
         {showIncomeCalc && (
           <div className="income-calc" role="group" aria-label="Income calculator">
             <div className="calc-row">
-              <label className="calc-label" htmlFor="income-input">Annual income</label>
+              <label className="calc-label" htmlFor="income-input">
+                Annual income
+                <span
+                  className="ami-help"
+                  title="AMI = Area Median Income. Set annually by HUD per metro area. Used to determine eligibility for affordable housing tiers."
+                  aria-label="What is AMI?"
+                >?</span>
+              </label>
               <div className="calc-input-wrap">
                 <span className="calc-prefix" aria-hidden="true">$</span>
                 <input

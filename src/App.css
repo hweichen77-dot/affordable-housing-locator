@@ -232,6 +232,34 @@ html, body, #root { height: 100%; overflow: hidden; }
   appearance: none;
 }
 
+.lihtc-info-banner {
+  font-size: 11px;
+  color: var(--blue);
+  background: var(--blue-bg);
+  border: 1px solid oklch(35% 0.08 240);
+  border-radius: 6px;
+  padding: 5px 9px;
+  line-height: 1.5;
+}
+
+.ami-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 700;
+  margin-left: 4px;
+  cursor: help;
+  vertical-align: middle;
+  line-height: 1;
+}
+.ami-help:hover { border-color: var(--accent-dim); color: var(--accent); }
+
 .qual-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .calc-note { font-size: 10px; color: var(--text-muted); }
 .calc-none { font-size: 10px; color: var(--danger); }
@@ -534,8 +562,9 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .legend-item { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--text-secondary); }
 .legend-dot { border-radius: 50%; border: 2px solid #fff; flex-shrink: 0; }
-.legend-cluster { width: 16px; height: 16px; background: #15803d; }
-.legend-active  { width: 12px; height: 12px; background: #16a34a; }
+.legend-cluster  { width: 16px; height: 16px; background: #15803d; }
+.legend-selected { width: 12px; height: 12px; background: #f59e0b; }
+.legend-active   { width: 12px; height: 12px; background: #16a34a; }
 
 /* ─── Locate Button ─── */
 .locate-btn {
@@ -725,6 +754,109 @@ html, body, #root { height: 100%; overflow: hidden; }
   display: flex;
   align-items: center;
   gap: 5px;
+}
+
+/* ─── Panel Toggle Button ─── */
+.panel-toggle-btn {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: oklch(14% 0.01 240 / 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  line-height: 1;
+}
+.panel-toggle-btn:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+/* Panel hidden state — desktop */
+.panel-hidden .side-panel { display: none; }
+
+/* ─── Export Toast ─── */
+.export-toast {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-dim);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: 20;
+  animation: fadeInOut 2.5s ease forwards;
+}
+
+@keyframes fadeInOut {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  15%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  75%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ─── Mobile Layout ─── */
+@media (max-width: 680px) {
+  .app-layout {
+    flex-direction: column;
+  }
+
+  .side-panel {
+    width: 100%;
+    min-width: unset;
+    max-height: 55vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    overflow-y: auto;
+  }
+
+  .panel-hidden .side-panel {
+    display: none;
+  }
+
+  .panel-hidden .map-container {
+    height: 100vh;
+  }
+
+  .map-container {
+    flex: 1;
+    min-height: 45vh;
+  }
+
+  .panel-toggle-btn {
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .locate-btn {
+    top: 50px;
+    left: 10px;
+  }
+
+  .map-legend {
+    bottom: 60px;
+  }
+
+  .map-source-badge {
+    bottom: 60px;
+  }
 }
 
 /* ─── Scrollbars ─── */

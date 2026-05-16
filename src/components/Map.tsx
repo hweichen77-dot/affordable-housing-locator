@@ -19,13 +19,14 @@ interface MapProps {
   userLocation: UserLocation | null;
   mapFly: MapFly | null;
   dataSource: "sj" | "lihtc";
+  selectedId: string | null;
   onSelectFeature: (props: Record<string, unknown>) => void;
   onLocate: (loc: UserLocation) => void;
 }
 
 const SOURCE_ID = "housing";
 
-export function Map({ data, userLocation, mapFly, dataSource, onSelectFeature, onLocate }: MapProps) {
+export function Map({ data, userLocation, mapFly, dataSource, selectedId, onSelectFeature, onLocate }: MapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
@@ -107,6 +108,16 @@ export function Map({ data, userLocation, mapFly, dataSource, onSelectFeature, o
     }
     addOrUpdateSource(map, data);
   }, [data]);
+
+  // Highlight selected pin
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !styleLoadedRef.current) return;
+    if (!map.getLayer("housing-selected")) return;
+    map.setFilter("housing-selected", [
+      "==", ["get", "_displayId"], selectedId ?? "",
+    ]);
+  }, [selectedId]);
 
   const handleLocate = () => {
     if (!navigator.geolocation) return;
@@ -199,6 +210,20 @@ function addMapLayers(map: maplibregl.Map, onSelectRef: React.MutableRefObject<(
       "circle-stroke-width": 2,
       "circle-stroke-color": "#fff",
       "circle-opacity": 0.9,
+    },
+  });
+
+  map.addLayer({
+    id: "housing-selected",
+    type: "circle",
+    source: SOURCE_ID,
+    filter: ["==", ["get", "_displayId"], ""],
+    paint: {
+      "circle-radius": 13,
+      "circle-color": "#f59e0b",
+      "circle-stroke-width": 3,
+      "circle-stroke-color": "#fff",
+      "circle-opacity": 1,
     },
   });
 
