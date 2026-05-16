@@ -98,6 +98,17 @@ export function SidePanel({
   const favCount = properties.filter(p => favorites.has(p.id)).length;
   const hasActiveFilters = isFiltered(filters, dataSource, nameFilter);
 
+  const activeFilterCount = [
+    dataSource === "sj" && !filters.activeOnly,
+    filters.populationType !== "",
+    filters.incomeTier !== "",
+    filters.bedroomSize !== "",
+    filters.voucherOnly,
+    filters.sortBy !== "name",
+    filters.householdIncome > 0,
+    nameFilter.length > 0,
+  ].filter(Boolean).length;
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchInput.trim()) onSearch(searchInput.trim());
@@ -193,6 +204,13 @@ export function SidePanel({
 
       {/* ── Filters ── */}
       <div className="filters-section" aria-label="Filters">
+        {activeFilterCount > 0 && (
+          <div className="filter-count-row" aria-live="polite">
+            <span className="filter-count-badge" aria-label={`${activeFilterCount} active filter${activeFilterCount > 1 ? "s" : ""}`}>
+              {activeFilterCount} filter{activeFilterCount > 1 ? "s" : ""} active
+            </span>
+          </div>
+        )}
         {/* Row 1: toggle pills + clear */}
         <div className="filter-row filter-row-inline">
           {dataSource === "sj" && (
@@ -345,7 +363,19 @@ export function SidePanel({
           ami={ami}
         />
       ) : (
-        <div className="property-list" role="list" aria-label="Housing properties">
+        <div
+          className="property-list"
+          role="list"
+          aria-label="Housing properties"
+          onKeyDown={(e) => {
+            if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+            e.preventDefault();
+            const items = e.currentTarget.querySelectorAll<HTMLElement>(".property-item");
+            const idx = Array.from(items).indexOf(document.activeElement as HTMLElement);
+            const next = e.key === "ArrowDown" ? idx + 1 : idx - 1;
+            items[Math.max(0, Math.min(next, items.length - 1))]?.focus();
+          }}
+        >
           {loading && <SkeletonList />}
           {!loading && !error && displayed.length === 0 && (
             <EmptyState
@@ -580,6 +610,24 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
           <a className="contact-btn web-btn" href={p.website} target="_blank" rel="noreferrer" aria-label="Open property website in new tab">
             🔗 Website
           </a>
+        )}
+      </div>
+
+      <div className="apply-callout" role="note">
+        {p.phone || p.website ? (
+          <>
+            <span className="apply-icon" aria-hidden="true">📋</span>
+            <div>
+              <strong>How to apply:</strong> Contact the property directly to ask about open units, waitlist status, and application requirements.
+            </div>
+          </>
+        ) : (
+          <>
+            <span className="apply-icon" aria-hidden="true">📋</span>
+            <div>
+              <strong>How to apply:</strong> Search for this property name online or contact your local housing authority to ask about availability.
+            </div>
+          </>
         )}
       </div>
 

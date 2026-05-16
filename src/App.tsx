@@ -49,6 +49,7 @@ export default function App() {
   const [panelOpen, setPanelOpen] = useState(true);
   const exportToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [exportDone, setExportDone] = useState(false);
+  const lastSearchRef = useRef<number>(0);
 
   const [favorites, setFavorites] = useState<Set<string>>(() => {
     try {
@@ -79,6 +80,10 @@ export default function App() {
   // ── City / ZIP search ────────────────────────────────────────────────────
   const handleSearch = useCallback(async (query: string) => {
     if (!query.trim()) return;
+    const now = Date.now();
+    const gap = now - lastSearchRef.current;
+    if (gap < 500) await new Promise(r => setTimeout(r, 500 - gap));
+    lastSearchRef.current = Date.now();
     setSearchQuery(query);
     setSearchError(null);
     setSearchLoading(true);
@@ -314,7 +319,10 @@ export default function App() {
           </div>
           <div className="legend-item">
             <span className="legend-dot legend-active" aria-hidden="true" />
-            <span>{dataSource === "sj" ? "Active" : "LIHTC"}</span>
+            <span>{dataSource === "sj" ? "SJ Active" : "LIHTC"}</span>
+          </div>
+          <div className="legend-source" aria-label="Data source">
+            {dataSource === "sj" ? "City of San Jose" : "HUD LIHTC 2024"}
           </div>
         </div>
         {exportDone && (

@@ -455,6 +455,23 @@ html, body, #root { height: 100%; overflow: hidden; }
 .phone-btn { background: var(--accent-bg); color: var(--accent); }
 .web-btn   { background: var(--bg-raised); color: var(--text-secondary); }
 
+/* ─── Apply Callout ─── */
+.apply-callout {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 11px;
+  margin-bottom: 12px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.apply-callout strong { color: var(--text-primary); }
+.apply-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
 /* ─── Unit Breakdown ─── */
 .unit-breakdown {
   margin-bottom: 14px;
@@ -561,6 +578,7 @@ html, body, #root { height: 100%; overflow: hidden; }
   pointer-events: none; z-index: 1;
 }
 .legend-item { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--text-secondary); }
+.legend-source { font-size: 9px; color: var(--text-muted); margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--border-light); text-transform: uppercase; letter-spacing: 0.04em; }
 .legend-dot { border-radius: 50%; border: 2px solid #fff; flex-shrink: 0; }
 .legend-cluster  { width: 16px; height: 16px; background: #15803d; }
 .legend-selected { width: 12px; height: 12px; background: #f59e0b; }
@@ -653,6 +671,19 @@ html, body, #root { height: 100%; overflow: hidden; }
   animation: shimmer 1.4s ease-in-out infinite;
 }
 .skeleton-pill-sm { width: 36px; }
+
+/* ─── Clear Filters ─── */
+/* ─── Filter Count Badge ─── */
+.filter-count-row { display: flex; align-items: center; }
+.filter-count-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-dim);
+  padding: 2px 9px;
+  border-radius: 20px;
+}
 
 /* ─── Clear Filters ─── */
 .clear-filters-btn {
