@@ -90,16 +90,6 @@ export function rentRangeForTier(
   };
 }
 
-// Backward-compat for SJ detail view (hardcoded SJ AMI)
-export const SJ_AMI = 169600;
-
-export const TIER_RENTS = {
-  ELI:      rentRangeForTier("ELI",      SJ_AMI),
-  VLI:      rentRangeForTier("VLI",      SJ_AMI),
-  LI:       rentRangeForTier("LI",       SJ_AMI),
-  Moderate: rentRangeForTier("Moderate", SJ_AMI),
-};
-
 export function fmt(n: number): string {
   return `$${n.toLocaleString()}`;
 }

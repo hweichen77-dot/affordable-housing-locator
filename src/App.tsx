@@ -3,7 +3,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { Map } from "./components/Map";
 import { SidePanel } from "./components/SidePanel";
 import type { HousingCollection, GeoLocation, DisplayProperty } from "./types/housing";
-import { normalizeFeatures, hasBedroomType, popMatches } from "./lib/normalize";
+import { normalizeFeatures, hasBedroomType, popMatches, qualifiesForIncome } from "./lib/normalize";
+import { haversineKm } from "./lib/geo";
 import { getAmi } from "./lib/ami";
 
 export interface FilterState {
@@ -29,16 +30,6 @@ export const DEFAULT_FILTERS: FilterState = {
   householdIncome: 0,
   householdSize: 1,
 };
-
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a = Math.sin(dLat / 2) ** 2
-    + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180)
-    * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 export default function App() {
   const [rawData, setRawData] = useState<DisplayProperty[]>([]);
@@ -97,7 +88,8 @@ export default function App() {
         bbox: loc.bbox as [number, number, number, number],
       });
 
-      const isSJ = loc.display_name.toLowerCase().includes("san jose")
+      const cityPart = loc.display_name.split(",")[0].trim().toLowerCase();
+      const isSJ = cityPart === "san jose"
         && loc.display_name.toLowerCase().includes("california");
 
       setDataLoading(true);
@@ -199,6 +191,11 @@ export default function App() {
       }
     }
 
+    // Filter by user's actual entered income (works on LIHTC incomeCeilingPct)
+    if (filters.householdIncome > 0) {
+      items = items.filter(p => qualifiesForIncome(p, filters.householdIncome, filters.householdSize, ami));
+    }
+
     return [...items].sort((a, b) => {
       if (filters.sortBy === "units") return b.affordableUnits - a.affordableUnits;
       if (filters.sortBy === "distance" && userLocation) {
@@ -275,6 +272,7 @@ export default function App() {
         onRetry={searchQuery ? () => handleSearch(searchQuery) : loadSJ}
         onSearch={handleSearch}
         onWidenSearch={searchLocation ? handleWidenSearch : undefined}
+        onGoHome={dataSource !== "sj" ? loadSJ : undefined}
         onExportFavorites={handleExportFavorites}
         dataSource={dataSource}
         ami={ami}

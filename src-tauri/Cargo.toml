@@ -1,6 +1,6 @@
 [package]
 name = "sj-housing-locator"
-version = "0.2.0"
+version = "0.3.0"
 description = "San Jose Emergency Shelter & Affordable Housing Locator"
 edition = "2021"
 

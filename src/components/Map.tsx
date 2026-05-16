@@ -57,7 +57,7 @@ export function Map({ data, userLocation, mapFly, dataSource, onSelectFeature, o
         addOrUpdateSource(map, pendingDataRef.current);
         pendingDataRef.current = null;
       }
-      addMapLayers(map, onSelectRef);
+      addMapLayers(map, onSelectRef, popupRef);
     });
 
     return () => {
@@ -153,7 +153,7 @@ function addOrUpdateSource(map: maplibregl.Map, data: HousingCollection) {
   }
 }
 
-function addMapLayers(map: maplibregl.Map, onSelectRef: React.MutableRefObject<(props: Record<string, unknown>) => void>) {
+function addMapLayers(map: maplibregl.Map, onSelectRef: React.MutableRefObject<(props: Record<string, unknown>) => void>, popupRef: React.MutableRefObject<maplibregl.Popup | null>) {
   // Guard: layers might already exist if this is called twice
   if (map.getLayer("clusters")) return;
 
@@ -235,9 +235,6 @@ function addMapLayers(map: maplibregl.Map, onSelectRef: React.MutableRefObject<(
   map.getCanvas().setAttribute("tabindex", "0");
   map.getCanvas().setAttribute("aria-label", "Interactive housing map. Use arrow keys to pan, +/- to zoom.");
 }
-
-// popupRef needs to be accessible in addMapLayers — hoist it
-const popupRef = { current: null as maplibregl.Popup | null };
 
 function buildPopupHTML(p: Record<string, unknown>): string {
   const name = String(p.PROJECT ?? p.DEVELOPMENTNAME ?? "Unknown Property");

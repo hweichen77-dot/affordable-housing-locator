@@ -1,4 +1,5 @@
 import type { HousingFeature, DisplayProperty, BedroomCounts, DataSource } from "../types/housing";
+import { adjustedAmi } from "./ami";
 
 function str(v: unknown): string { return v != null ? String(v) : ""; }
 function num(v: unknown): number { return typeof v === "number" ? v : 0; }
@@ -17,15 +18,17 @@ function normalizeSJ(feature: HousingFeature): DisplayProperty | null {
   const total = num(p.ELIUNITS) + num(p.VLIUNITS) + num(p.LIUNITS) + num(p.MODERATEUNITS);
 
   const popTypes: string[] = [];
-  const pop = str(p.POPULATIONTYPE);
-  if (pop.toLowerCase().includes("family")) popTypes.push("Family");
-  if (pop.toLowerCase().includes("senior")) popTypes.push("Elderly");
-  if (pop.toLowerCase().includes("special")) popTypes.push("Disabled");
-  if (pop.toLowerCase().includes("homeless") || pop.toLowerCase().includes("homeless")) popTypes.push("Homeless");
-  if (popTypes.length === 0 && pop) popTypes.push(pop.replace(/;$/, "").replace(/;/g, " · "));
+  const pop = str(p.POPULATIONTYPE).toLowerCase();
+  if (pop.includes("family")) popTypes.push("Family");
+  if (pop.includes("senior")) popTypes.push("Elderly");
+  if (pop.includes("special")) popTypes.push("Disabled");
+  if (pop.includes("homeless")) popTypes.push("Homeless");
+  if (popTypes.length === 0 && pop) popTypes.push(str(p.POPULATIONTYPE).replace(/;$/, "").replace(/;/g, " · "));
+
+  const objectId = str(p.OBJECTID);
 
   return {
-    id: `sj-${str(p.OBJECTID) || String(Math.random())}`,
+    id: `sj-${objectId || `rand-${Date.now()}-${Math.random().toString(36).slice(2)}`}`,
     source: "sj" as DataSource,
     name: str(p.DEVELOPMENTNAME) || "Unknown Project",
     address: str(p.ADDRESS),
@@ -77,12 +80,13 @@ function normalizeLIHTC(feature: HousingFeature): DisplayProperty | null {
   const yearBuilt = yr > 0 && yr < 9000 ? yr : undefined;
 
   const zip = str(p.PROJ_ZIP);
-
   const lat = coords ? coords[1] : (typeof p.LAT === "number" ? p.LAT : null);
   const lng = coords ? coords[0] : (typeof p.LON === "number" ? p.LON : null);
 
+  const objectId = str(p.OBJECTID);
+
   return {
-    id: `lihtc-${str(p.OBJECTID) || String(Math.random())}`,
+    id: `lihtc-${objectId || `rand-${Date.now()}-${Math.random().toString(36).slice(2)}`}`,
     source: "lihtc" as DataSource,
     name: str(p.PROJECT) || "Unknown Project",
     address: str(p.PROJ_ADD),
@@ -126,9 +130,8 @@ export function normalizeFeatures(features: HousingFeature[], source: DataSource
 export function hasBedroomType(p: DisplayProperty, size: "" | "0" | "1" | "2" | "3" | "4"): boolean {
   if (!size) return true;
   const b = p.bedrooms;
-  // If no bedroom data (SJ source), always match
   const hasAny = b.studio + b.br1 + b.br2 + b.br3 + b.br4plus > 0;
-  if (!hasAny) return true;
+  if (!hasAny) return true; // SJ has no bedroom data — always match
   if (size === "0") return b.studio > 0;
   if (size === "1") return b.br1 > 0;
   if (size === "2") return b.br2 > 0;
@@ -143,21 +146,9 @@ export function popMatches(p: DisplayProperty, filter: string): boolean {
     || (filter.toLowerCase() === "family" && p.populationTypes.length === 0);
 }
 
-export function qualifiesForIncome(p: DisplayProperty, annualIncome: number, persons: number, stateAmi: number): boolean {
+export function qualifiesForIncome(p: DisplayProperty, annualIncome: number, persons: number, ami4: number): boolean {
   if (!annualIncome) return true;
-  if (!p.incomeCeilingPct) return true; // unknown ceiling, always show
-  const adjAmi = adjustAmi(stateAmi, persons);
-  const maxIncome = adjAmi * (p.incomeCeilingPct / 100);
-  return annualIncome <= maxIncome;
-}
-
-// HUD household size adjustment factors
-const SIZE_FACTOR: Record<number, number> = {
-  1: 0.70, 2: 0.80, 3: 0.90, 4: 1.00,
-  5: 1.08, 6: 1.16, 7: 1.24, 8: 1.32,
-};
-
-export function adjustAmi(ami4person: number, persons: number): number {
-  const factor = SIZE_FACTOR[Math.min(Math.max(persons, 1), 8)] ?? 1.0;
-  return ami4person * factor;
+  if (!p.incomeCeilingPct) return true; // unknown ceiling — always show
+  const adjAmi = adjustedAmi(ami4, persons);
+  return annualIncome <= adjAmi * (p.incomeCeilingPct / 100);
 }

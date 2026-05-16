@@ -3,6 +3,7 @@ import type { DisplayProperty, DataSource } from "../types/housing";
 import type { FilterState, UserLocation } from "../App";
 import { DEFAULT_FILTERS } from "../App";
 import { rentRangeForTier, fmt } from "../lib/ami";
+import { haversineKm, fmtDist } from "../lib/geo";
 
 interface SidePanelProps {
   properties: DisplayProperty[];
@@ -20,6 +21,7 @@ interface SidePanelProps {
   onRetry: () => void;
   onSearch: (query: string) => void;
   onWidenSearch?: () => void;
+  onGoHome?: () => void;
   onExportFavorites: () => void;
   dataSource: DataSource;
   ami: number;
@@ -51,21 +53,6 @@ const BEDROOM_SIZES = [
   { value: "4" as const, label: "4+ bedrooms" },
 ];
 
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a = Math.sin(dLat / 2) ** 2
-    + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180)
-    * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function fmtDist(km: number): string {
-  const mi = km * 0.621371;
-  return mi < 10 ? `${mi.toFixed(1)} mi` : `${Math.round(mi)} mi`;
-}
-
 function statusBadge(p: DisplayProperty): { text: string; cls: string } {
   if (p.source === "lihtc") {
     const yr = p.yearBuilt;
@@ -75,21 +62,23 @@ function statusBadge(p: DisplayProperty): { text: string; cls: string } {
   return { text: p.arstatus ?? "Unknown", cls: "badge-gray" };
 }
 
-function isFiltered(f: FilterState, source: DataSource): boolean {
+function isFiltered(f: FilterState, source: DataSource, nameFilter: string): boolean {
   return (
     (source === "sj" && !f.activeOnly) ||
     f.populationType !== "" ||
     f.incomeTier !== "" ||
     f.bedroomSize !== "" ||
     f.voucherOnly ||
-    f.sortBy !== "name"
+    f.sortBy !== "name" ||
+    f.householdIncome > 0 ||
+    nameFilter.length > 0
   );
 }
 
 export function SidePanel({
   properties, totalCount, selected, loading, error, filters, setFilters,
   favorites, onToggleFavorite, userLocation, onSelect, onClear, onRetry,
-  onSearch, onWidenSearch, onExportFavorites, dataSource, ami, searchDisplay,
+  onSearch, onWidenSearch, onGoHome, onExportFavorites, dataSource, ami, searchDisplay,
 }: SidePanelProps) {
   const [searchInput, setSearchInput] = useState("");
   const [nameFilter, setNameFilter] = useState("");
@@ -107,7 +96,7 @@ export function SidePanel({
     : properties;
 
   const favCount = properties.filter(p => favorites.has(p.id)).length;
-  const hasActiveFilters = isFiltered(filters, dataSource);
+  const hasActiveFilters = isFiltered(filters, dataSource, nameFilter);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,6 +121,14 @@ export function SidePanel({
         <div className="header-title-row">
           <h1>Housing Locator</h1>
           <div className="header-actions">
+            {onGoHome && (
+              <button
+                className="icon-btn home-btn"
+                title="Back to San Jose"
+                aria-label="Back to San Jose affordable housing"
+                onClick={onGoHome}
+              >⌂</button>
+            )}
             {favCount > 0 && (
               <button
                 className="icon-btn"

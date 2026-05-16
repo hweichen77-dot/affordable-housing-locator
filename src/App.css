@@ -85,6 +85,7 @@ html, body, #root { height: 100%; overflow: hidden; }
   font-family: inherit;
 }
 .icon-btn:hover { color: var(--text-primary); }
+.home-btn { color: var(--accent); border-color: var(--accent-dim); }
 
 .fav-toggle-btn {
   font-size: 11px;
