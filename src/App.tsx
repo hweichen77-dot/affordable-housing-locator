@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Map } from "./components/Map";
 import { SidePanel } from "./components/SidePanel";
+const Map = lazy(() => import("./components/Map").then(m => ({ default: m.Map })));
 import type { HousingCollection, GeoLocation, DisplayProperty } from "./types/housing";
 import { normalizeFeatures, hasBedroomType, popMatches, qualifiesForIncome } from "./lib/normalize";
 import { haversineKm } from "./lib/geo";
@@ -50,6 +50,7 @@ export default function App() {
   const exportToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [exportDone, setExportDone] = useState(false);
   const lastSearchRef = useRef<number>(0);
+  const searchCounterRef = useRef<number>(0);
 
   const [favorites, setFavorites] = useState<Set<string>>(() => {
     try {
@@ -80,10 +81,14 @@ export default function App() {
   // ── City / ZIP search ────────────────────────────────────────────────────
   const handleSearch = useCallback(async (query: string) => {
     if (!query.trim()) return;
+    const myCount = ++searchCounterRef.current;
+
     const now = Date.now();
     const gap = now - lastSearchRef.current;
     if (gap < 500) await new Promise(r => setTimeout(r, 500 - gap));
+    if (myCount !== searchCounterRef.current) return;
     lastSearchRef.current = Date.now();
+
     setSearchQuery(query);
     setSearchError(null);
     setSearchLoading(true);
@@ -91,6 +96,8 @@ export default function App() {
 
     try {
       const loc = await invoke<GeoLocation>("geocode", { query });
+      if (myCount !== searchCounterRef.current) return;
+
       setSearchLocation(loc);
       setMapFly({
         lat: loc.lat, lng: loc.lng, zoom: 12,
@@ -98,14 +105,16 @@ export default function App() {
       });
 
       const cityPart = loc.display_name.split(",")[0].trim().toLowerCase();
+      const displayLower = loc.display_name.toLowerCase();
       const isSJ = cityPart === "san jose"
-        && loc.display_name.toLowerCase().includes("california");
+        && (displayLower.includes("california") || displayLower.includes(", ca,") || displayLower.includes(", ca "));
 
       setDataLoading(true);
       setDataError(null);
 
       if (isSJ) {
         const d = await invoke<HousingCollection>("fetch_housing");
+        if (myCount !== searchCounterRef.current) return;
         setRawData(normalizeFeatures(d.features, "sj"));
         setDataSource("sj");
         setFilters(f => ({ ...f, activeOnly: true }));
@@ -113,6 +122,7 @@ export default function App() {
         const d = await invoke<HousingCollection>("fetch_lihtc", {
           lat: loc.lat, lng: loc.lng, radiusKm: 15,
         });
+        if (myCount !== searchCounterRef.current) return;
         setRawData(normalizeFeatures(d.features, "lihtc"));
         setDataSource("lihtc");
         setFilters(f => ({ ...f, activeOnly: false, incomeTier: "", voucherOnly: false }));
@@ -120,6 +130,7 @@ export default function App() {
 
       setDataLoading(false);
     } catch (e) {
+      if (myCount !== searchCounterRef.current) return;
       const msg = typeof e === "string" ? e : JSON.stringify(e);
       if (msg.includes("Not found") || msg.includes("No results")) {
         setSearchError(`No results for "${query}". Try a different city or ZIP.`);
@@ -130,6 +141,7 @@ export default function App() {
       setDataLoading(false);
       return;
     }
+    if (myCount !== searchCounterRef.current) return;
     setSearchLoading(false);
   }, []);
 
@@ -242,6 +254,15 @@ export default function App() {
     setFilters(f => ({ ...f, sortBy: "distance" }));
   }, []);
 
+  const handleNearMe = useCallback(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => handleLocate({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {},
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }, [handleLocate]);
+
   const handleExportFavorites = useCallback(() => {
     const favs = rawData.filter(p => favorites.has(p.id));
     if (!favs.length) return;
@@ -286,20 +307,23 @@ export default function App() {
         onWidenSearch={searchLocation ? handleWidenSearch : undefined}
         onGoHome={dataSource !== "sj" ? loadSJ : undefined}
         onExportFavorites={handleExportFavorites}
+        onNearMe={handleNearMe}
         dataSource={dataSource}
         ami={ami}
         searchDisplay={searchLocation?.display_name}
       />
       <div className="map-container">
-        <Map
-          data={mapData}
-          userLocation={userLocation}
-          mapFly={mapFly}
-          dataSource={dataSource}
-          selectedId={selected?.id ?? null}
-          onSelectFeature={(props) => { handleSelectFromMap(props); setPanelOpen(true); }}
-          onLocate={handleLocate}
-        />
+        <Suspense fallback={<div style={{ width: "100%", height: "100%", background: "var(--bg-deep)" }} />}>
+          <Map
+            data={mapData}
+            userLocation={userLocation}
+            mapFly={mapFly}
+            dataSource={dataSource}
+            selectedId={selected?.id ?? null}
+            onSelectFeature={(props) => { handleSelectFromMap(props); setPanelOpen(true); }}
+            onLocate={handleLocate}
+          />
+        </Suspense>
         <button
           className="panel-toggle-btn"
           onClick={() => setPanelOpen(v => !v)}

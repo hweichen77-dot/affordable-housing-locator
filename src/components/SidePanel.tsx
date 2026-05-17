@@ -23,6 +23,7 @@ interface SidePanelProps {
   onWidenSearch?: () => void;
   onGoHome?: () => void;
   onExportFavorites: () => void;
+  onNearMe?: () => void;
   dataSource: DataSource;
   ami: number;
   searchDisplay?: string;
@@ -78,12 +79,19 @@ function isFiltered(f: FilterState, source: DataSource, nameFilter: string): boo
 export function SidePanel({
   properties, totalCount, selected, loading, error, filters, setFilters,
   favorites, onToggleFavorite, userLocation, onSelect, onClear, onRetry,
-  onSearch, onWidenSearch, onGoHome, onExportFavorites, dataSource, ami, searchDisplay,
+  onSearch, onWidenSearch, onGoHome, onExportFavorites, onNearMe, dataSource, ami, searchDisplay,
 }: SidePanelProps) {
   const [searchInput, setSearchInput] = useState("");
   const [nameFilter, setNameFilter] = useState("");
   const [showFavsOnly, setShowFavsOnly] = useState(false);
   const [showIncomeCalc, setShowIncomeCalc] = useState(false);
+  const [nearMeLoading, setNearMeLoading] = useState(false);
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem("housing-search-history-v1");
+      return raw ? JSON.parse(raw) as string[] : [];
+    } catch { return []; }
+  });
   const searchRef = useRef<HTMLInputElement>(null);
 
   const displayed = showFavsOnly
@@ -111,7 +119,31 @@ export function SidePanel({
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchInput.trim()) onSearch(searchInput.trim());
+    const q = searchInput.trim();
+    if (!q) return;
+    setSearchHistory(prev => {
+      const next = [q, ...prev.filter(h => h.toLowerCase() !== q.toLowerCase())].slice(0, 3);
+      localStorage.setItem("housing-search-history-v1", JSON.stringify(next));
+      return next;
+    });
+    onSearch(q);
+  };
+
+  const handleHistoryClick = (q: string) => {
+    setSearchInput(q);
+    setSearchHistory(prev => {
+      const next = [q, ...prev.filter(h => h.toLowerCase() !== q.toLowerCase())].slice(0, 3);
+      localStorage.setItem("housing-search-history-v1", JSON.stringify(next));
+      return next;
+    });
+    onSearch(q);
+  };
+
+  const handleNearMeClick = () => {
+    if (!onNearMe || nearMeLoading) return;
+    setNearMeLoading(true);
+    onNearMe();
+    setTimeout(() => setNearMeLoading(false), 8500);
   };
 
   const clearFilters = useCallback(() => {
@@ -177,6 +209,31 @@ export function SidePanel({
             aria-label="Search"
           >{loading ? "…" : "→"}</button>
         </form>
+
+        {(searchHistory.length > 0 || onNearMe) && (
+          <div className="search-quick-row">
+            {onNearMe && (
+              <button
+                className={`quick-chip near-me-chip ${nearMeLoading ? "loading" : ""}`}
+                onClick={handleNearMeClick}
+                disabled={nearMeLoading}
+                aria-label="Search near my location"
+                title="Find housing near me"
+              >
+                {nearMeLoading ? "…" : "📍 Near me"}
+              </button>
+            )}
+            {searchHistory.map(h => (
+              <button
+                key={h}
+                className="quick-chip history-chip"
+                onClick={() => handleHistoryClick(h)}
+                title={`Search again: ${h}`}
+                aria-label={`Repeat search: ${h}`}
+              >{h}</button>
+            ))}
+          </div>
+        )}
 
         {searchDisplay && (
           <p className="search-location-label" aria-live="polite">
@@ -284,6 +341,7 @@ export function SidePanel({
             {filters.householdIncome > 0 && (
               <QualificationBadges income={filters.householdIncome} persons={filters.householdSize} ami={ami} />
             )}
+            <AmiTierChart ami={ami} persons={filters.householdSize} />
           </div>
         )}
 
@@ -519,6 +577,66 @@ function QualificationBadges({ income, persons, ami }: { income: number; persons
   );
 }
 
+// ── AMI Tier Chart ────────────────────────────────────────────────────────────
+
+function AmiTierChart({ ami, persons }: { ami: number; persons: number }) {
+  const sf: Record<number, number> = { 1: 0.70, 2: 0.80, 3: 0.90, 4: 1.00, 5: 1.08, 6: 1.16, 7: 1.24, 8: 1.32 };
+  const factor = sf[Math.min(Math.max(persons, 1), 8)] ?? 1.0;
+  const adjAmi = ami * factor;
+  const tiers = [
+    { label: "ELI", desc: "≤30% AMI", pct: 0.30, color: "var(--tier-eli)" },
+    { label: "VLI", desc: "≤50% AMI", pct: 0.50, color: "var(--tier-vli)" },
+    { label: "LI",  desc: "≤80% AMI", pct: 0.80, color: "var(--tier-li)"  },
+    { label: "Mod", desc: "≤120% AMI", pct: 1.20, color: "var(--tier-mod)" },
+  ];
+  return (
+    <div className="ami-chart" aria-label="AMI income tier thresholds">
+      <p className="ami-chart-title">{persons}-person household limits</p>
+      {tiers.map(t => (
+        <div key={t.label} className="ami-tier-row">
+          <span className="ami-tier-label" style={{ color: t.color }}>{t.label}</span>
+          <div className="ami-tier-bar" aria-hidden="true">
+            <div className="ami-tier-fill" style={{ width: `${(t.pct / 1.20) * 100}%`, background: t.color }} />
+          </div>
+          <span className="ami-tier-amount" aria-label={`${t.desc}: up to $${Math.round(adjAmi * t.pct).toLocaleString()} per year`}>
+            ≤${Math.round(adjAmi * t.pct).toLocaleString()}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Share Button ──────────────────────────────────────────────────────────────
+
+function ShareButton({ property: p }: { property: DisplayProperty }) {
+  const [copied, setCopied] = useState(false);
+  const handleShare = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const parts = [
+      p.name,
+      [p.address, p.city, p.state, p.zip].filter(Boolean).join(", "),
+      p.phone ? `Phone: ${p.phone}` : "",
+      p.website ? `Website: ${p.website}` : "",
+      p.affordableUnits ? `${p.affordableUnits} affordable units` : "",
+      "How to apply: Contact property directly for waitlist and application info.",
+    ].filter(Boolean);
+    try {
+      await navigator.clipboard.writeText(parts.join("\n"));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch { /* clipboard unavailable */ }
+  }, [p]);
+  return (
+    <button
+      className={`share-btn ${copied ? "copied" : ""}`}
+      onClick={handleShare}
+      aria-label={copied ? "Copied to clipboard" : "Copy property summary to clipboard"}
+      title={copied ? "Copied!" : "Share property"}
+    >{copied ? "✓" : "⎘"}</button>
+  );
+}
+
 // ── Detail View ───────────────────────────────────────────────────────────────
 
 interface DetailViewProps {
@@ -572,6 +690,7 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
         <button className="back-btn" onClick={onClear} aria-label="Back to list">← Back</button>
         <div className="detail-top-right">
           {dist && <span className="detail-dist" aria-label={`${dist} from your location`}>{dist}</span>}
+          <ShareButton property={p} />
           <button
             className={`heart-btn large ${isFav ? "saved" : ""}`}
             onClick={onToggleFav}

@@ -890,6 +890,113 @@ html, body, #root { height: 100%; overflow: hidden; }
   }
 }
 
+/* ─── Search Quick Row (near me + history chips) ─── */
+.search-quick-row {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.quick-chip {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: border-color 0.12s, color 0.12s;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.quick-chip:hover { color: var(--text-primary); border-color: var(--accent-dim); }
+
+.near-me-chip { color: var(--accent); border-color: var(--accent-dim); background: var(--accent-bg); }
+.near-me-chip:hover { background: var(--accent-dim); color: #fff; }
+.near-me-chip.loading { opacity: 0.6; cursor: wait; }
+
+.history-chip { color: var(--text-secondary); }
+
+/* ─── AMI Tier Chart ─── */
+.ami-chart {
+  background: var(--bg-deep);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ami-chart-title {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.ami-tier-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 72px;
+  align-items: center;
+  gap: 7px;
+}
+
+.ami-tier-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: right;
+}
+
+.ami-tier-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg-raised);
+  overflow: hidden;
+}
+
+.ami-tier-fill {
+  height: 100%;
+  border-radius: 2px;
+  opacity: 0.75;
+}
+
+.ami-tier-amount {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ─── Share Button ─── */
+.share-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: color 0.15s, border-color 0.15s;
+}
+.share-btn:hover { color: var(--text-secondary); border-color: var(--accent-dim); }
+.share-btn.copied { color: var(--accent); border-color: var(--accent-dim); }
+
 /* ─── Scrollbars ─── */
 .property-list::-webkit-scrollbar,
 .detail-card::-webkit-scrollbar { width: 4px; }

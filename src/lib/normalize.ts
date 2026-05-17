@@ -4,6 +4,9 @@ import { adjustedAmi } from "./ami";
 function str(v: unknown): string { return v != null ? String(v) : ""; }
 function num(v: unknown): number { return typeof v === "number" ? v : 0; }
 function flag(v: unknown): boolean { return v === "Y" || v === 1 || v === true || v === "Yes"; }
+function stableSlug(...parts: string[]): string {
+  return parts.filter(Boolean).join("-").replace(/[^a-zA-Z0-9]+/g, "_").slice(0, 48);
+}
 
 function emptyBedrooms(): BedroomCounts {
   return { studio: 0, br1: 0, br2: 0, br3: 0, br4plus: 0 };
@@ -28,7 +31,7 @@ function normalizeSJ(feature: HousingFeature): DisplayProperty | null {
   const objectId = str(p.OBJECTID);
 
   return {
-    id: `sj-${objectId || `rand-${Date.now()}-${Math.random().toString(36).slice(2)}`}`,
+    id: `sj-${objectId || stableSlug(str(p.DEVELOPMENTNAME), str(p.ADDRESS))}`,
     source: "sj" as DataSource,
     name: str(p.DEVELOPMENTNAME) || "Unknown Project",
     address: str(p.ADDRESS),
@@ -86,7 +89,7 @@ function normalizeLIHTC(feature: HousingFeature): DisplayProperty | null {
   const objectId = str(p.OBJECTID);
 
   return {
-    id: `lihtc-${objectId || `rand-${Date.now()}-${Math.random().toString(36).slice(2)}`}`,
+    id: `lihtc-${objectId || stableSlug(str(p.PROJECT), str(p.PROJ_ADD))}`,
     source: "lihtc" as DataSource,
     name: str(p.PROJECT) || "Unknown Project",
     address: str(p.PROJ_ADD),
