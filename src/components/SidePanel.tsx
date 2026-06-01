@@ -27,6 +27,7 @@ interface SidePanelProps {
   dataSource: DataSource;
   ami: number;
   searchDisplay?: string;
+  hasSearched: boolean;
 }
 
 const POP_TYPES = [
@@ -79,7 +80,7 @@ function isFiltered(f: FilterState, source: DataSource, nameFilter: string): boo
 export function SidePanel({
   properties, totalCount, selected, loading, error, filters, setFilters,
   favorites, onToggleFavorite, userLocation, onSelect, onClear, onRetry,
-  onSearch, onWidenSearch, onGoHome, onExportFavorites, onNearMe, dataSource, ami, searchDisplay,
+  onSearch, onWidenSearch, onGoHome, onExportFavorites, onNearMe, dataSource, ami, searchDisplay, hasSearched,
 }: SidePanelProps) {
   const [searchInput, setSearchInput] = useState("");
   const [nameFilter, setNameFilter] = useState("");
@@ -166,8 +167,8 @@ export function SidePanel({
             {onGoHome && (
               <button
                 className="icon-btn home-btn"
-                title="Back to San Jose"
-                aria-label="Back to San Jose affordable housing"
+                title="New search"
+                aria-label="Clear search and start over"
                 onClick={onGoHome}
               >⌂</button>
             )}
@@ -195,7 +196,7 @@ export function SidePanel({
           <input
             ref={searchRef}
             className="city-search-input"
-            placeholder="City, ZIP, or address…"
+            placeholder="City, ZIP, or address — anywhere in the US"
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
             aria-label="Search by city, ZIP code, or address"
@@ -240,9 +241,9 @@ export function SidePanel({
             {searchDisplay.split(",").slice(0, 3).join(",")}
           </p>
         )}
-        {dataSource === "lihtc" && (
+        {hasSearched && dataSource === "lihtc" && (
           <p className="lihtc-info-banner" role="note">
-            Showing HUD LIHTC properties — federally funded affordable housing. Income limits vary by property.
+            HUD LIHTC — federally funded affordable housing. Rents capped at 30% of income limit.
           </p>
         )}
 
@@ -392,6 +393,7 @@ export function SidePanel({
             <option value="name">A–Z</option>
             <option value="units">Most units</option>
             <option value="distance" disabled={!userLocation}>Nearest</option>
+            <option value="rent">Lowest rent</option>
           </select>
         </div>
       </div>
@@ -419,6 +421,7 @@ export function SidePanel({
           onClear={onClear}
           userLocation={userLocation}
           ami={ami}
+          bedroomSize={filters.bedroomSize}
         />
       ) : (
         <div
@@ -435,7 +438,10 @@ export function SidePanel({
           }}
         >
           {loading && <SkeletonList />}
-          {!loading && !error && displayed.length === 0 && (
+          {!loading && !error && !hasSearched && (
+            <WelcomeState onSearch={onSearch} onNearMe={onNearMe} />
+          )}
+          {!loading && !error && hasSearched && displayed.length === 0 && (
             <EmptyState
               showFavsOnly={showFavsOnly}
               hasFilters={hasActiveFilters || nameFilter.length > 0}
@@ -466,7 +472,10 @@ export function SidePanel({
                     aria-pressed={isFav}
                   >{isFav ? "♥" : "♡"}</button>
                 </div>
-                <span className="property-item-addr">{p.address}{p.city ? `, ${p.city}` : ""}{p.state && p.state !== "CA" ? `, ${p.state}` : ""}</span>
+                <span className="property-item-addr">
+                  {p.address}{p.city ? `, ${p.city}` : ""}
+                  {p.state ? `, ${p.state}` : ""}
+                </span>
                 <div className="property-item-meta">
                   {p.affordableUnits > 0 && (
                     <span className="property-item-units">{p.affordableUnits} units</span>
@@ -476,6 +485,12 @@ export function SidePanel({
                   )}
                   {p.hasRentalAssistance && <span className="badge badge-blue">Sec. 8</span>}
                   <span className={`badge ${badge.cls}`}>{badge.text}</span>
+                  {p.arExpiry != null && (() => {
+                    const days = Math.floor((p.arExpiry - Date.now()) / 86400000);
+                    if (days < 0) return <span className="badge badge-red" title="Affordability restriction has expired">Expired</span>;
+                    if (days < 365) return <span className="badge badge-warn" title={`Affordability expires in ${days} days`}>Exp. soon</span>;
+                    return null;
+                  })()}
                   {dist && <span className="property-item-dist">{dist}</span>}
                 </div>
                 {p.source === "lihtc" && (p.bedrooms.studio + p.bedrooms.br1 + p.bedrooms.br2 + p.bedrooms.br3 + p.bedrooms.br4plus) > 0 && (
@@ -487,12 +502,75 @@ export function SidePanel({
                     {p.bedrooms.br4plus > 0 && <span className="br-chip">4BR+×{p.bedrooms.br4plus}</span>}
                   </div>
                 )}
+                {p.source === "lihtc" && p.incomeCeilingPct && (() => {
+                  const r = rentRangeForTier(p.incomeCeilingPct, ami);
+                  const b = p.bedrooms;
+                  const minRent = b.studio > 0 ? r.studio
+                    : b.br1 > 0 ? r.oneBed
+                    : b.br2 > 0 ? r.twoBed
+                    : b.br3 > 0 ? r.threeBed
+                    : r.studio;
+                  return (
+                    <span className="card-rent" aria-label={`Estimated rent from ${fmt(minRent)} per month`}>
+                      From {fmt(minRent)}/mo · ≤{p.incomeCeilingPct}% AMI
+                    </span>
+                  );
+                })()}
+                {p.source === "sj" && ((p.eliunits ?? 0) + (p.vliunits ?? 0) + (p.liunits ?? 0) + (p.moderateunits ?? 0)) > 0 && (() => {
+                  const lowestTier = (p.eliunits ?? 0) > 0 ? "ELI"
+                    : (p.vliunits ?? 0) > 0 ? "VLI"
+                    : (p.liunits ?? 0) > 0 ? "LI" : "Moderate";
+                  const r = rentRangeForTier(lowestTier, ami);
+                  return (
+                    <span className="card-rent" aria-label={`Estimated rent from ${fmt(r.studio)} per month`}>
+                      From {fmt(r.studio)}/mo ({lowestTier} tier)
+                    </span>
+                  );
+                })()}
               </button>
             );
           })}
         </div>
       )}
     </aside>
+  );
+}
+
+// ── Welcome state (before first search) ──────────────────────────────────────
+
+const EXAMPLE_SEARCHES = ["San Jose, CA", "Seattle, WA", "Denver, CO", "Chicago, IL", "Miami, FL", "Austin, TX"];
+
+function WelcomeState({ onSearch, onNearMe }: { onSearch: (q: string) => void; onNearMe?: () => void }) {
+  return (
+    <div className="welcome-state">
+      <div className="welcome-hero">
+        <p className="welcome-icon" aria-hidden="true">🏠</p>
+        <h2 className="welcome-title">Find Affordable Housing</h2>
+        <p className="welcome-sub">Search 50,000+ subsidized properties across all 50 states</p>
+      </div>
+      {onNearMe && (
+        <button className="welcome-near-me-btn" onClick={onNearMe} aria-label="Search near my current location">
+          📍 Search near me
+        </button>
+      )}
+      <div className="welcome-examples" aria-label="Example city searches">
+        <p className="welcome-examples-label">Or try:</p>
+        <div className="welcome-example-chips">
+          {EXAMPLE_SEARCHES.map(city => (
+            <button
+              key={city}
+              className="example-chip"
+              onClick={() => onSearch(city)}
+              aria-label={`Search affordable housing in ${city}`}
+            >{city}</button>
+          ))}
+        </div>
+      </div>
+      <div className="welcome-data-note">
+        <strong>San Jose</strong> includes detailed local data from the City of San Jose.<br />
+        All other cities use <strong>HUD LIHTC</strong> — the federal affordable housing database.
+      </div>
+    </div>
   );
 }
 
@@ -541,7 +619,7 @@ function EmptyState({ showFavsOnly, hasFilters, onClearFilters, onWidenSearch }:
       )}
       {onWidenSearch && (
         <button className="empty-action-btn empty-action-secondary" onClick={onWidenSearch}>
-          Widen search (40 km radius)
+          Widen search (60 km radius)
         </button>
       )}
       {!hasFilters && !onWidenSearch && (
@@ -646,6 +724,7 @@ interface DetailViewProps {
   onClear: () => void;
   userLocation: UserLocation | null;
   ami: number;
+  bedroomSize: FilterState["bedroomSize"];
 }
 
 function CopyButton({ text, label }: { text: string; label: string }) {
@@ -669,7 +748,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   );
 }
 
-function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, ami }: DetailViewProps) {
+function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, ami, bedroomSize }: DetailViewProps) {
   const badge = p.source === "lihtc"
     ? { text: "HUD LIHTC", cls: "badge-blue" }
     : p.arstatus === "Active"
@@ -757,6 +836,13 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
             <h3 className="breakdown-title">Affordable Units</h3>
             <span className="breakdown-total">{p.affordableUnits} units</span>
           </div>
+          {p.arExpiry != null && (() => {
+            const days = Math.floor((p.arExpiry - Date.now()) / 86400000);
+            const dateStr = new Date(p.arExpiry).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+            if (days < 0) return <p className="breakdown-note breakdown-warn">⚠ Affordability restriction expired {dateStr}</p>;
+            if (days < 365) return <p className="breakdown-note breakdown-warn">⚠ Affordability expires {dateStr} ({days} days)</p>;
+            return <p className="breakdown-note">Affordability restriction expires {dateStr}</p>;
+          })()}
           <div className="rent-table" role="table" aria-label="Rent ranges by income tier">
             <div className="rent-table-head" role="row">
               <span role="columnheader" />
@@ -771,11 +857,11 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
             {(p.liunits ?? 0) > 0  && <RentRow tier="LI"  label="Low"      color="var(--tier-li)"  count={p.liunits!}  ami={ami} />}
             {(p.moderateunits ?? 0) > 0 && <RentRow tier="Moderate" label="Moderate" color="var(--tier-mod)" count={p.moderateunits!} ami={ami} />}
           </div>
-          <p className="breakdown-note">Max rents per HUD 2024 limits. Actual rent may be lower.</p>
+          <p className="breakdown-note">HUD-regulated max rents. Actual rent may be lower.</p>
         </div>
       )}
 
-      {/* LIHTC: bedroom counts + estimated rent by income ceiling */}
+      {/* LIHTC: bedroom counts + unit-specific rent by income ceiling */}
       {p.source === "lihtc" && (hasBedroomData || p.incomeCeilingPct) && (
         <div className="unit-breakdown">
           <div className="breakdown-title-row">
@@ -783,7 +869,18 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
             {p.incomeCeilingPct && (
               <span className="badge badge-blue">≤{p.incomeCeilingPct}% AMI</span>
             )}
+            {!p.incomeCeilingPct && (
+              <span className="badge badge-gray">Mixed AMI tiers</span>
+            )}
           </div>
+
+          {/* Mixed-tier: lower ceiling units */}
+          {p.lowCeil && p.ceilUnit && (
+            <p className="breakdown-note breakdown-info">
+              {p.ceilUnit} units at ≤{p.lowCeil}% AMI · rest at ≤{p.incomeCeilingPct ?? "60"}% AMI
+            </p>
+          )}
+
           {hasBedroomData && (
             <div className="bedroom-breakdown">
               {p.bedrooms.studio > 0 && <BedroomTile label="Studio" count={p.bedrooms.studio} />}
@@ -793,23 +890,39 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
               {p.bedrooms.br4plus > 0 && <BedroomTile label="4+ BR" count={p.bedrooms.br4plus} />}
             </div>
           )}
-          {p.incomeCeilingPct && (
-            <>
-              <p className="breakdown-title" style={{ marginTop: 10, marginBottom: 6 }}>Est. Max Rent (30% of income)</p>
-              {(() => {
-                const r = rentRangeForTier(p.incomeCeilingPct, ami);
-                return (
-                  <div className="lihtc-rent-row">
-                    <span>Studio <strong>{fmt(r.studio)}/mo</strong></span>
-                    <span>1BR <strong>{fmt(r.oneBed)}/mo</strong></span>
-                    <span>2BR <strong>{fmt(r.twoBed)}/mo</strong></span>
-                    <span>3BR <strong>{fmt(r.threeBed)}/mo</strong></span>
+
+          {p.incomeCeilingPct && (() => {
+            const r = rentRangeForTier(p.incomeCeilingPct, ami);
+            const b = p.bedrooms;
+            const hasBrData = b.studio + b.br1 + b.br2 + b.br3 + b.br4plus > 0;
+            // Highlighted rent for selected bedroom filter
+            const highlightLabel = bedroomSize === "0" ? "Studio"
+              : bedroomSize === "1" ? "1 BR" : bedroomSize === "2" ? "2 BR"
+              : bedroomSize === "3" ? "3 BR" : bedroomSize === "4" ? "4+ BR" : null;
+            const highlightRent = bedroomSize === "0" ? r.studio
+              : bedroomSize === "1" ? r.oneBed : bedroomSize === "2" ? r.twoBed
+              : bedroomSize === "3" ? r.threeBed : null;
+            return (
+              <>
+                {highlightLabel && highlightRent && (
+                  <div className="rent-highlight-row">
+                    <span className="rent-highlight-label">{highlightLabel} max rent</span>
+                    <strong className="rent-highlight-val">{fmt(highlightRent)}/mo</strong>
                   </div>
-                );
-              })()}
-              <p className="breakdown-note">Based on {ami >= 100000 ? `$${(ami/1000).toFixed(0)}k` : fmt(ami)} local AMI. Contact property for actual pricing.</p>
-            </>
-          )}
+                )}
+                <p className="breakdown-title" style={{ marginTop: 10, marginBottom: 6 }}>
+                  HUD Max Rent by bedroom (30% of income limit)
+                </p>
+                <div className="lihtc-rent-row">
+                  {(!hasBrData || b.studio > 0) && <span>Studio <strong>{fmt(r.studio)}/mo</strong></span>}
+                  {(!hasBrData || b.br1 > 0) && <span>1BR <strong>{fmt(r.oneBed)}/mo</strong></span>}
+                  {(!hasBrData || b.br2 > 0) && <span>2BR <strong>{fmt(r.twoBed)}/mo</strong></span>}
+                  {(!hasBrData || b.br3 > 0) && <span>3BR <strong>{fmt(r.threeBed)}/mo</strong></span>}
+                </div>
+                <p className="breakdown-note">Based on {ami >= 100000 ? `$${(ami/1000).toFixed(0)}k` : fmt(ami)} area AMI. These are HUD-regulated maximums — actual rent may be lower.</p>
+              </>
+            );
+          })()}
         </div>
       )}
 
@@ -825,6 +938,7 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
       <div className="detail-rows">
         <DetailRow label="Developer" value={p.developer} />
         {p.source === "sj" && <>
+          <DetailRow label="Property Manager" value={p.propertyManager} />
           <DetailRow label="Tenure" value={p.tenuretype} />
           <DetailRow label="Project Type" value={p.projecttype} />
           <DetailRow label="Stage" value={p.projdevstage} />
@@ -835,6 +949,30 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
           <DetailRow label="Year Built" value={p.yearBuilt} />
           <DetailRow label="Total Units" value={p.totalUnits} />
         </>}
+      </div>
+
+      {/* External listings search */}
+      <div className="listings-actions">
+        <a
+          className="listings-btn"
+          href={`https://affordablehousingonline.com/search?name=${encodeURIComponent(p.name)}&city=${encodeURIComponent(p.city)}&state=${encodeURIComponent(p.state)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Search for current listings on Affordable Housing Online"
+        >
+          Search current listings ↗
+        </a>
+        {p.source === "lihtc" && (
+          <a
+            className="listings-btn listings-btn-secondary"
+            href={`https://www.socialserve.com/state/${p.state.toLowerCase()}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Browse available units on Socialserve"
+          >
+            Browse Socialserve ↗
+          </a>
+        )}
       </div>
     </div>
   );

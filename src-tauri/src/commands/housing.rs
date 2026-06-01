@@ -8,10 +8,11 @@ const LIHTC_URL: &str =
     "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/LIHTC/FeatureServer/0/query";
 
 const NOMINATIM_URL: &str = "https://nominatim.openstreetmap.org/search";
+const NOMINATIM_REVERSE_URL: &str = "https://nominatim.openstreetmap.org/reverse";
 
 const LIHTC_FIELDS: &str =
     "OBJECTID,PROJECT,PROJ_ADD,PROJ_CTY,PROJ_ST,PROJ_ZIP,N_UNITS,LI_UNITS,\
-     N_0BR,N_1BR,N_2BR,N_3BR,N_4BR,INC_CEIL,LOW_CEIL,TRGT_FAM,TRGT_ELD,\
+     N_0BR,N_1BR,N_2BR,N_3BR,N_4BR,INC_CEIL,LOW_CEIL,CEILUNIT,TRGT_FAM,TRGT_ELD,\
      TRGT_DIS,TRGT_HML,RENTASSIST,NON_PROF,YR_PIS,CO_TEL,COMPANY,LAT,LON";
 
 const LIHTC_PAGE: usize = 1000;
@@ -194,6 +195,47 @@ pub async fn fetch_lihtc(
         collection_type: "FeatureCollection".into(),
         features: all_features,
     })
+}
+
+/// Reverse geocode lat/lng to a location display name via Nominatim.
+#[tauri::command]
+pub async fn reverse_geocode(
+    client: tauri::State<'_, reqwest::Client>,
+    lat: f64,
+    lng: f64,
+) -> Result<GeoLocation, HousingError> {
+    let lat_s = format!("{lat}");
+    let lng_s = format!("{lng}");
+    let body = get_bytes(
+        &client,
+        NOMINATIM_REVERSE_URL,
+        &[
+            ("lat", lat_s.as_str()),
+            ("lon", lng_s.as_str()),
+            ("format", "json"),
+            ("zoom", "10"),
+        ],
+    )
+    .await?;
+
+    let r: NominatimResult = serde_json::from_slice(&body)
+        .map_err(|e| HousingError::Parse(e.to_string()))?;
+
+    let lat_f: f64 = r.lat.parse().map_err(|_| HousingError::Parse("bad lat".into()))?;
+    let lng_f: f64 = r.lon.parse().map_err(|_| HousingError::Parse("bad lon".into()))?;
+
+    let bbox = if r.boundingbox.len() == 4 {
+        [
+            r.boundingbox[0].parse().unwrap_or(lat_f - 0.1),
+            r.boundingbox[1].parse().unwrap_or(lat_f + 0.1),
+            r.boundingbox[2].parse().unwrap_or(lng_f - 0.1),
+            r.boundingbox[3].parse().unwrap_or(lng_f + 0.1),
+        ]
+    } else {
+        [lat_f - 0.1, lat_f + 0.1, lng_f - 0.1, lng_f + 0.1]
+    };
+
+    Ok(GeoLocation { lat: lat_f, lng: lng_f, display_name: r.display_name, bbox })
 }
 
 /// Fetch San Jose local affordable housing (detailed local dataset).

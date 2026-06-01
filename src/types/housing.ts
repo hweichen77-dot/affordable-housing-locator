@@ -62,5 +62,10 @@ export interface DisplayProperty {
   vliunits?: number;
   liunits?: number;
   moderateunits?: number;
+  propertyManager?: string;
+  arExpiry?: number;          // Unix epoch ms — SJ affordability restriction expiry
+  // LIHTC-specific
+  lowCeil?: number;           // decoded lower AMI tier % (50 or 60) for mixed-tier properties
+  ceilUnit?: number;          // units at lower AMI tier
   raw: Record<string, unknown>;
 }

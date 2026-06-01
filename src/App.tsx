@@ -5,7 +5,7 @@ const Map = lazy(() => import("./components/Map").then(m => ({ default: m.Map })
 import type { HousingCollection, GeoLocation, DisplayProperty } from "./types/housing";
 import { normalizeFeatures, hasBedroomType, popMatches, qualifiesForIncome } from "./lib/normalize";
 import { haversineKm } from "./lib/geo";
-import { getAmi } from "./lib/ami";
+import { getAmi, rentRangeForTier } from "./lib/ami";
 
 export interface FilterState {
   activeOnly: boolean;
@@ -13,7 +13,7 @@ export interface FilterState {
   incomeTier: "" | "ELI" | "VLI" | "LI" | "Moderate";
   bedroomSize: "" | "0" | "1" | "2" | "3" | "4";
   voucherOnly: boolean;
-  sortBy: "name" | "units" | "distance";
+  sortBy: "name" | "units" | "distance" | "rent";
   householdIncome: number;
   householdSize: number;
 }
@@ -34,8 +34,9 @@ export const DEFAULT_FILTERS: FilterState = {
 export default function App() {
   const [rawData, setRawData] = useState<DisplayProperty[]>([]);
   const [dataSource, setDataSource] = useState<"sj" | "lihtc">("sj");
-  const [dataLoading, setDataLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLocation, setSearchLocation] = useState<GeoLocation | null>(null);
@@ -59,24 +60,6 @@ export default function App() {
     } catch { return new Set(); }
   });
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
-
-  // ── Initial SJ data load ─────────────────────────────────────────────────
-  const loadSJ = useCallback(() => {
-    setDataLoading(true);
-    setDataError(null);
-    invoke<HousingCollection>("fetch_housing")
-      .then((d) => {
-        setRawData(normalizeFeatures(d.features, "sj"));
-        setDataSource("sj");
-        setDataLoading(false);
-      })
-      .catch((e) => {
-        setDataError(typeof e === "string" ? e : JSON.stringify(e));
-        setDataLoading(false);
-      });
-  }, []);
-
-  useEffect(() => { loadSJ(); }, [loadSJ]);
 
   // ── City / ZIP search ────────────────────────────────────────────────────
   const handleSearch = useCallback(async (query: string) => {
@@ -120,7 +103,7 @@ export default function App() {
         setFilters(f => ({ ...f, activeOnly: true }));
       } else {
         const d = await invoke<HousingCollection>("fetch_lihtc", {
-          lat: loc.lat, lng: loc.lng, radiusKm: 15,
+          lat: loc.lat, lng: loc.lng, radiusKm: 25,
         });
         if (myCount !== searchCounterRef.current) return;
         setRawData(normalizeFeatures(d.features, "lihtc"));
@@ -128,6 +111,7 @@ export default function App() {
         setFilters(f => ({ ...f, activeOnly: false, incomeTier: "", voucherOnly: false }));
       }
 
+      setHasSearched(true);
       setDataLoading(false);
     } catch (e) {
       if (myCount !== searchCounterRef.current) return;
@@ -151,7 +135,7 @@ export default function App() {
     setDataError(null);
     try {
       const d = await invoke<HousingCollection>("fetch_lihtc", {
-        lat: searchLocation.lat, lng: searchLocation.lng, radiusKm: 40,
+        lat: searchLocation.lat, lng: searchLocation.lng, radiusKm: 60,
       });
       setRawData(normalizeFeatures(d.features, "lihtc"));
       setDataSource("lihtc");
@@ -161,6 +145,56 @@ export default function App() {
       setDataLoading(false);
     }
   }, [searchLocation]);
+
+  // ── Near me: geolocate + reverse geocode + fetch LIHTC ──────────────────
+  const handleNearMe = useCallback(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setUserLocation({ lat, lng });
+        setFilters(f => ({ ...f, sortBy: "distance" }));
+        setMapFly({ lat, lng, zoom: 12 });
+        setDataLoading(true);
+        setDataError(null);
+        setSelected(null);
+
+        try {
+          const [loc, d] = await Promise.all([
+            invoke<GeoLocation>("reverse_geocode", { lat, lng }).catch(() => null),
+            invoke<HousingCollection>("fetch_lihtc", { lat, lng, radiusKm: 25 }),
+          ]);
+          if (loc) {
+            setSearchLocation(loc);
+          }
+          setRawData(normalizeFeatures(d.features, "lihtc"));
+          setDataSource("lihtc");
+          setFilters(f => ({ ...f, activeOnly: false, incomeTier: "", voucherOnly: false }));
+          setHasSearched(true);
+          setDataLoading(false);
+        } catch (e) {
+          setDataError(typeof e === "string" ? e : JSON.stringify(e));
+          setDataLoading(false);
+        }
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 8500 }
+    );
+  }, []);
+
+  // ── Clear search → welcome state ─────────────────────────────────────────
+  const handleGoHome = useCallback(() => {
+    setRawData([]);
+    setDataSource("sj");
+    setSearchQuery("");
+    setSearchLocation(null);
+    setSelected(null);
+    setHasSearched(false);
+    setFilters(DEFAULT_FILTERS);
+    setDataError(null);
+    setSearchError(null);
+  }, []);
 
   // ── Favorites ────────────────────────────────────────────────────────────
   const toggleFavorite = useCallback((id: string) => {
@@ -175,7 +209,7 @@ export default function App() {
 
   // ── AMI for current location ─────────────────────────────────────────────
   const ami = useMemo(() => {
-    if (!searchLocation) return 169600; // SJ default
+    if (!searchLocation) return 97800; // national median fallback
     const city = searchLocation.display_name.split(",")[0];
     const state = rawData[0]?.state ?? "CA";
     return getAmi(state, city);
@@ -212,7 +246,6 @@ export default function App() {
       }
     }
 
-    // Filter by user's actual entered income (works on LIHTC incomeCeilingPct)
     if (filters.householdIncome > 0) {
       items = items.filter(p => qualifiesForIncome(p, filters.householdIncome, filters.householdSize, ami));
     }
@@ -226,9 +259,33 @@ export default function App() {
           ? haversineKm(userLocation.lat, userLocation.lng, b.lat, b.lng) : Infinity;
         return dA - dB;
       }
+      if (filters.sortBy === "rent") {
+        const estRent = (p: DisplayProperty): number => {
+          if (p.source === "lihtc" && p.incomeCeilingPct) {
+            const r = rentRangeForTier(p.incomeCeilingPct, ami);
+            if (filters.bedroomSize === "0") return r.studio;
+            if (filters.bedroomSize === "1") return r.oneBed;
+            if (filters.bedroomSize === "2") return r.twoBed;
+            if (filters.bedroomSize === "3") return r.threeBed;
+            const b = p.bedrooms;
+            if (b.studio > 0) return r.studio;
+            if (b.br1 > 0) return r.oneBed;
+            if (b.br2 > 0) return r.twoBed;
+            return r.threeBed;
+          }
+          if (p.source === "sj") {
+            const tier = (p.eliunits ?? 0) > 0 ? "ELI"
+              : (p.vliunits ?? 0) > 0 ? "VLI"
+              : (p.liunits ?? 0) > 0 ? "LI" : "Moderate";
+            return rentRangeForTier(tier, ami).studio;
+          }
+          return Infinity;
+        };
+        return estRent(a) - estRent(b);
+      }
       return a.name.localeCompare(b.name);
     });
-  }, [rawData, filters, userLocation, dataSource]);
+  }, [rawData, filters, userLocation, dataSource, ami]);
 
   // ── Map GeoJSON ──────────────────────────────────────────────────────────
   const mapData = useMemo<HousingCollection>(() => ({
@@ -254,15 +311,6 @@ export default function App() {
     setFilters(f => ({ ...f, sortBy: "distance" }));
   }, []);
 
-  const handleNearMe = useCallback(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => handleLocate({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => {},
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
-  }, [handleLocate]);
-
   const handleExportFavorites = useCallback(() => {
     const favs = rawData.filter(p => favorites.has(p.id));
     if (!favs.length) return;
@@ -284,6 +332,9 @@ export default function App() {
     exportToastRef.current = setTimeout(() => setExportDone(false), 2500);
   }, [rawData, favorites]);
 
+  // Unused effect kept to avoid breaking hot-reload state on dev
+  useEffect(() => { /* intentional no-op */ }, []);
+
   const loading = dataLoading || searchLoading;
   const error = dataError || searchError;
 
@@ -302,15 +353,16 @@ export default function App() {
         userLocation={userLocation}
         onSelect={(p) => { setSelected(p); setPanelOpen(true); }}
         onClear={() => setSelected(null)}
-        onRetry={searchQuery ? () => handleSearch(searchQuery) : loadSJ}
+        onRetry={searchQuery ? () => handleSearch(searchQuery) : handleGoHome}
         onSearch={handleSearch}
         onWidenSearch={searchLocation ? handleWidenSearch : undefined}
-        onGoHome={dataSource !== "sj" ? loadSJ : undefined}
+        onGoHome={hasSearched ? handleGoHome : undefined}
         onExportFavorites={handleExportFavorites}
         onNearMe={handleNearMe}
         dataSource={dataSource}
         ami={ami}
         searchDisplay={searchLocation?.display_name}
+        hasSearched={hasSearched}
       />
       <div className="map-container">
         <Suspense fallback={<div style={{ width: "100%", height: "100%", background: "var(--bg-deep)" }} />}>

@@ -12,6 +12,15 @@ function emptyBedrooms(): BedroomCounts {
   return { studio: 0, br1: 0, br2: 0, br3: 0, br4plus: 0 };
 }
 
+// HUD LIHTC INC_CEIL / LOW_CEIL coded values:
+//   "1" = 50% AMI, "2" = 60% AMI, "9" = mixed tiers
+function decodeIncCeil(v: unknown): number | undefined {
+  const s = String(v);
+  if (s === "1") return 50;
+  if (s === "2") return 60;
+  return undefined;
+}
+
 // ─── SJ local dataset (HSG_HousingMapLayers) ─────────────────────────────────
 
 function normalizeSJ(feature: HousingFeature): DisplayProperty | null {
@@ -29,6 +38,8 @@ function normalizeSJ(feature: HousingFeature): DisplayProperty | null {
   if (popTypes.length === 0 && pop) popTypes.push(str(p.POPULATIONTYPE).replace(/;$/, "").replace(/;/g, " · "));
 
   const objectId = str(p.OBJECTID);
+  const arExpRaw = p.AREXP;
+  const arExpiry = typeof arExpRaw === "number" && arExpRaw > 0 ? arExpRaw : undefined;
 
   return {
     id: `sj-${objectId || stableSlug(str(p.DEVELOPMENTNAME), str(p.ADDRESS))}`,
@@ -61,6 +72,8 @@ function normalizeSJ(feature: HousingFeature): DisplayProperty | null {
     vliunits: num(p.VLIUNITS),
     liunits: num(p.LIUNITS),
     moderateunits: num(p.MODERATEUNITS),
+    propertyManager: str(p.PROPERTYMANAGER) || undefined,
+    arExpiry,
     raw: p,
   };
 }
@@ -87,6 +100,9 @@ function normalizeLIHTC(feature: HousingFeature): DisplayProperty | null {
   const lng = coords ? coords[0] : (typeof p.LON === "number" ? p.LON : null);
 
   const objectId = str(p.OBJECTID);
+  const incomeCeilingPct = decodeIncCeil(p.INC_CEIL);
+  const lowCeil = decodeIncCeil(p.LOW_CEIL);
+  const ceilUnitVal = num(p.CEILUNIT);
 
   return {
     id: `lihtc-${objectId || stableSlug(str(p.PROJECT), str(p.PROJ_ADD))}`,
@@ -111,7 +127,9 @@ function normalizeLIHTC(feature: HousingFeature): DisplayProperty | null {
       br3: num(p.N_3BR),
       br4plus: num(p.N_4BR),
     },
-    incomeCeilingPct: num(p.INC_CEIL) || undefined,
+    incomeCeilingPct,
+    lowCeil: lowCeil !== incomeCeilingPct ? lowCeil : undefined,
+    ceilUnit: ceilUnitVal > 0 ? ceilUnitVal : undefined,
     populationTypes: popTypes,
     hasRentalAssistance: flag(p.RENTASSIST),
     yearBuilt,

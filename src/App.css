@@ -1004,3 +1004,114 @@ html, body, #root { height: 100%; overflow: hidden; }
 .detail-card::-webkit-scrollbar-track { background: transparent; }
 .property-list::-webkit-scrollbar-thumb,
 .detail-card::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ─── Badge variants ─── */
+.badge-red  { background: oklch(25% 0.08 20); color: oklch(70% 0.18 20); }
+.badge-warn { background: oklch(25% 0.08 50); color: oklch(72% 0.18 50); }
+
+/* ─── Card rent estimate ─── */
+.card-rent {
+  display: block;
+  font-size: 10px;
+  color: var(--accent);
+  font-weight: 600;
+  margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Welcome state ─── */
+.welcome-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 32px 20px;
+  text-align: center;
+}
+.welcome-hero { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.welcome-icon { font-size: 36px; margin: 0; }
+.welcome-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.welcome-sub { font-size: 12px; color: var(--text-muted); margin: 0; }
+.welcome-near-me-btn {
+  padding: 10px 20px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-dim);
+  color: var(--accent);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.welcome-near-me-btn:hover { background: var(--accent-dim); color: #fff; }
+.welcome-examples { width: 100%; }
+.welcome-examples-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+.welcome-example-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.example-chip {
+  padding: 5px 10px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s;
+}
+.example-chip:hover { border-color: var(--accent-dim); color: var(--accent); }
+.welcome-data-note {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  padding: 10px 14px;
+  background: var(--bg-raised);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ─── Rent highlight row (detail view) ─── */
+.rent-highlight-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-dim);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.rent-highlight-label { font-size: 11px; color: var(--accent); font-weight: 600; }
+.rent-highlight-val { font-size: 16px; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* ─── Breakdown note variants ─── */
+.breakdown-warn { color: oklch(72% 0.18 50) !important; }
+.breakdown-info { color: var(--text-secondary); font-style: italic; }
+
+/* ─── External listings buttons ─── */
+.listings-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.listings-btn {
+  display: block;
+  text-align: center;
+  padding: 8px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  transition: border-color 0.15s, color 0.15s;
+}
+.listings-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+.listings-btn-secondary { font-weight: 500; color: var(--text-muted); }
+.listings-btn-secondary:hover { color: var(--text-secondary); }
