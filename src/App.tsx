@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { SidePanel } from "./components/SidePanel";
 const Map = lazy(() => import("./components/Map").then(m => ({ default: m.Map })));
@@ -370,8 +370,6 @@ export default function App() {
     exportToastRef.current = setTimeout(() => setExportDone(false), 2500);
   }, [rawData, favorites, applicationStatuses]);
 
-  useEffect(() => { /* intentional no-op */ }, []);
-
   const loading = dataLoading || searchLoading;
   const error = dataError || searchError;
 
@@ -392,7 +390,7 @@ export default function App() {
         onClear={() => setSelected(null)}
         onRetry={searchQuery ? () => handleSearch(searchQuery) : handleGoHome}
         onSearch={handleSearch}
-        onWidenSearch={searchLocation ? handleWidenSearch : undefined}
+        onWidenSearch={searchLocation && dataSource !== "sj" ? handleWidenSearch : undefined}
         onGoHome={hasSearched ? handleGoHome : undefined}
         onExportFavorites={handleExportFavorites}
         onNearMe={handleNearMe}

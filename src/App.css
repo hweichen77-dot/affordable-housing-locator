@@ -1,5 +1,7 @@
 /* ─── Reset & Root ─── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+:focus:not(:focus-visible) { outline: none; }
 
 :root {
   --font-body: system-ui, -apple-system, sans-serif;
@@ -1175,9 +1177,9 @@ html, body, #root { height: 100%; overflow: hidden; }
   transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
 .app-tracker-btn:hover { border-color: var(--accent-dim); color: var(--text-secondary); }
-.app-tracker-btn.active.app-tracker-btn:nth-child(1) { background: oklch(25% 0.06 220); color: oklch(70% 0.16 220); border-color: oklch(40% 0.1 220); }
-.app-tracker-btn.active:nth-child(2) { background: oklch(22% 0.07 145); color: oklch(68% 0.18 145); border-color: var(--accent-dim); }
-.app-tracker-btn.active:nth-child(3) { background: oklch(25% 0.06 50);  color: oklch(72% 0.18 50);  border-color: oklch(40% 0.1 50); }
+.app-tracker-btn.active[data-status="interested"] { background: oklch(25% 0.06 220); color: oklch(70% 0.16 220); border-color: oklch(40% 0.1 220); }
+.app-tracker-btn.active[data-status="applied"]    { background: oklch(22% 0.07 145); color: oklch(68% 0.18 145); border-color: var(--accent-dim); }
+.app-tracker-btn.active[data-status="waitlisted"] { background: oklch(25% 0.06 50);  color: oklch(72% 0.18 50);  border-color: oklch(40% 0.1 50); }
 
 /* ─── Application guide ─── */
 .app-guide {
@@ -1356,3 +1358,87 @@ html, body, #root { height: 100%; overflow: hidden; }
   padding-top: 8px;
   border-top: 1px solid var(--border);
 }
+
+/* ─── Welcome state stats ─── */
+.welcome-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+.welcome-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 6px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-align: center;
+}
+.welcome-stat-num {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.welcome-stat-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+}
+.welcome-error {
+  font-size: 11px;
+  color: oklch(72% 0.18 50);
+  background: oklch(22% 0.06 50);
+  border: 1px solid oklch(35% 0.1 50);
+  border-radius: 7px;
+  padding: 8px 12px;
+  width: 100%;
+  text-align: center;
+}
+
+/* ─── About modal keyboard shortcuts ─── */
+.shortcut-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 7px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: var(--font-body);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  min-width: 28px;
+}
+
+/* ─── Skip link (accessibility) ─── */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 8px;
+  z-index: 9999;
+  background: var(--accent);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 0 0 8px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.15s;
+}
+.skip-link:focus { top: 0; }

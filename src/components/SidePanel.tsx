@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import type { DisplayProperty, DataSource } from "../types/housing";
 import type { FilterState, UserLocation, AppStatuses, AppStatusValue } from "../App";
 import { DEFAULT_FILTERS } from "../App";
@@ -99,6 +99,18 @@ export function SidePanel({
     } catch { return []; }
   });
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key === "/" || e.key === "s") { e.preventDefault(); searchRef.current?.focus(); }
+      if (e.key === "?" || e.key === "i") { e.preventDefault(); setShowAbout(true); }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, []);
 
   const displayed = showFavsOnly
     ? properties.filter(p => favorites.has(p.id))
@@ -452,8 +464,8 @@ export function SidePanel({
           }}
         >
           {loading && <SkeletonList />}
-          {!loading && !error && !hasSearched && (
-            <WelcomeState onSearch={onSearch} onNearMe={onNearMe} loading={loading} />
+          {!loading && !hasSearched && (
+            <WelcomeState onSearch={onSearch} onNearMe={onNearMe} loading={loading} error={error} />
           )}
           {!loading && !error && hasSearched && displayed.length === 0 && (
             <EmptyState
@@ -562,7 +574,7 @@ export function SidePanel({
 
 const EXAMPLE_SEARCHES = ["San Jose, CA", "Seattle, WA", "Denver, CO", "Chicago, IL", "Miami, FL", "Austin, TX"];
 
-function WelcomeState({ onSearch, onNearMe, loading }: { onSearch: (q: string) => void; onNearMe?: () => void; loading: boolean }) {
+function WelcomeState({ onSearch, onNearMe, loading, error }: { onSearch: (q: string) => void; onNearMe?: () => void; loading: boolean; error: string | null }) {
   return (
     <div className="welcome-state">
       <div className="welcome-hero">
@@ -570,6 +582,17 @@ function WelcomeState({ onSearch, onNearMe, loading }: { onSearch: (q: string) =
         <h2 className="welcome-title">Find Affordable Housing</h2>
         <p className="welcome-sub">Search 50,000+ subsidized properties across all 50 states</p>
       </div>
+
+      <div className="welcome-stats" aria-label="Housing crisis facts">
+        <div className="welcome-stat"><span className="welcome-stat-num">40M+</span><span className="welcome-stat-label">Americans cost-burdened by rent</span></div>
+        <div className="welcome-stat"><span className="welcome-stat-num">50K+</span><span className="welcome-stat-label">subsidized properties searchable</span></div>
+        <div className="welcome-stat"><span className="welcome-stat-num">50</span><span className="welcome-stat-label">states covered</span></div>
+      </div>
+
+      {error && (
+        <p className="welcome-error" role="alert">⚠ {error}</p>
+      )}
+
       {onNearMe && (
         <button
           className="welcome-near-me-btn"
@@ -849,6 +872,7 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
             <button
               key={s}
               className={`app-tracker-btn${appStatus === s ? " active" : ""}`}
+              data-status={s}
               onClick={() => onSetAppStatus(appStatus === s ? null : s)}
               aria-pressed={appStatus === s}
             >
