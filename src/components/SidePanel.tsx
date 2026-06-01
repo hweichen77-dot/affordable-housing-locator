@@ -1,9 +1,10 @@
 import { useRef, useState, useCallback } from "react";
 import type { DisplayProperty, DataSource } from "../types/housing";
-import type { FilterState, UserLocation } from "../App";
+import type { FilterState, UserLocation, AppStatuses, AppStatusValue } from "../App";
 import { DEFAULT_FILTERS } from "../App";
 import { rentRangeForTier, fmt } from "../lib/ami";
 import { haversineKm, fmtDist } from "../lib/geo";
+import { AboutModal } from "./AboutModal";
 
 interface SidePanelProps {
   properties: DisplayProperty[];
@@ -28,6 +29,8 @@ interface SidePanelProps {
   ami: number;
   searchDisplay?: string;
   hasSearched: boolean;
+  applicationStatuses: AppStatuses;
+  onSetAppStatus: (id: string, status: AppStatusValue | null) => void;
 }
 
 const POP_TYPES = [
@@ -81,12 +84,14 @@ export function SidePanel({
   properties, totalCount, selected, loading, error, filters, setFilters,
   favorites, onToggleFavorite, userLocation, onSelect, onClear, onRetry,
   onSearch, onWidenSearch, onGoHome, onExportFavorites, onNearMe, dataSource, ami, searchDisplay, hasSearched,
+  applicationStatuses, onSetAppStatus,
 }: SidePanelProps) {
   const [searchInput, setSearchInput] = useState("");
   const [nameFilter, setNameFilter] = useState("");
   const [showFavsOnly, setShowFavsOnly] = useState(false);
   const [showIncomeCalc, setShowIncomeCalc] = useState(false);
   const [nearMeLoading, setNearMeLoading] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>(() => {
     try {
       const raw = localStorage.getItem("housing-search-history-v1");
@@ -158,12 +163,19 @@ export function SidePanel({
   }, [setFilters]);
 
   return (
+    <>
     <aside className="side-panel" aria-label="Housing search and filters">
       {/* ── Header ── */}
       <div className="side-panel-header">
         <div className="header-title-row">
           <h1>Housing Locator</h1>
           <div className="header-actions">
+            <button
+              className="icon-btn about-btn"
+              title="About this app"
+              aria-label="About Affordable Housing Locator"
+              onClick={() => setShowAbout(true)}
+            >?</button>
             {onGoHome && (
               <button
                 className="icon-btn home-btn"
@@ -260,8 +272,8 @@ export function SidePanel({
         </div>
       </div>
 
-      {/* ── Filters ── */}
-      <div className="filters-section" aria-label="Filters">
+      {/* ── Filters (only shown after search) ── */}
+      {hasSearched && <div className="filters-section" aria-label="Filters">
         {activeFilterCount > 0 && (
           <div className="filter-count-row" aria-live="polite">
             <span className="filter-count-badge" aria-label={`${activeFilterCount} active filter${activeFilterCount > 1 ? "s" : ""}`}>
@@ -396,7 +408,7 @@ export function SidePanel({
             <option value="rent">Lowest rent</option>
           </select>
         </div>
-      </div>
+      </div>}
 
       {/* ── Status ── */}
       <div className="side-panel-status" aria-live="polite">
@@ -407,7 +419,7 @@ export function SidePanel({
             <button className="retry-btn" onClick={onRetry} aria-label="Retry last search">Retry</button>
           </div>
         )}
-        {!loading && !error && (
+        {!loading && !error && hasSearched && (
           <p className="results-count">{displayed.length} result{displayed.length !== 1 ? "s" : ""}</p>
         )}
       </div>
@@ -422,6 +434,8 @@ export function SidePanel({
           userLocation={userLocation}
           ami={ami}
           bedroomSize={filters.bedroomSize}
+          appStatus={applicationStatuses[selected.id] ?? null}
+          onSetAppStatus={(s) => onSetAppStatus(selected.id, s)}
         />
       ) : (
         <div
@@ -439,7 +453,7 @@ export function SidePanel({
         >
           {loading && <SkeletonList />}
           {!loading && !error && !hasSearched && (
-            <WelcomeState onSearch={onSearch} onNearMe={onNearMe} />
+            <WelcomeState onSearch={onSearch} onNearMe={onNearMe} loading={loading} />
           )}
           {!loading && !error && hasSearched && displayed.length === 0 && (
             <EmptyState
@@ -455,6 +469,7 @@ export function SidePanel({
               : null;
             const isFav = favorites.has(p.id);
             const badge = statusBadge(p);
+            const appStatus = applicationStatuses[p.id];
             return (
               <button
                 key={p.id}
@@ -485,6 +500,11 @@ export function SidePanel({
                   )}
                   {p.hasRentalAssistance && <span className="badge badge-blue">Sec. 8</span>}
                   <span className={`badge ${badge.cls}`}>{badge.text}</span>
+                  {appStatus && (
+                    <span className={`badge app-status-badge app-status-${appStatus}`}>
+                      {appStatus === "interested" ? "★ Interested" : appStatus === "applied" ? "✓ Applied" : "⌛ Waitlisted"}
+                    </span>
+                  )}
                   {p.arExpiry != null && (() => {
                     const days = Math.floor((p.arExpiry - Date.now()) / 86400000);
                     if (days < 0) return <span className="badge badge-red" title="Affordability restriction has expired">Expired</span>;
@@ -533,6 +553,8 @@ export function SidePanel({
         </div>
       )}
     </aside>
+    {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
+    </>
   );
 }
 
@@ -540,7 +562,7 @@ export function SidePanel({
 
 const EXAMPLE_SEARCHES = ["San Jose, CA", "Seattle, WA", "Denver, CO", "Chicago, IL", "Miami, FL", "Austin, TX"];
 
-function WelcomeState({ onSearch, onNearMe }: { onSearch: (q: string) => void; onNearMe?: () => void }) {
+function WelcomeState({ onSearch, onNearMe, loading }: { onSearch: (q: string) => void; onNearMe?: () => void; loading: boolean }) {
   return (
     <div className="welcome-state">
       <div className="welcome-hero">
@@ -549,8 +571,13 @@ function WelcomeState({ onSearch, onNearMe }: { onSearch: (q: string) => void; o
         <p className="welcome-sub">Search 50,000+ subsidized properties across all 50 states</p>
       </div>
       {onNearMe && (
-        <button className="welcome-near-me-btn" onClick={onNearMe} aria-label="Search near my current location">
-          📍 Search near me
+        <button
+          className="welcome-near-me-btn"
+          onClick={onNearMe}
+          disabled={loading}
+          aria-label="Search near my current location"
+        >
+          {loading ? "📍 Finding housing near you…" : "📍 Search near me"}
         </button>
       )}
       <div className="welcome-examples" aria-label="Example city searches">
@@ -725,6 +752,8 @@ interface DetailViewProps {
   userLocation: UserLocation | null;
   ami: number;
   bedroomSize: FilterState["bedroomSize"];
+  appStatus: AppStatusValue | null;
+  onSetAppStatus: (s: AppStatusValue | null) => void;
 }
 
 function CopyButton({ text, label }: { text: string; label: string }) {
@@ -748,7 +777,8 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   );
 }
 
-function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, ami, bedroomSize }: DetailViewProps) {
+function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, ami, bedroomSize, appStatus, onSetAppStatus }: DetailViewProps) {
+  const [guideOpen, setGuideOpen] = useState(false);
   const badge = p.source === "lihtc"
     ? { text: "HUD LIHTC", cls: "badge-blue" }
     : p.arstatus === "Active"
@@ -811,19 +841,36 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
         )}
       </div>
 
+      {/* ── Application status tracker ── */}
+      <div className="app-tracker" role="group" aria-label="My application status">
+        <span className="app-tracker-label">My status:</span>
+        <div className="app-tracker-btns">
+          {(["interested", "applied", "waitlisted"] as AppStatusValue[]).map(s => (
+            <button
+              key={s}
+              className={`app-tracker-btn${appStatus === s ? " active" : ""}`}
+              onClick={() => onSetAppStatus(appStatus === s ? null : s)}
+              aria-pressed={appStatus === s}
+            >
+              {s === "interested" ? "★ Interested" : s === "applied" ? "✓ Applied" : "⌛ Waitlisted"}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="apply-callout" role="note">
         {p.phone || p.website ? (
           <>
             <span className="apply-icon" aria-hidden="true">📋</span>
             <div>
-              <strong>How to apply:</strong> Contact the property directly to ask about open units, waitlist status, and application requirements.
+              <strong>How to apply:</strong> Contact the property directly about open units, waitlist status, and application requirements.
             </div>
           </>
         ) : (
           <>
             <span className="apply-icon" aria-hidden="true">📋</span>
             <div>
-              <strong>How to apply:</strong> Search for this property name online or contact your local housing authority to ask about availability.
+              <strong>How to apply:</strong> Search for this property name online or contact your local housing authority about availability.
             </div>
           </>
         )}
@@ -949,6 +996,34 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
           <DetailRow label="Year Built" value={p.yearBuilt} />
           <DetailRow label="Total Units" value={p.totalUnits} />
         </>}
+      </div>
+
+      {/* Application guide */}
+      <div className="app-guide">
+        <button
+          className="app-guide-toggle"
+          onClick={() => setGuideOpen(v => !v)}
+          aria-expanded={guideOpen}
+        >
+          📄 Application guide {guideOpen ? "▲" : "▼"}
+        </button>
+        {guideOpen && (
+          <div className="app-guide-body">
+            <p className="guide-section-title">Typical documents needed:</p>
+            <ul className="guide-list">
+              <li>Government-issued photo ID for all adults</li>
+              <li>Social Security cards for all household members</li>
+              <li>Proof of income — pay stubs, tax returns, benefit award letters</li>
+              <li>Bank statements (last 2–3 months)</li>
+              <li>Rental history and references from previous landlords</li>
+              <li>Birth certificates for minor children</li>
+            </ul>
+            <p className="guide-section-title">What to expect:</p>
+            <p className="guide-note">Waitlists range from weeks to several years. Apply to multiple properties and keep your contact information current. Follow up every 3–6 months.</p>
+            <p className="guide-section-title">Income verification tips:</p>
+            <p className="guide-note">Affordable housing uses <em>gross</em> income (before taxes). Include all household members' income. Self-employed: provide tax returns + a profit/loss statement.</p>
+          </div>
+        )}
       </div>
 
       {/* External listings search */}

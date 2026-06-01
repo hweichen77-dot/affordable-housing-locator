@@ -20,6 +20,9 @@ export interface FilterState {
 
 export interface UserLocation { lng: number; lat: number; }
 
+export type AppStatusValue = "interested" | "applied" | "waitlisted";
+export type AppStatuses = Record<string, AppStatusValue>;
+
 export const DEFAULT_FILTERS: FilterState = {
   activeOnly: true,
   populationType: "",
@@ -59,7 +62,25 @@ export default function App() {
       return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
     } catch { return new Set(); }
   });
+
+  const [applicationStatuses, setApplicationStatuses] = useState<AppStatuses>(() => {
+    try {
+      const raw = localStorage.getItem("housing-app-statuses-v1");
+      return raw ? JSON.parse(raw) as AppStatuses : {};
+    } catch { return {}; }
+  });
+
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+
+  const setAppStatus = useCallback((id: string, status: AppStatusValue | null) => {
+    setApplicationStatuses(prev => {
+      const next = { ...prev };
+      if (status === null) delete next[id];
+      else next[id] = status;
+      localStorage.setItem("housing-app-statuses-v1", JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
   // ── City / ZIP search ────────────────────────────────────────────────────
   const handleSearch = useCallback(async (query: string) => {
@@ -117,10 +138,11 @@ export default function App() {
       if (myCount !== searchCounterRef.current) return;
       const msg = typeof e === "string" ? e : JSON.stringify(e);
       if (msg.includes("Not found") || msg.includes("No results")) {
-        setSearchError(`No results for "${query}". Try a different city or ZIP.`);
+        setSearchError(`No results for "${query}". Try a different city or ZIP code.`);
       } else {
-        setSearchError(msg);
+        setSearchError("Search failed. Check your connection and try again.");
       }
+      setHasSearched(true); // show empty state, not welcome
       setSearchLoading(false);
       setDataLoading(false);
       return;
@@ -141,14 +163,23 @@ export default function App() {
       setDataSource("lihtc");
       setDataLoading(false);
     } catch (e) {
-      setDataError(typeof e === "string" ? e : JSON.stringify(e));
+      setDataError(typeof e === "string" ? e : "Failed to load housing data. Try again.");
       setDataLoading(false);
     }
   }, [searchLocation]);
 
-  // ── Near me: geolocate + reverse geocode + fetch LIHTC ──────────────────
+  // ── Near me: geolocate immediately, then fetch LIHTC ────────────────────
   const handleNearMe = useCallback(() => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      setSearchError("Geolocation is not supported by your browser.");
+      return;
+    }
+    // Set loading immediately — before the geolocation callback fires
+    setDataLoading(true);
+    setDataError(null);
+    setSearchError(null);
+    setSelected(null);
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const lat = pos.coords.latitude;
@@ -156,29 +187,32 @@ export default function App() {
         setUserLocation({ lat, lng });
         setFilters(f => ({ ...f, sortBy: "distance" }));
         setMapFly({ lat, lng, zoom: 12 });
-        setDataLoading(true);
-        setDataError(null);
-        setSelected(null);
 
         try {
           const [loc, d] = await Promise.all([
             invoke<GeoLocation>("reverse_geocode", { lat, lng }).catch(() => null),
             invoke<HousingCollection>("fetch_lihtc", { lat, lng, radiusKm: 25 }),
           ]);
-          if (loc) {
-            setSearchLocation(loc);
-          }
+          if (loc) setSearchLocation(loc);
           setRawData(normalizeFeatures(d.features, "lihtc"));
           setDataSource("lihtc");
           setFilters(f => ({ ...f, activeOnly: false, incomeTier: "", voucherOnly: false }));
           setHasSearched(true);
           setDataLoading(false);
         } catch (e) {
-          setDataError(typeof e === "string" ? e : JSON.stringify(e));
+          setDataError("Failed to load housing data near your location. Try searching by city name.");
           setDataLoading(false);
+          setHasSearched(true);
         }
       },
-      () => {},
+      (err) => {
+        setDataLoading(false);
+        const msg =
+          err.code === 1 ? "Location access denied. Please allow location access or search by city name." :
+          err.code === 3 ? "Location request timed out. Try again or search by city." :
+          "Could not get your location. Search by city name instead.";
+        setSearchError(msg);
+      },
       { enableHighAccuracy: true, timeout: 8500 }
     );
   }, []);
@@ -314,13 +348,17 @@ export default function App() {
   const handleExportFavorites = useCallback(() => {
     const favs = rawData.filter(p => favorites.has(p.id));
     if (!favs.length) return;
-    const lines = favs.map(p => [
-      p.name,
-      `${p.address}, ${p.city}, ${p.state} ${p.zip}`.trim().replace(/,\s*,/g, ","),
-      p.phone ? `Phone: ${p.phone}` : "",
-      p.website ? `Website: ${p.website}` : "",
-      p.affordableUnits ? `${p.affordableUnits} affordable units` : "",
-    ].filter(Boolean).join("\n"));
+    const lines = favs.map(p => {
+      const status = applicationStatuses[p.id];
+      return [
+        p.name,
+        `${p.address}, ${p.city}, ${p.state} ${p.zip}`.trim().replace(/,\s*,/g, ","),
+        p.phone ? `Phone: ${p.phone}` : "",
+        p.website ? `Website: ${p.website}` : "",
+        p.affordableUnits ? `${p.affordableUnits} affordable units` : "",
+        status ? `Status: ${status}` : "",
+      ].filter(Boolean).join("\n");
+    });
     const blob = new Blob([lines.join("\n\n---\n\n")], { type: "text/plain" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
@@ -330,9 +368,8 @@ export default function App() {
     if (exportToastRef.current) clearTimeout(exportToastRef.current);
     setExportDone(true);
     exportToastRef.current = setTimeout(() => setExportDone(false), 2500);
-  }, [rawData, favorites]);
+  }, [rawData, favorites, applicationStatuses]);
 
-  // Unused effect kept to avoid breaking hot-reload state on dev
   useEffect(() => { /* intentional no-op */ }, []);
 
   const loading = dataLoading || searchLoading;
@@ -363,6 +400,8 @@ export default function App() {
         ami={ami}
         searchDisplay={searchLocation?.display_name}
         hasSearched={hasSearched}
+        applicationStatuses={applicationStatuses}
+        onSetAppStatus={setAppStatus}
       />
       <div className="map-container">
         <Suspense fallback={<div style={{ width: "100%", height: "100%", background: "var(--bg-deep)" }} />}>
