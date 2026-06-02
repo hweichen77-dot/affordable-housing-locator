@@ -380,6 +380,51 @@ export default function App() {
     setFilters(f => ({ ...f, sortBy: "distance" }));
   }, []);
 
+  const handleExportCsv = useCallback(() => {
+    if (!filtered.length) return;
+    const escape = (v: string | number | boolean | undefined | null) => {
+      if (v == null) return "";
+      const s = String(v);
+      if (s.includes(",") || s.includes('"') || s.includes("\n")) return `"${s.replace(/"/g, '""')}"`;
+      return s;
+    };
+    const getAmiTier = (p: typeof filtered[0]): string => {
+      if (p.incomeCeilingPct) return `≤${p.incomeCeilingPct}% AMI`;
+      if (p.source === "sj") {
+        if ((p.eliunits ?? 0) > 0) return "ELI (≤30%)";
+        if ((p.vliunits ?? 0) > 0) return "VLI (≤50%)";
+        if ((p.liunits ?? 0) > 0) return "LI (≤80%)";
+        if ((p.moderateunits ?? 0) > 0) return "Moderate (≤120%)";
+      }
+      return "Unknown";
+    };
+    const header = ["Name","Address","City","State","ZIP","Affordable Units","AMI Tier","Has Rental Assistance","Year Built","Phone","Website","Source"];
+    const rows = filtered.map(p => [
+      escape(p.name),
+      escape(p.address),
+      escape(p.city),
+      escape(p.state),
+      escape(p.zip),
+      escape(p.affordableUnits),
+      escape(getAmiTier(p)),
+      escape(p.hasRentalAssistance ? "Yes" : "No"),
+      escape(p.yearBuilt ?? ""),
+      escape(p.phone ?? ""),
+      escape(p.website ?? ""),
+      escape(p.source === "sj" ? "San Jose" : "HUD LIHTC"),
+    ].join(","));
+    const csv = [header.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "affordable-housing.csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    if (exportToastRef.current) clearTimeout(exportToastRef.current);
+    setExportDone(true);
+    exportToastRef.current = setTimeout(() => setExportDone(false), 2500);
+  }, [filtered]);
+
   const handleExportFavorites = useCallback(() => {
     const favs = rawData.filter(p => favorites.has(p.id));
     if (!favs.length) return;
@@ -428,6 +473,7 @@ export default function App() {
         onWidenSearch={searchLocation && dataSource !== "sj" ? handleWidenSearch : undefined}
         onGoHome={hasSearched ? handleGoHome : undefined}
         onExportFavorites={handleExportFavorites}
+        onExportCsv={handleExportCsv}
         onNearMe={handleNearMe}
         dataSource={dataSource}
         ami={ami}
