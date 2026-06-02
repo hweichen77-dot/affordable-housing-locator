@@ -1,7 +1,7 @@
 [package]
-name = "sj-housing-locator"
+name = "affordable-housing-locator"
 version = "0.6.0"
-description = "San Jose Emergency Shelter & Affordable Housing Locator"
+description = "Affordable Housing Locator — nationwide HUD/LIHTC search with market comparison"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

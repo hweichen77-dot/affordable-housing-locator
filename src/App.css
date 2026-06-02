@@ -1442,3 +1442,255 @@ kbd {
   transition: top 0.15s;
 }
 .skip-link:focus { top: 0; }
+
+/* ── Nearby Listings ───────────────────────────────────────────────────────── */
+.nearby-wrap {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 14px 10px;
+  margin-bottom: 10px;
+}
+.nearby-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+.nearby-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.nearby-subtitle {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.nearby-list { display: flex; flex-direction: column; gap: 4px; }
+.nearby-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  background: var(--bg-panel);
+  border-radius: 6px;
+  gap: 8px;
+}
+.nearby-item-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  flex: 1;
+}
+.nearby-br {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+  min-width: 42px;
+}
+.nearby-addr {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+.nearby-sqft {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.nearby-item-right {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.nearby-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.nearby-mo {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.nearby-dom {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: 6px;
+}
+.nearby-more {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 5px 0 2px;
+  width: 100%;
+  text-align: center;
+}
+.nearby-source {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 6px;
+}
+
+/* ── IL Rent Table ─────────────────────────────────────────────────────────── */
+.il-table-wrap {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 14px 10px;
+  margin-bottom: 10px;
+}
+.il-table-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 9px;
+}
+.il-table-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.il-table-area {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.il-table { display: flex; flex-direction: column; gap: 3px; }
+.il-table-row {
+  display: grid;
+  grid-template-columns: 62px repeat(4, 1fr);
+  gap: 2px;
+}
+.il-header-row .il-cell {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--border-light);
+}
+.il-cell {
+  font-size: 11px;
+  color: var(--text-primary);
+  padding: 2px 0;
+  text-align: right;
+}
+.il-tier-col {
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+}
+.il-table-note {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 7px;
+  line-height: 1.4;
+}
+
+/* ── Savings Card ──────────────────────────────────────────────────────────── */
+.savings-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 13px 14px 11px;
+  margin-bottom: 12px;
+}
+.savings-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.savings-zip {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.savings-rows { display: flex; flex-direction: column; gap: 6px; }
+.savings-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.savings-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex: 1;
+  min-width: 0;
+}
+.savings-hint {
+  color: var(--text-muted);
+  cursor: help;
+  font-size: 11px;
+  margin-left: 3px;
+}
+.savings-market { font-size: 13px; font-weight: 500; color: var(--text-primary); white-space: nowrap; }
+.savings-fmr    { font-size: 13px; font-weight: 500; color: oklch(68% 0.19 220); white-space: nowrap; }
+.savings-yours  { font-size: 13px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+.savings-divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: 4px 0;
+}
+.savings-highlight {
+  margin-top: 10px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-dim);
+  border-radius: 8px;
+  padding: 10px 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.savings-highlight-label {
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 500;
+}
+.savings-highlight-amounts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+.savings-highlight-month {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.1;
+}
+.savings-highlight-year {
+  font-size: 11px;
+  color: var(--accent-dim);
+}
+.savings-note {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  font-style: italic;
+}

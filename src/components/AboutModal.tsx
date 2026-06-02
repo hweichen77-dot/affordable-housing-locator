@@ -53,7 +53,7 @@ export function AboutModal({ onClose }: AboutModalProps) {
         onClick={e => e.stopPropagation()}
       >
         <div className="modal-header">
-          <h2 className="modal-title">🏠 Affordable Housing Locator</h2>
+          <h2 className="modal-title">Affordable Housing Locator</h2>
           <button
             className="modal-close-btn"
             onClick={onClose}

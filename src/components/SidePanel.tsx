@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from "react";
-import type { DisplayProperty, DataSource } from "../types/housing";
+import type { DisplayProperty, DataSource, MarketData, IlData, BrRents, RentcastListing } from "../types/housing";
 import type { FilterState, UserLocation, AppStatuses, AppStatusValue } from "../App";
 import { DEFAULT_FILTERS } from "../App";
 import { rentRangeForTier, fmt } from "../lib/ami";
@@ -31,6 +31,7 @@ interface SidePanelProps {
   hasSearched: boolean;
   applicationStatuses: AppStatuses;
   onSetAppStatus: (id: string, status: AppStatusValue | null) => void;
+  marketData?: MarketData | null;
 }
 
 const POP_TYPES = [
@@ -84,7 +85,7 @@ export function SidePanel({
   properties, totalCount, selected, loading, error, filters, setFilters,
   favorites, onToggleFavorite, userLocation, onSelect, onClear, onRetry,
   onSearch, onWidenSearch, onGoHome, onExportFavorites, onNearMe, dataSource, ami, searchDisplay, hasSearched,
-  applicationStatuses, onSetAppStatus,
+  applicationStatuses, onSetAppStatus, marketData,
 }: SidePanelProps) {
   const [searchInput, setSearchInput] = useState("");
   const [nameFilter, setNameFilter] = useState("");
@@ -245,7 +246,7 @@ export function SidePanel({
                 aria-label="Search near my location"
                 title="Find housing near me"
               >
-                {nearMeLoading ? "…" : "📍 Near me"}
+                {nearMeLoading ? "…" : "Near me"}
               </button>
             )}
             {searchHistory.map(h => (
@@ -448,6 +449,8 @@ export function SidePanel({
           bedroomSize={filters.bedroomSize}
           appStatus={applicationStatuses[selected.id] ?? null}
           onSetAppStatus={(s) => onSetAppStatus(selected.id, s)}
+          marketData={marketData}
+          householdIncome={filters.householdIncome}
         />
       ) : (
         <div
@@ -514,7 +517,7 @@ export function SidePanel({
                   <span className={`badge ${badge.cls}`}>{badge.text}</span>
                   {appStatus && (
                     <span className={`badge app-status-badge app-status-${appStatus}`}>
-                      {appStatus === "interested" ? "★ Interested" : appStatus === "applied" ? "✓ Applied" : "⌛ Waitlisted"}
+                      {appStatus === "interested" ? "Interested" : appStatus === "applied" ? "✓ Applied" : "Waitlisted"}
                     </span>
                   )}
                   {p.arExpiry != null && (() => {
@@ -578,7 +581,7 @@ function WelcomeState({ onSearch, onNearMe, loading, error }: { onSearch: (q: st
   return (
     <div className="welcome-state">
       <div className="welcome-hero">
-        <p className="welcome-icon" aria-hidden="true">🏠</p>
+        <p className="welcome-icon" aria-hidden="true"></p>
         <h2 className="welcome-title">Find Affordable Housing</h2>
         <p className="welcome-sub">Search 50,000+ subsidized properties across all 50 states</p>
       </div>
@@ -590,7 +593,7 @@ function WelcomeState({ onSearch, onNearMe, loading, error }: { onSearch: (q: st
       </div>
 
       {error && (
-        <p className="welcome-error" role="alert">⚠ {error}</p>
+        <p className="welcome-error" role="alert">Warning:{error}</p>
       )}
 
       {onNearMe && (
@@ -600,7 +603,7 @@ function WelcomeState({ onSearch, onNearMe, loading, error }: { onSearch: (q: st
           disabled={loading}
           aria-label="Search near my current location"
         >
-          {loading ? "📍 Finding housing near you…" : "📍 Search near me"}
+          {loading ? "Finding housing near you…" : "Search near me"}
         </button>
       )}
       <div className="welcome-examples" aria-label="Example city searches">
@@ -777,6 +780,8 @@ interface DetailViewProps {
   bedroomSize: FilterState["bedroomSize"];
   appStatus: AppStatusValue | null;
   onSetAppStatus: (s: AppStatusValue | null) => void;
+  marketData?: MarketData | null;
+  householdIncome?: number;
 }
 
 function CopyButton({ text, label }: { text: string; label: string }) {
@@ -800,7 +805,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   );
 }
 
-function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, ami, bedroomSize, appStatus, onSetAppStatus }: DetailViewProps) {
+function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, ami, bedroomSize, appStatus, onSetAppStatus, marketData, householdIncome = 0 }: DetailViewProps) {
   const [guideOpen, setGuideOpen] = useState(false);
   const badge = p.source === "lihtc"
     ? { text: "HUD LIHTC", cls: "badge-blue" }
@@ -852,14 +857,14 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
         {p.phone && (
           <div className="contact-item">
             <a className="contact-btn phone-btn" href={`tel:${p.phone.replace(/\s/g, "")}`} aria-label={`Call ${p.phone}`}>
-              📞 {p.phone}
+              {p.phone}
             </a>
             <CopyButton text={p.phone} label="phone number" />
           </div>
         )}
         {p.website && (
           <a className="contact-btn web-btn" href={p.website} target="_blank" rel="noreferrer" aria-label="Open property website in new tab">
-            🔗 Website
+            Website
           </a>
         )}
       </div>
@@ -876,7 +881,7 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
               onClick={() => onSetAppStatus(appStatus === s ? null : s)}
               aria-pressed={appStatus === s}
             >
-              {s === "interested" ? "★ Interested" : s === "applied" ? "✓ Applied" : "⌛ Waitlisted"}
+              {s === "interested" ? "Interested" : s === "applied" ? "✓ Applied" : "Waitlisted"}
             </button>
           ))}
         </div>
@@ -885,14 +890,14 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
       <div className="apply-callout" role="note">
         {p.phone || p.website ? (
           <>
-            <span className="apply-icon" aria-hidden="true">📋</span>
+            <span className="apply-icon" aria-hidden="true">›</span>
             <div>
               <strong>How to apply:</strong> Contact the property directly about open units, waitlist status, and application requirements.
             </div>
           </>
         ) : (
           <>
-            <span className="apply-icon" aria-hidden="true">📋</span>
+            <span className="apply-icon" aria-hidden="true">›</span>
             <div>
               <strong>How to apply:</strong> Search for this property name online or contact your local housing authority about availability.
             </div>
@@ -910,8 +915,8 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
           {p.arExpiry != null && (() => {
             const days = Math.floor((p.arExpiry - Date.now()) / 86400000);
             const dateStr = new Date(p.arExpiry).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-            if (days < 0) return <p className="breakdown-note breakdown-warn">⚠ Affordability restriction expired {dateStr}</p>;
-            if (days < 365) return <p className="breakdown-note breakdown-warn">⚠ Affordability expires {dateStr} ({days} days)</p>;
+            if (days < 0) return <p className="breakdown-note breakdown-warn">Warning:Affordability restriction expired {dateStr}</p>;
+            if (days < 365) return <p className="breakdown-note breakdown-warn">Warning:Affordability expires {dateStr} ({days} days)</p>;
             return <p className="breakdown-note">Affordability restriction expires {dateStr}</p>;
           })()}
           <div className="rent-table" role="table" aria-label="Rent ranges by income tier">
@@ -997,6 +1002,24 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
         </div>
       )}
 
+      {marketData?.nearby && marketData.nearby.length > 0 && (
+        <NearbyListings listings={marketData.nearby} />
+      )}
+
+      {marketData?.il && (
+        <IlRentTable il={marketData.il} property={p} />
+      )}
+
+      {marketData && (
+        <SavingsCard
+          property={p}
+          marketData={marketData}
+          ami={ami}
+          householdIncome={householdIncome}
+          bedroomSize={bedroomSize}
+        />
+      )}
+
       {/* Population + program tags */}
       {(p.populationTypes.length > 0 || p.hasRentalAssistance || p.isNonProfit) && (
         <div className="tag-row" aria-label="Property tags">
@@ -1029,7 +1052,7 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
           onClick={() => setGuideOpen(v => !v)}
           aria-expanded={guideOpen}
         >
-          📄 Application guide {guideOpen ? "▲" : "▼"}
+          Application guide {guideOpen ? "▲" : "▼"}
         </button>
         {guideOpen && (
           <div className="app-guide-body">
@@ -1073,6 +1096,197 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
           </a>
         )}
       </div>
+    </div>
+  );
+}
+
+// ── Nearby Active Listings ────────────────────────────────────────────────────
+// Real rental prices pulled from Rentcast API — actual listings within 0.5 mi.
+
+const BR_LABEL: Record<number, string> = { 0: "Studio", 1: "1BR", 2: "2BR", 3: "3BR", 4: "4BR+" };
+
+function NearbyListings({ listings }: { listings: RentcastListing[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded ? listings : listings.slice(0, 5);
+
+  return (
+    <div className="nearby-wrap" aria-label="Nearby active rental listings">
+      <div className="nearby-header">
+        <span className="nearby-title">Nearby Active Rentals</span>
+        <span className="nearby-subtitle">within 0.5 mi · actual prices</span>
+      </div>
+      <div className="nearby-list" role="list">
+        {shown.map((l, i) => (
+          <div key={i} className="nearby-item" role="listitem">
+            <div className="nearby-item-left">
+              <span className="nearby-br">{BR_LABEL[l.bedrooms] ?? `${l.bedrooms}BR`}</span>
+              <span className="nearby-addr" title={l.address}>
+                {l.address.split(",")[0]}
+              </span>
+              {l.square_footage && (
+                <span className="nearby-sqft">{l.square_footage.toLocaleString()} sqft</span>
+              )}
+            </div>
+            <div className="nearby-item-right">
+              <strong className="nearby-price">{fmt(l.price)}</strong>
+              <span className="nearby-mo">/mo</span>
+              {l.days_on_market != null && (
+                <span className="nearby-dom">{l.days_on_market}d listed</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      {listings.length > 5 && (
+        <button className="nearby-more" onClick={() => setExpanded(v => !v)}>
+          {expanded ? "Show less ▲" : `Show all ${listings.length} listings ▼`}
+        </button>
+      )}
+      <p className="nearby-source">Source: Rentcast · market-rate listings only</p>
+    </div>
+  );
+}
+
+// ── IL Rent Table ─────────────────────────────────────────────────────────────
+// Shows HUD-regulated maximum rents per bedroom at each AMI tier.
+// These ARE the actual maximum rents — properties cannot legally charge more.
+
+function IlRentTable({ il, property: p }: { il: IlData; property: DisplayProperty }) {
+  // Only show tiers relevant to the property's declared income ceiling
+  const tiers: Array<{ label: string; key: keyof IlData; color: string; show: boolean }> = [
+    { label: "30% AMI", key: "pct30", color: "var(--tier-eli)",  show: (p.incomeCeilingPct ?? 80) <= 30 || (p.eliunits ?? 0) > 0 },
+    { label: "50% AMI", key: "pct50", color: "var(--tier-vli)",  show: (p.incomeCeilingPct ?? 80) <= 60 || (p.vliunits ?? 0) > 0 },
+    { label: "60% AMI", key: "pct60", color: "var(--tier-li)",   show: (p.incomeCeilingPct ?? 60) <= 60 || (p.liunits ?? 0) > 0 },
+    { label: "80% AMI", key: "pct80", color: "var(--tier-mod)",  show: (p.incomeCeilingPct ?? 80) >= 80 || (p.moderateunits ?? 0) > 0 },
+  ];
+
+  // Always show at least 50% and 60% (the two LIHTC standard tiers)
+  const visibleTiers = tiers.filter(t => t.show || t.key === "pct50" || t.key === "pct60");
+
+  return (
+    <div className="il-table-wrap" aria-label="HUD regulated maximum rents by income tier">
+      <div className="il-table-header">
+        <span className="il-table-title">Maximum Rents (HUD IL {il.year})</span>
+        <span className="il-table-area" title={il.area_name}>{il.area_name}</span>
+      </div>
+      <div className="il-table" role="table" aria-label="Regulated max rents per bedroom per AMI tier">
+        <div className="il-table-row il-header-row" role="row">
+          <span className="il-cell il-tier-col" role="columnheader">Tier</span>
+          <span className="il-cell" role="columnheader">Studio</span>
+          <span className="il-cell" role="columnheader">1BR</span>
+          <span className="il-cell" role="columnheader">2BR</span>
+          <span className="il-cell" role="columnheader">3BR</span>
+        </div>
+        {visibleTiers.map(tier => {
+          const r = il[tier.key] as BrRents;
+          return (
+            <div key={tier.key} className="il-table-row" role="row">
+              <span className="il-cell il-tier-col" style={{ color: tier.color }} role="cell">{tier.label}</span>
+              <span className="il-cell" role="cell">{r.studio > 0 ? fmt(r.studio) : "—"}</span>
+              <span className="il-cell" role="cell">{r.one_br > 0 ? fmt(r.one_br) : "—"}</span>
+              <span className="il-cell" role="cell">{r.two_br > 0 ? fmt(r.two_br) : "—"}</span>
+              <span className="il-cell" role="cell">{r.three_br > 0 ? fmt(r.three_br) : "—"}</span>
+            </div>
+          );
+        })}
+      </div>
+      <p className="il-table-note">
+        HUD-regulated maximums — properties cannot charge more. Actual rent may be lower.
+        {il.median_income > 0 && <> Area median income: {fmt(il.median_income)}/yr.</>}
+      </p>
+    </div>
+  );
+}
+
+// ── Savings Card ──────────────────────────────────────────────────────────────
+
+function SavingsCard({ property: p, marketData, ami, householdIncome, bedroomSize }: {
+  property: DisplayProperty;
+  marketData: MarketData;
+  ami: number;
+  householdIncome: number;
+  bedroomSize: FilterState["bedroomSize"];
+}) {
+  const { fmr, acs } = marketData;
+
+  const pick = <T,>(br: FilterState["bedroomSize"], s: T, one: T, two: T, three: T, fallback: T): T => {
+    if (br === "0") return s;
+    if (br === "1") return one;
+    if (br === "2") return two;
+    if (br === "3" || br === "4") return three;
+    return fallback;
+  };
+
+  const marketRent: number | null = acs
+    ? (pick(bedroomSize, acs.studio, acs.one_br, acs.two_br, acs.three_br, acs.median_all) ?? acs.median_all)
+    : null;
+
+  const fmrRent: number | null = fmr
+    ? pick(bedroomSize, fmr.efficiency, fmr.one_br, fmr.two_br, fmr.three_br, fmr.one_br)
+    : null;
+
+  const subsidizedRent: number = (() => {
+    if (householdIncome > 0) return Math.round(householdIncome * 0.30 / 12);
+    const tier =
+      p.source === "sj"
+        ? ((p.eliunits ?? 0) > 0 ? "ELI" : (p.vliunits ?? 0) > 0 ? "VLI" : (p.liunits ?? 0) > 0 ? "LI" : "Moderate")
+        : (p.incomeCeilingPct ?? "LI") as "ELI" | "VLI" | "LI" | "Moderate" | number;
+    const r = rentRangeForTier(tier, ami);
+    return pick(bedroomSize, r.studio, r.oneBed, r.twoBed, r.threeBed, r.studio);
+  })();
+
+  if (!marketRent && !fmrRent) return null;
+
+  const savings = marketRent ? marketRent - subsidizedRent : null;
+  const yearlySavings = savings && savings > 0 ? savings * 12 : null;
+
+  return (
+    <div className="savings-card" aria-label="Market rent comparison">
+      <div className="savings-card-title">
+        Area Market Comparison
+        {acs && <span className="savings-zip">ZIP {acs.zcta}</span>}
+      </div>
+
+      <div className="savings-rows">
+        {marketRent && (
+          <div className="savings-row">
+            <span className="savings-label">Median market rent (ACS)</span>
+            <span className="savings-market">{fmt(marketRent)}/mo</span>
+          </div>
+        )}
+        {fmrRent && fmr && (
+          <div className="savings-row">
+            <span className="savings-label">
+              HUD Fair Market Rent (FY{fmr.year})
+              <span className="savings-hint" title="Maximum rent HUD covers under Section 8 / Housing Choice Vouchers"> ⓘ</span>
+            </span>
+            <span className="savings-fmr">{fmt(fmrRent)}/mo</span>
+          </div>
+        )}
+        <div className="savings-divider" />
+        <div className="savings-row">
+          <span className="savings-label">
+            {householdIncome > 0 ? "Your rent (30% of income)" : "Est. subsidized max"}
+          </span>
+          <span className="savings-yours">{fmt(subsidizedRent)}/mo</span>
+        </div>
+      </div>
+
+      {yearlySavings && yearlySavings > 0 && (
+        <div className="savings-highlight" aria-label={`You save ${fmt(savings!)}/mo vs market rate`}>
+          <div className="savings-highlight-label">You save vs market</div>
+          <div className="savings-highlight-amounts">
+            <strong className="savings-highlight-month">{fmt(savings!)}/mo</strong>
+            <span className="savings-highlight-year">${yearlySavings.toLocaleString()}/yr</span>
+          </div>
+        </div>
+      )}
+
+      {!fmr && (
+        <p className="savings-note">
+          Add <code>HUD_API_TOKEN</code> env var for Section 8 FMR data.
+        </p>
+      )}
     </div>
   );
 }

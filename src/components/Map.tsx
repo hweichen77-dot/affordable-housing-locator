@@ -279,7 +279,7 @@ function buildPopupHTML(p: Record<string, unknown>): string {
     ${status}
     ${addr ? `<div class="popup-addr">${escHtml(addr)}</div>` : ""}
     ${units > 0 ? `<div class="popup-stat">${units} affordable units</div>` : ""}
-    ${phone ? `<a class="popup-phone" href="tel:${escAttr(phone.replace(/\s/g, ""))}">📞 ${escHtml(phone)}</a>` : ""}
+    ${phone ? `<a class="popup-phone" href="tel:${escAttr(phone.replace(/\s/g, ""))}">${escHtml(phone)}</a>` : ""}
   </div>`;
 }
 
