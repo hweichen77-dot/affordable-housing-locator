@@ -26,3 +26,8 @@ dist-ssr
 # Tauri
 src-tauri/target/
 src-tauri/gen/
+
+# Secrets — never commit
+.env
+.env.local
+.env.*.local

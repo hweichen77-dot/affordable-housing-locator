@@ -1,8 +1,8 @@
-import { lazy, Suspense, useCallback, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { SidePanel } from "./components/SidePanel";
 const Map = lazy(() => import("./components/Map").then(m => ({ default: m.Map })));
-import type { HousingCollection, GeoLocation, DisplayProperty } from "./types/housing";
+import type { HousingCollection, GeoLocation, DisplayProperty, MarketData, FmrData, AcsRentData, IlData, RentcastListing } from "./types/housing";
 import { normalizeFeatures, hasBedroomType, popMatches, qualifiesForIncome } from "./lib/normalize";
 import { haversineKm } from "./lib/geo";
 import { getAmi, rentRangeForTier } from "./lib/ami";
@@ -72,6 +72,9 @@ export default function App() {
 
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
 
+  const [marketData, setMarketData] = useState<MarketData | null>(null);
+  const marketCacheRef = useRef<Record<string, MarketData>>({});
+
   const setAppStatus = useCallback((id: string, status: AppStatusValue | null) => {
     setApplicationStatuses(prev => {
       const next = { ...prev };
@@ -81,6 +84,38 @@ export default function App() {
       return next;
     });
   }, []);
+
+  // ── Market data fetch on property select ─────────────────────────────────
+  useEffect(() => {
+    if (!selected?.zip) { setMarketData(null); return; }
+    const zip = selected.zip.replace(/\D/g, "").slice(0, 5);
+    if (zip.length !== 5) { setMarketData(null); return; }
+
+    if (marketCacheRef.current[zip]) {
+      setMarketData(marketCacheRef.current[zip]);
+      return;
+    }
+
+    let cancelled = false;
+    const lat = selected.lat ?? null;
+    const lng = selected.lng ?? null;
+
+    Promise.all([
+      invoke<FmrData | null>("fetch_fmr", { zip }).catch(() => null),
+      invoke<AcsRentData | null>("fetch_acs_rent", { zip }).catch(() => null),
+      invoke<IlData | null>("fetch_il", { zip }).catch(() => null),
+      lat != null && lng != null
+        ? invoke<RentcastListing[]>("fetch_nearby_rentals", { lat, lng }).catch(() => [])
+        : Promise.resolve([] as RentcastListing[]),
+    ]).then(([fmr, acs, il, nearby]) => {
+      if (cancelled) return;
+      const data: MarketData = { fmr, acs, il, nearby: nearby ?? [] };
+      marketCacheRef.current[zip] = data;
+      setMarketData(data);
+    });
+
+    return () => { cancelled = true; };
+  }, [selected?.zip]);
 
   // ── City / ZIP search ────────────────────────────────────────────────────
   const handleSearch = useCallback(async (query: string) => {
@@ -400,6 +435,7 @@ export default function App() {
         hasSearched={hasSearched}
         applicationStatuses={applicationStatuses}
         onSetAppStatus={setAppStatus}
+        marketData={marketData}
       />
       <div className="map-container">
         <Suspense fallback={<div style={{ width: "100%", height: "100%", background: "var(--bg-deep)" }} />}>
