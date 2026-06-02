@@ -389,9 +389,10 @@ html, body, #root { height: 100%; overflow: hidden; }
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
-.badge-green { background: var(--accent-bg); color: var(--accent); }
-.badge-gray  { background: var(--bg-raised); color: var(--text-muted); }
-.badge-blue  { background: var(--blue-bg); color: var(--blue); }
+.badge-green    { background: var(--accent-bg); color: var(--accent); }
+.badge-gray     { background: var(--bg-raised); color: var(--text-muted); }
+.badge-blue     { background: var(--blue-bg); color: var(--blue); }
+.badge-section8 { background: oklch(20% 0.06 145); color: oklch(72% 0.18 145); }
 
 /* ─── Empty State ─── */
 .empty-state {
@@ -413,7 +414,8 @@ html, body, #root { height: 100%; overflow: hidden; }
   color: var(--text-muted);
   border: 1px solid var(--border);
 }
-.tag-blue { color: var(--blue); background: var(--blue-bg); }
+.tag-blue     { color: var(--blue); background: var(--blue-bg); }
+.tag-section8 { color: oklch(72% 0.18 145); background: oklch(20% 0.06 145); border-color: oklch(30% 0.08 145); }
 
 /* ─── Detail Card ─── */
 .detail-card { flex: 1; overflow-y: auto; padding: 0 14px 24px; }

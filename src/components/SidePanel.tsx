@@ -24,6 +24,7 @@ interface SidePanelProps {
   onWidenSearch?: () => void;
   onGoHome?: () => void;
   onExportFavorites: () => void;
+  onExportCsv?: () => void;
   onNearMe?: () => void;
   dataSource: DataSource;
   ami: number;
@@ -84,7 +85,7 @@ function isFiltered(f: FilterState, source: DataSource, nameFilter: string): boo
 export function SidePanel({
   properties, totalCount, selected, loading, error, filters, setFilters,
   favorites, onToggleFavorite, userLocation, onSelect, onClear, onRetry,
-  onSearch, onWidenSearch, onGoHome, onExportFavorites, onNearMe, dataSource, ami, searchDisplay, hasSearched,
+  onSearch, onWidenSearch, onGoHome, onExportFavorites, onExportCsv, onNearMe, dataSource, ami, searchDisplay, hasSearched,
   applicationStatuses, onSetAppStatus, marketData,
 }: SidePanelProps) {
   const [searchInput, setSearchInput] = useState("");
@@ -204,6 +205,14 @@ export function SidePanel({
                 aria-label="Export saved properties as text file"
                 onClick={onExportFavorites}
               >↓</button>
+            )}
+            {onExportCsv && hasSearched && properties.length > 0 && (
+              <button
+                className="icon-btn"
+                title="Export filtered results as CSV"
+                aria-label="Export filtered results as CSV"
+                onClick={onExportCsv}
+              >CSV</button>
             )}
             {favCount > 0 && (
               <button
@@ -513,7 +522,7 @@ export function SidePanel({
                   {p.populationTypes.length > 0 && (
                     <span className="property-item-pop">{p.populationTypes[0]}</span>
                   )}
-                  {p.hasRentalAssistance && <span className="badge badge-blue">Sec. 8</span>}
+                  {p.hasRentalAssistance && <span className="badge badge-section8">Section 8 OK</span>}
                   <span className={`badge ${badge.cls}`}>{badge.text}</span>
                   {appStatus && (
                     <span className={`badge app-status-badge app-status-${appStatus}`}>
@@ -524,6 +533,15 @@ export function SidePanel({
                     const days = Math.floor((p.arExpiry - Date.now()) / 86400000);
                     if (days < 0) return <span className="badge badge-red" title="Affordability restriction has expired">Expired</span>;
                     if (days < 365) return <span className="badge badge-warn" title={`Affordability expires in ${days} days`}>Exp. soon</span>;
+                    return null;
+                  })()}
+                  {p.source === "lihtc" && p.yearBuilt != null && (() => {
+                    const expiryYear = p.yearBuilt + 30;
+                    const currentYear = new Date().getFullYear();
+                    const diff = expiryYear - currentYear;
+                    if (diff < 0) return <span className="badge badge-red" title="LIHTC affordability period has expired">Expired</span>;
+                    if (diff < 5) return <span className="badge badge-red" title={`LIHTC affordability expires ${expiryYear}`}>Exp. {expiryYear}</span>;
+                    if (diff < 10) return <span className="badge badge-warn" title={`LIHTC affordability expires ${expiryYear}`}>Exp. {expiryYear}</span>;
                     return null;
                   })()}
                   {dist && <span className="property-item-dist">{dist}</span>}
@@ -950,6 +968,33 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
             )}
           </div>
 
+          {/* LIHTC expiry note */}
+          {p.yearBuilt != null && (() => {
+            const expiryYear = p.yearBuilt + 30;
+            const currentYear = new Date().getFullYear();
+            const diff = expiryYear - currentYear;
+            if (diff < 0) return (
+              <p className="breakdown-note breakdown-warn">
+                Warning: LIHTC affordability period expired in {expiryYear} (built {p.yearBuilt})
+              </p>
+            );
+            if (diff < 5) return (
+              <p className="breakdown-note breakdown-warn">
+                Warning: LIHTC affordability expires {expiryYear} — in {diff} year{diff !== 1 ? "s" : ""} (built {p.yearBuilt})
+              </p>
+            );
+            if (diff < 10) return (
+              <p className="breakdown-note">
+                LIHTC affordability expires {expiryYear} (built {p.yearBuilt})
+              </p>
+            );
+            return (
+              <p className="breakdown-note">
+                Affordability through {expiryYear} (built {p.yearBuilt})
+              </p>
+            );
+          })()}
+
           {/* Mixed-tier: lower ceiling units */}
           {p.lowCeil && p.ceilUnit && (
             <p className="breakdown-note breakdown-info">
@@ -1024,7 +1069,7 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
       {(p.populationTypes.length > 0 || p.hasRentalAssistance || p.isNonProfit) && (
         <div className="tag-row" aria-label="Property tags">
           {p.populationTypes.map(t => <span key={t} className="tag">{t}</span>)}
-          {p.hasRentalAssistance && <span className="tag tag-blue">Rental Assistance</span>}
+          {p.hasRentalAssistance && <span className="tag tag-section8">Section 8 OK</span>}
           {p.isNonProfit && <span className="tag">Non-Profit</span>}
         </div>
       )}
