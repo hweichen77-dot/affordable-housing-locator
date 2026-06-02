@@ -5,7 +5,7 @@ const Map = lazy(() => import("./components/Map").then(m => ({ default: m.Map })
 import type { HousingCollection, GeoLocation, DisplayProperty, MarketData, FmrData, AcsRentData, IlData, RentcastListing } from "./types/housing";
 import { normalizeFeatures, hasBedroomType, popMatches, qualifiesForIncome } from "./lib/normalize";
 import { haversineKm } from "./lib/geo";
-import { getAmi, rentRangeForTier } from "./lib/ami";
+import { getAmi, rentRangeForTier, adjustedAmi } from "./lib/ami";
 
 export interface FilterState {
   activeOnly: boolean;
@@ -13,7 +13,7 @@ export interface FilterState {
   incomeTier: "" | "ELI" | "VLI" | "LI" | "Moderate";
   bedroomSize: "" | "0" | "1" | "2" | "3" | "4";
   voucherOnly: boolean;
-  sortBy: "name" | "units" | "distance" | "rent";
+  sortBy: "name" | "units" | "distance" | "rent" | "match";
   householdIncome: number;
   householdSize: number;
 }
@@ -284,6 +284,39 @@ export default function App() {
     return getAmi(state, city);
   }, [searchLocation, rawData]);
 
+  // ── Match score computation ──────────────────────────────────────────────
+  const matchScores = useMemo<Record<string, number>>(() => {
+    const scores: Record<string, number> = {};
+    for (const p of rawData) {
+      let score = 0;
+      if (userLocation && p.lat != null && p.lng != null) {
+        const km = haversineKm(userLocation.lat, userLocation.lng, p.lat, p.lng);
+        if (km < 1) score += 30;
+        else if (km < 5) score += 20;
+        else if (km < 15) score += 10;
+      }
+      if (filters.householdIncome > 0) {
+        const adjAmi = adjustedAmi(ami, filters.householdSize);
+        const incomeRatio = filters.householdIncome / adjAmi;
+        const ceiling = (p.incomeCeilingPct ?? 80) / 100;
+        if (incomeRatio <= ceiling) score += 25;
+      }
+      if (p.hasRentalAssistance) score += 15;
+      const expiryYear = p.source === "sj" && p.arExpiry
+        ? new Date(p.arExpiry).getFullYear()
+        : p.yearBuilt ? p.yearBuilt + 30 : null;
+      if (expiryYear) {
+        const yearsLeft = expiryYear - new Date().getFullYear();
+        if (yearsLeft < 0) score -= 20;
+        else if (yearsLeft > 20) score += 15;
+        else if (yearsLeft > 10) score += 10;
+      }
+      if (filters.populationType && p.populationTypes.includes(filters.populationType)) score += 10;
+      scores[p.id] = Math.max(0, Math.min(100, score));
+    }
+    return scores;
+  }, [rawData, userLocation, filters.householdIncome, filters.householdSize, filters.populationType, ami]);
+
   // ── Filtered + sorted list ───────────────────────────────────────────────
   const filtered = useMemo<DisplayProperty[]>(() => {
     let items = rawData;
@@ -352,9 +385,12 @@ export default function App() {
         };
         return estRent(a) - estRent(b);
       }
+      if (filters.sortBy === "match") {
+        return (matchScores[b.id] ?? 0) - (matchScores[a.id] ?? 0);
+      }
       return a.name.localeCompare(b.name);
     });
-  }, [rawData, filters, userLocation, dataSource, ami]);
+  }, [rawData, filters, userLocation, dataSource, ami, matchScores]);
 
   // ── Map GeoJSON ──────────────────────────────────────────────────────────
   const mapData = useMemo<HousingCollection>(() => ({
@@ -379,51 +415,6 @@ export default function App() {
     setUserLocation(loc);
     setFilters(f => ({ ...f, sortBy: "distance" }));
   }, []);
-
-  const handleExportCsv = useCallback(() => {
-    if (!filtered.length) return;
-    const escape = (v: string | number | boolean | undefined | null) => {
-      if (v == null) return "";
-      const s = String(v);
-      if (s.includes(",") || s.includes('"') || s.includes("\n")) return `"${s.replace(/"/g, '""')}"`;
-      return s;
-    };
-    const getAmiTier = (p: typeof filtered[0]): string => {
-      if (p.incomeCeilingPct) return `≤${p.incomeCeilingPct}% AMI`;
-      if (p.source === "sj") {
-        if ((p.eliunits ?? 0) > 0) return "ELI (≤30%)";
-        if ((p.vliunits ?? 0) > 0) return "VLI (≤50%)";
-        if ((p.liunits ?? 0) > 0) return "LI (≤80%)";
-        if ((p.moderateunits ?? 0) > 0) return "Moderate (≤120%)";
-      }
-      return "Unknown";
-    };
-    const header = ["Name","Address","City","State","ZIP","Affordable Units","AMI Tier","Has Rental Assistance","Year Built","Phone","Website","Source"];
-    const rows = filtered.map(p => [
-      escape(p.name),
-      escape(p.address),
-      escape(p.city),
-      escape(p.state),
-      escape(p.zip),
-      escape(p.affordableUnits),
-      escape(getAmiTier(p)),
-      escape(p.hasRentalAssistance ? "Yes" : "No"),
-      escape(p.yearBuilt ?? ""),
-      escape(p.phone ?? ""),
-      escape(p.website ?? ""),
-      escape(p.source === "sj" ? "San Jose" : "HUD LIHTC"),
-    ].join(","));
-    const csv = [header.join(","), ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "affordable-housing.csv";
-    a.click();
-    URL.revokeObjectURL(a.href);
-    if (exportToastRef.current) clearTimeout(exportToastRef.current);
-    setExportDone(true);
-    exportToastRef.current = setTimeout(() => setExportDone(false), 2500);
-  }, [filtered]);
 
   const handleExportFavorites = useCallback(() => {
     const favs = rawData.filter(p => favorites.has(p.id));
@@ -473,7 +464,6 @@ export default function App() {
         onWidenSearch={searchLocation && dataSource !== "sj" ? handleWidenSearch : undefined}
         onGoHome={hasSearched ? handleGoHome : undefined}
         onExportFavorites={handleExportFavorites}
-        onExportCsv={handleExportCsv}
         onNearMe={handleNearMe}
         dataSource={dataSource}
         ami={ami}
@@ -482,6 +472,7 @@ export default function App() {
         applicationStatuses={applicationStatuses}
         onSetAppStatus={setAppStatus}
         marketData={marketData}
+        matchScores={matchScores}
       />
       <div className="map-container">
         <Suspense fallback={<div style={{ width: "100%", height: "100%", background: "var(--bg-deep)" }} />}>

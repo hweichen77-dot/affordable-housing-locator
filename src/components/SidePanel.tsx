@@ -24,7 +24,6 @@ interface SidePanelProps {
   onWidenSearch?: () => void;
   onGoHome?: () => void;
   onExportFavorites: () => void;
-  onExportCsv?: () => void;
   onNearMe?: () => void;
   dataSource: DataSource;
   ami: number;
@@ -33,6 +32,7 @@ interface SidePanelProps {
   applicationStatuses: AppStatuses;
   onSetAppStatus: (id: string, status: AppStatusValue | null) => void;
   marketData?: MarketData | null;
+  matchScores?: Record<string, number>;
 }
 
 const POP_TYPES = [
@@ -85,8 +85,8 @@ function isFiltered(f: FilterState, source: DataSource, nameFilter: string): boo
 export function SidePanel({
   properties, totalCount, selected, loading, error, filters, setFilters,
   favorites, onToggleFavorite, userLocation, onSelect, onClear, onRetry,
-  onSearch, onWidenSearch, onGoHome, onExportFavorites, onExportCsv, onNearMe, dataSource, ami, searchDisplay, hasSearched,
-  applicationStatuses, onSetAppStatus, marketData,
+  onSearch, onWidenSearch, onGoHome, onExportFavorites, onNearMe, dataSource, ami, searchDisplay, hasSearched,
+  applicationStatuses, onSetAppStatus, marketData, matchScores = {},
 }: SidePanelProps) {
   const [searchInput, setSearchInput] = useState("");
   const [nameFilter, setNameFilter] = useState("");
@@ -205,14 +205,6 @@ export function SidePanel({
                 aria-label="Export saved properties as text file"
                 onClick={onExportFavorites}
               >↓</button>
-            )}
-            {onExportCsv && hasSearched && properties.length > 0 && (
-              <button
-                className="icon-btn"
-                title="Export filtered results as CSV"
-                aria-label="Export filtered results as CSV"
-                onClick={onExportCsv}
-              >CSV</button>
             )}
             {favCount > 0 && (
               <button
@@ -428,6 +420,7 @@ export function SidePanel({
             <option value="units">Most units</option>
             <option value="distance" disabled={!userLocation}>Nearest</option>
             <option value="rent">Lowest rent</option>
+            <option value="match">Best match</option>
           </select>
         </div>
       </div>}
@@ -460,6 +453,7 @@ export function SidePanel({
           onSetAppStatus={(s) => onSetAppStatus(selected.id, s)}
           marketData={marketData}
           householdIncome={filters.householdIncome}
+          matchScore={filters.sortBy === "match" ? matchScores[selected.id] : undefined}
         />
       ) : (
         <div
@@ -494,6 +488,7 @@ export function SidePanel({
             const isFav = favorites.has(p.id);
             const badge = statusBadge(p);
             const appStatus = applicationStatuses[p.id];
+            const matchScore = matchScores[p.id];
             return (
               <button
                 key={p.id}
@@ -522,7 +517,7 @@ export function SidePanel({
                   {p.populationTypes.length > 0 && (
                     <span className="property-item-pop">{p.populationTypes[0]}</span>
                   )}
-                  {p.hasRentalAssistance && <span className="badge badge-section8">Section 8 OK</span>}
+                  {p.hasRentalAssistance && <span className="badge badge-blue">Sec. 8</span>}
                   <span className={`badge ${badge.cls}`}>{badge.text}</span>
                   {appStatus && (
                     <span className={`badge app-status-badge app-status-${appStatus}`}>
@@ -535,16 +530,10 @@ export function SidePanel({
                     if (days < 365) return <span className="badge badge-warn" title={`Affordability expires in ${days} days`}>Exp. soon</span>;
                     return null;
                   })()}
-                  {p.source === "lihtc" && p.yearBuilt != null && (() => {
-                    const expiryYear = p.yearBuilt + 30;
-                    const currentYear = new Date().getFullYear();
-                    const diff = expiryYear - currentYear;
-                    if (diff < 0) return <span className="badge badge-red" title="LIHTC affordability period has expired">Expired</span>;
-                    if (diff < 5) return <span className="badge badge-red" title={`LIHTC affordability expires ${expiryYear}`}>Exp. {expiryYear}</span>;
-                    if (diff < 10) return <span className="badge badge-warn" title={`LIHTC affordability expires ${expiryYear}`}>Exp. {expiryYear}</span>;
-                    return null;
-                  })()}
                   {dist && <span className="property-item-dist">{dist}</span>}
+                  {filters.sortBy === "match" && matchScore != null && (
+                    <span className="badge badge-match" aria-label={`Match score: ${matchScore} out of 100`}>{matchScore} match</span>
+                  )}
                 </div>
                 {p.source === "lihtc" && (p.bedrooms.studio + p.bedrooms.br1 + p.bedrooms.br2 + p.bedrooms.br3 + p.bedrooms.br4plus) > 0 && (
                   <div className="bedroom-chips" aria-label="Bedroom breakdown">
@@ -800,6 +789,7 @@ interface DetailViewProps {
   onSetAppStatus: (s: AppStatusValue | null) => void;
   marketData?: MarketData | null;
   householdIncome?: number;
+  matchScore?: number;
 }
 
 function CopyButton({ text, label }: { text: string; label: string }) {
@@ -823,7 +813,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   );
 }
 
-function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, ami, bedroomSize, appStatus, onSetAppStatus, marketData, householdIncome = 0 }: DetailViewProps) {
+function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, ami, bedroomSize, appStatus, onSetAppStatus, marketData, householdIncome = 0, matchScore }: DetailViewProps) {
   const [guideOpen, setGuideOpen] = useState(false);
   const badge = p.source === "lihtc"
     ? { text: "HUD LIHTC", cls: "badge-blue" }
@@ -861,6 +851,11 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
         <h2>{p.name}</h2>
         <span className={`badge ${badge.cls}`}>{badge.text}</span>
       </div>
+      {matchScore != null && (
+        <p className="detail-match-score" aria-label={`Best match score: ${matchScore} out of 100`}>
+          Best match score: <strong>{matchScore}/100</strong>
+        </p>
+      )}
 
       {p.address && (
         <div className="detail-address-row">
@@ -968,33 +963,6 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
             )}
           </div>
 
-          {/* LIHTC expiry note */}
-          {p.yearBuilt != null && (() => {
-            const expiryYear = p.yearBuilt + 30;
-            const currentYear = new Date().getFullYear();
-            const diff = expiryYear - currentYear;
-            if (diff < 0) return (
-              <p className="breakdown-note breakdown-warn">
-                Warning: LIHTC affordability period expired in {expiryYear} (built {p.yearBuilt})
-              </p>
-            );
-            if (diff < 5) return (
-              <p className="breakdown-note breakdown-warn">
-                Warning: LIHTC affordability expires {expiryYear} — in {diff} year{diff !== 1 ? "s" : ""} (built {p.yearBuilt})
-              </p>
-            );
-            if (diff < 10) return (
-              <p className="breakdown-note">
-                LIHTC affordability expires {expiryYear} (built {p.yearBuilt})
-              </p>
-            );
-            return (
-              <p className="breakdown-note">
-                Affordability through {expiryYear} (built {p.yearBuilt})
-              </p>
-            );
-          })()}
-
           {/* Mixed-tier: lower ceiling units */}
           {p.lowCeil && p.ceilUnit && (
             <p className="breakdown-note breakdown-info">
@@ -1065,11 +1033,13 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
         />
       )}
 
+      <UnitMixChart property={p} />
+
       {/* Population + program tags */}
       {(p.populationTypes.length > 0 || p.hasRentalAssistance || p.isNonProfit) && (
         <div className="tag-row" aria-label="Property tags">
           {p.populationTypes.map(t => <span key={t} className="tag">{t}</span>)}
-          {p.hasRentalAssistance && <span className="tag tag-section8">Section 8 OK</span>}
+          {p.hasRentalAssistance && <span className="tag tag-blue">Rental Assistance</span>}
           {p.isNonProfit && <span className="tag">Non-Profit</span>}
         </div>
       )}
@@ -1332,6 +1302,73 @@ function SavingsCard({ property: p, marketData, ami, householdIncome, bedroomSiz
           Add <code>HUD_API_TOKEN</code> env var for Section 8 FMR data.
         </p>
       )}
+    </div>
+  );
+}
+
+// ── Unit Mix Chart ────────────────────────────────────────────────────────────
+
+function UnitMixChart({ property: p }: { property: DisplayProperty }) {
+  const hasSJTiers = p.source === "sj" && ((p.eliunits ?? 0) + (p.vliunits ?? 0) + (p.liunits ?? 0) + (p.moderateunits ?? 0)) > 0;
+  const hasBedroomData = p.source === "lihtc" && (p.bedrooms.studio + p.bedrooms.br1 + p.bedrooms.br2 + p.bedrooms.br3 + p.bedrooms.br4plus) > 0;
+
+  if (!hasSJTiers && !hasBedroomData) return null;
+
+  if (hasSJTiers) {
+    const total = (p.eliunits ?? 0) + (p.vliunits ?? 0) + (p.liunits ?? 0) + (p.moderateunits ?? 0);
+    const rows = [
+      { label: "ELI", desc: "30% AMI", count: p.eliunits ?? 0, color: "var(--tier-eli)" },
+      { label: "VLI", desc: "50% AMI", count: p.vliunits ?? 0, color: "var(--tier-vli)" },
+      { label: "LI",  desc: "80% AMI", count: p.liunits ?? 0,  color: "var(--tier-li)"  },
+      { label: "Mod", desc: "120% AMI", count: p.moderateunits ?? 0, color: "var(--tier-mod)" },
+    ].filter(r => r.count > 0);
+    return (
+      <div className="unit-mix-chart" aria-label="Unit mix by income tier">
+        <h4 className="unit-mix-title">Unit Mix by Income Tier</h4>
+        {rows.map(r => (
+          <div key={r.label} className="unit-mix-row">
+            <span className="unit-mix-label" style={{ color: r.color }}>{r.label}</span>
+            <span className="unit-mix-desc">{r.desc}</span>
+            <div className="unit-mix-track" aria-hidden="true">
+              <div
+                className="unit-mix-fill"
+                style={{ width: `${(r.count / total) * 100}%`, background: r.color }}
+              />
+            </div>
+            <span className="unit-mix-count">{r.count}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // LIHTC bedroom breakdown
+  const b = p.bedrooms;
+  const total = b.studio + b.br1 + b.br2 + b.br3 + b.br4plus;
+  const rows = [
+    { label: "Studio", count: b.studio },
+    { label: "1BR",    count: b.br1    },
+    { label: "2BR",    count: b.br2    },
+    { label: "3BR",    count: b.br3    },
+    { label: "4BR+",   count: b.br4plus },
+  ].filter(r => r.count > 0);
+  const colors = ["var(--accent)", "var(--tier-vli)", "var(--tier-li)", "var(--tier-eli)", "var(--tier-mod)"];
+  return (
+    <div className="unit-mix-chart" aria-label="Unit mix by bedroom size">
+      <h4 className="unit-mix-title">Unit Mix by Bedroom Size</h4>
+      {rows.map((r, i) => (
+        <div key={r.label} className="unit-mix-row">
+          <span className="unit-mix-label" style={{ color: colors[i % colors.length] }}>{r.label}</span>
+          <span className="unit-mix-desc" />
+          <div className="unit-mix-track" aria-hidden="true">
+            <div
+              className="unit-mix-fill"
+              style={{ width: `${(r.count / total) * 100}%`, background: colors[i % colors.length] }}
+            />
+          </div>
+          <span className="unit-mix-count">{r.count}</span>
+        </div>
+      ))}
     </div>
   );
 }
