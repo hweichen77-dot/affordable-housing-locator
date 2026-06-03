@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import type { DisplayProperty, DataSource, MarketData, IlData, BrRents, RentcastListing } from "../types/housing";
 import type { FilterState, UserLocation, AppStatuses, AppStatusValue } from "../App";
 import { DEFAULT_FILTERS } from "../App";
@@ -34,22 +35,6 @@ interface SidePanelProps {
   marketData?: MarketData | null;
   matchScores?: Record<string, number>;
 }
-
-const POP_TYPES = [
-  { value: "", label: "All households" },
-  { value: "Family", label: "Family" },
-  { value: "Elderly", label: "Seniors / Elderly" },
-  { value: "Disabled", label: "Disabled / Special Needs" },
-  { value: "Homeless", label: "Experiencing Homelessness" },
-];
-
-const INCOME_TIERS = [
-  { value: "" as const,        label: "Any income level" },
-  { value: "ELI" as const,     label: "Ext. Low Income (≤30% AMI)" },
-  { value: "VLI" as const,     label: "Very Low Income (≤50% AMI)" },
-  { value: "LI" as const,      label: "Low Income (≤80% AMI)" },
-  { value: "Moderate" as const, label: "Moderate (≤120% AMI)" },
-];
 
 const BEDROOM_SIZES = [
   { value: "" as const,  label: "Any size" },
@@ -88,6 +73,28 @@ export function SidePanel({
   onSearch, onWidenSearch, onGoHome, onExportFavorites, onNearMe, dataSource, ami, searchDisplay, hasSearched,
   applicationStatuses, onSetAppStatus, marketData, matchScores = {},
 }: SidePanelProps) {
+  const { t, i18n } = useTranslation();
+  const changeLang = (lng: string) => {
+    i18n.changeLanguage(lng);
+    localStorage.setItem("housing-lang", lng);
+  };
+
+  const POP_TYPES = [
+    { value: "", label: t("filters.anyHousehold") },
+    { value: "Family", label: t("filters.family") },
+    { value: "Elderly", label: t("filters.elderly") },
+    { value: "Disabled", label: t("filters.disabled") },
+    { value: "Homeless", label: t("filters.homeless") },
+  ];
+
+  const INCOME_TIERS = [
+    { value: "" as const,         label: t("filters.anyIncome") },
+    { value: "ELI" as const,      label: t("filters.eli") },
+    { value: "VLI" as const,      label: t("filters.vli") },
+    { value: "LI" as const,       label: t("filters.li") },
+    { value: "Moderate" as const, label: t("filters.moderate") },
+  ];
+
   const [searchInput, setSearchInput] = useState("");
   const [nameFilter, setNameFilter] = useState("");
   const [showFavsOnly, setShowFavsOnly] = useState(false);
@@ -184,6 +191,16 @@ export function SidePanel({
         <div className="header-title-row">
           <h1>Housing Locator</h1>
           <div className="header-actions">
+            <select
+              className="lang-select"
+              value={i18n.language}
+              onChange={e => changeLang(e.target.value)}
+              aria-label="Select language"
+            >
+              <option value="en">EN</option>
+              <option value="es">ES</option>
+              <option value="vi">VI</option>
+            </select>
             <button
               className="icon-btn about-btn"
               title="About this app"
@@ -222,7 +239,7 @@ export function SidePanel({
           <input
             ref={searchRef}
             className="city-search-input"
-            placeholder="City, ZIP, or address — anywhere in the US"
+            placeholder={t("search.placeholder")}
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
             aria-label="Search by city, ZIP code, or address"
@@ -247,7 +264,7 @@ export function SidePanel({
                 aria-label="Search near my location"
                 title="Find housing near me"
               >
-                {nearMeLoading ? "…" : "Near me"}
+                {nearMeLoading ? "…" : t("search.nearMe")}
               </button>
             )}
             {searchHistory.map(h => (
@@ -302,14 +319,14 @@ export function SidePanel({
               className={`toggle-pill ${filters.activeOnly ? "on" : ""}`}
               onClick={() => setFilters(f => ({ ...f, activeOnly: !f.activeOnly }))}
               aria-pressed={filters.activeOnly}
-            >Active only</button>
+            >{t("filters.activeOnly")}</button>
           )}
           {dataSource !== "sj" && (
             <button
               className={`toggle-pill ${filters.voucherOnly ? "on" : ""}`}
               onClick={() => setFilters(f => ({ ...f, voucherOnly: !f.voucherOnly }))}
               aria-pressed={filters.voucherOnly}
-            >Voucher / Sec. 8</button>
+            >{t("filters.voucherOnly")}</button>
           )}
           <button
             className={`toggle-pill ${showIncomeCalc ? "on" : ""}`}
@@ -416,18 +433,18 @@ export function SidePanel({
             onChange={e => setFilters(f => ({ ...f, sortBy: e.target.value as FilterState["sortBy"] }))}
             aria-label="Sort results"
           >
-            <option value="name">A–Z</option>
-            <option value="units">Most units</option>
-            <option value="distance" disabled={!userLocation}>Nearest</option>
-            <option value="rent">Lowest rent</option>
-            <option value="match">Best match</option>
+            <option value="name">{t("filters.sortName")}</option>
+            <option value="units">{t("filters.sortUnits")}</option>
+            <option value="distance" disabled={!userLocation}>{t("filters.sortDistance")}</option>
+            <option value="rent">{t("filters.sortRent")}</option>
+            <option value="match">{t("filters.sortMatch")}</option>
           </select>
         </div>
       </div>}
 
       {/* ── Status ── */}
       <div className="side-panel-status" aria-live="polite">
-        {loading && <p className="status-text">Searching…</p>}
+        {loading && <p className="status-text">{t("search.searching")}</p>}
         {error && (
           <div className="status-error-wrap">
             <p className="status-error" role="alert">{error}</p>
@@ -435,11 +452,12 @@ export function SidePanel({
           </div>
         )}
         {!loading && !error && hasSearched && (
-          <p className="results-count">{displayed.length} result{displayed.length !== 1 ? "s" : ""}</p>
+          <p className="results-count">{t("status.found", { count: displayed.length })}</p>
         )}
       </div>
 
       {/* ── Content ── */}
+      <div aria-live="polite" aria-atomic="false" className="content-region">
       {selected ? (
         <DetailView
           property={selected}
@@ -453,7 +471,6 @@ export function SidePanel({
           onSetAppStatus={(s) => onSetAppStatus(selected.id, s)}
           marketData={marketData}
           householdIncome={filters.householdIncome}
-          matchScore={filters.sortBy === "match" ? matchScores[selected.id] : undefined}
         />
       ) : (
         <div
@@ -488,7 +505,7 @@ export function SidePanel({
             const isFav = favorites.has(p.id);
             const badge = statusBadge(p);
             const appStatus = applicationStatuses[p.id];
-            const matchScore = matchScores[p.id];
+            const matchScore = matchScores?.[p.id];
             return (
               <button
                 key={p.id}
@@ -512,27 +529,22 @@ export function SidePanel({
                 </span>
                 <div className="property-item-meta">
                   {p.affordableUnits > 0 && (
-                    <span className="property-item-units">{p.affordableUnits} units</span>
+                    <span className="property-item-units">{p.affordableUnits} {t("property.units")}</span>
                   )}
                   {p.populationTypes.length > 0 && (
                     <span className="property-item-pop">{p.populationTypes[0]}</span>
                   )}
-                  {p.hasRentalAssistance && <span className="badge badge-blue">Sec. 8</span>}
+                  {p.hasRentalAssistance && <span className="badge badge-section8">{t("property.section8")}</span>}
                   <span className={`badge ${badge.cls}`}>{badge.text}</span>
                   {appStatus && (
                     <span className={`badge app-status-badge app-status-${appStatus}`}>
-                      {appStatus === "interested" ? "Interested" : appStatus === "applied" ? "✓ Applied" : "Waitlisted"}
+                      {appStatus === "interested" ? t("property.interested") : appStatus === "applied" ? `✓ ${t("property.applied")}` : t("property.waitlisted")}
                     </span>
                   )}
-                  {p.arExpiry != null && (() => {
-                    const days = Math.floor((p.arExpiry - Date.now()) / 86400000);
-                    if (days < 0) return <span className="badge badge-red" title="Affordability restriction has expired">Expired</span>;
-                    if (days < 365) return <span className="badge badge-warn" title={`Affordability expires in ${days} days`}>Exp. soon</span>;
-                    return null;
-                  })()}
+                  <ExpiryBadge arExpiry={p.arExpiry} />
                   {dist && <span className="property-item-dist">{dist}</span>}
                   {filters.sortBy === "match" && matchScore != null && (
-                    <span className="badge badge-match" aria-label={`Match score: ${matchScore} out of 100`}>{matchScore} match</span>
+                    <span className="badge badge-match">{matchScore} match</span>
                   )}
                 </div>
                 {p.source === "lihtc" && (p.bedrooms.studio + p.bedrooms.br1 + p.bedrooms.br2 + p.bedrooms.br3 + p.bedrooms.br4plus) > 0 && (
@@ -574,9 +586,80 @@ export function SidePanel({
           })}
         </div>
       )}
+      </div>
     </aside>
     {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
     </>
+  );
+}
+
+// ── Expiry badge helper ───────────────────────────────────────────────────────
+
+function ExpiryBadge({ arExpiry }: { arExpiry: number | null | undefined }) {
+  if (arExpiry == null) return null;
+  const days = Math.floor((arExpiry - Date.now()) / 86400000);
+  if (days < 0) return <span className="badge badge-red" title="Affordability restriction has expired">Expired</span>;
+  if (days < 365) return <span className="badge badge-warn" title={`Affordability expires in ${days} days`}>Exp. soon</span>;
+  return null;
+}
+
+// ── Unit Mix Chart ────────────────────────────────────────────────────────────
+
+function UnitMixChart({ property: p }: { property: DisplayProperty }) {
+  const hasSJTiers = p.source === "sj" && ((p.eliunits ?? 0) + (p.vliunits ?? 0) + (p.liunits ?? 0) + (p.moderateunits ?? 0)) > 0;
+  const hasBedroomData = p.source === "lihtc" && (p.bedrooms.studio + p.bedrooms.br1 + p.bedrooms.br2 + p.bedrooms.br3 + p.bedrooms.br4plus) > 0;
+
+  if (!hasSJTiers && !hasBedroomData) return null;
+
+  if (hasSJTiers) {
+    const total = (p.eliunits ?? 0) + (p.vliunits ?? 0) + (p.liunits ?? 0) + (p.moderateunits ?? 0);
+    const rows = [
+      { label: "ELI", desc: "30% AMI", count: p.eliunits ?? 0, color: "var(--tier-eli)" },
+      { label: "VLI", desc: "50% AMI", count: p.vliunits ?? 0, color: "var(--tier-vli)" },
+      { label: "LI",  desc: "80% AMI", count: p.liunits ?? 0,  color: "var(--tier-li)"  },
+      { label: "Mod", desc: "120% AMI", count: p.moderateunits ?? 0, color: "var(--tier-mod)" },
+    ].filter(r => r.count > 0);
+    return (
+      <div className="unit-mix-chart" aria-label="Unit mix by income tier">
+        <h4 className="unit-mix-title">Unit Mix by Income Tier</h4>
+        {rows.map(r => (
+          <div key={r.label} className="unit-mix-row">
+            <span className="unit-mix-label" style={{ color: r.color }}>{r.label}</span>
+            <span className="unit-mix-desc">{r.desc}</span>
+            <div className="unit-mix-track" aria-hidden="true">
+              <div className="unit-mix-fill" style={{ width: `${(r.count / total) * 100}%`, background: r.color }} />
+            </div>
+            <span className="unit-mix-count">{r.count}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const b = p.bedrooms;
+  const total = b.studio + b.br1 + b.br2 + b.br3 + b.br4plus;
+  const rows = [
+    { label: "Studio", count: b.studio },
+    { label: "1BR",    count: b.br1    },
+    { label: "2BR",    count: b.br2    },
+    { label: "3BR",    count: b.br3    },
+    { label: "4BR+",   count: b.br4plus },
+  ].filter(r => r.count > 0);
+  const colors = ["var(--accent)", "var(--tier-vli)", "var(--tier-li)", "var(--tier-eli)", "var(--tier-mod)"];
+  return (
+    <div className="unit-mix-chart" aria-label="Unit mix by bedroom size">
+      <h4 className="unit-mix-title">Unit Mix by Bedroom Size</h4>
+      {rows.map((r, i) => (
+        <div key={r.label} className="unit-mix-row">
+          <span className="unit-mix-label" style={{ color: colors[i % colors.length] }}>{r.label}</span>
+          <span className="unit-mix-desc" />
+          <div className="unit-mix-track" aria-hidden="true">
+            <div className="unit-mix-fill" style={{ width: `${(r.count / total) * 100}%`, background: colors[i % colors.length] }} />
+          </div>
+          <span className="unit-mix-count">{r.count}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -585,19 +668,22 @@ export function SidePanel({
 const EXAMPLE_SEARCHES = ["San Jose, CA", "Seattle, WA", "Denver, CO", "Chicago, IL", "Miami, FL", "Austin, TX"];
 
 function WelcomeState({ onSearch, onNearMe, loading, error }: { onSearch: (q: string) => void; onNearMe?: () => void; loading: boolean; error: string | null }) {
+  const { t } = useTranslation();
   return (
     <div className="welcome-state">
       <div className="welcome-hero">
-        <p className="welcome-icon" aria-hidden="true"></p>
+        <svg className="welcome-icon-svg" viewBox="0 0 40 36" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 3L2 16h4v17h10V22h8v11h10V16h4L20 3z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" fill="none"/>
+          <rect x="15" y="22" width="10" height="11" rx="1" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        </svg>
         <h2 className="welcome-title">Find Affordable Housing</h2>
-        <p className="welcome-sub">Search 50,000+ subsidized properties across all 50 states</p>
+        <p className="welcome-sub">50,000+ subsidized properties · all 50 states · free</p>
       </div>
 
-      <div className="welcome-stats" aria-label="Housing crisis facts">
-        <div className="welcome-stat"><span className="welcome-stat-num">40M+</span><span className="welcome-stat-label">Americans cost-burdened by rent</span></div>
-        <div className="welcome-stat"><span className="welcome-stat-num">50K+</span><span className="welcome-stat-label">subsidized properties searchable</span></div>
-        <div className="welcome-stat"><span className="welcome-stat-num">50</span><span className="welcome-stat-label">states covered</span></div>
-      </div>
+      <p className="welcome-fact" aria-label="Housing crisis context">
+        <strong>{t("welcome.stat1num")}</strong> {t("welcome.stat1label")} —&nbsp;
+        <strong>{t("welcome.stat2num")}</strong> {t("welcome.stat2label")}.
+      </p>
 
       {error && (
         <p className="welcome-error" role="alert">Warning:{error}</p>
@@ -610,7 +696,7 @@ function WelcomeState({ onSearch, onNearMe, loading, error }: { onSearch: (q: st
           disabled={loading}
           aria-label="Search near my current location"
         >
-          {loading ? "Finding housing near you…" : "Search near me"}
+          {loading ? t("search.searching") : t("search.nearMe")}
         </button>
       )}
       <div className="welcome-examples" aria-label="Example city searches">
@@ -789,7 +875,6 @@ interface DetailViewProps {
   onSetAppStatus: (s: AppStatusValue | null) => void;
   marketData?: MarketData | null;
   householdIncome?: number;
-  matchScore?: number;
 }
 
 function CopyButton({ text, label }: { text: string; label: string }) {
@@ -813,7 +898,8 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   );
 }
 
-function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, ami, bedroomSize, appStatus, onSetAppStatus, marketData, householdIncome = 0, matchScore }: DetailViewProps) {
+function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, ami, bedroomSize, appStatus, onSetAppStatus, marketData, householdIncome = 0 }: DetailViewProps) {
+  const { t } = useTranslation();
   const [guideOpen, setGuideOpen] = useState(false);
   const badge = p.source === "lihtc"
     ? { text: "HUD LIHTC", cls: "badge-blue" }
@@ -832,7 +918,7 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
   return (
     <div className="detail-card" role="region" aria-label={`Details for ${p.name}`}>
       <div className="detail-top-bar">
-        <button className="back-btn" onClick={onClear} aria-label="Back to list">← Back</button>
+        <button className="back-btn" onClick={onClear} aria-label="Back to list">{t("property.back")}</button>
         <div className="detail-top-right">
           {dist && <span className="detail-dist" aria-label={`${dist} from your location`}>{dist}</span>}
           <ShareButton property={p} />
@@ -851,11 +937,6 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
         <h2>{p.name}</h2>
         <span className={`badge ${badge.cls}`}>{badge.text}</span>
       </div>
-      {matchScore != null && (
-        <p className="detail-match-score" aria-label={`Best match score: ${matchScore} out of 100`}>
-          Best match score: <strong>{matchScore}/100</strong>
-        </p>
-      )}
 
       {p.address && (
         <div className="detail-address-row">
@@ -877,7 +958,7 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
         )}
         {p.website && (
           <a className="contact-btn web-btn" href={p.website} target="_blank" rel="noreferrer" aria-label="Open property website in new tab">
-            Website
+            {t("property.website")}
           </a>
         )}
       </div>
@@ -894,7 +975,7 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
               onClick={() => onSetAppStatus(appStatus === s ? null : s)}
               aria-pressed={appStatus === s}
             >
-              {s === "interested" ? "Interested" : s === "applied" ? "✓ Applied" : "Waitlisted"}
+              {s === "interested" ? t("property.interested") : s === "applied" ? `✓ ${t("property.applied")}` : t("property.waitlisted")}
             </button>
           ))}
         </div>
@@ -905,14 +986,14 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
           <>
             <span className="apply-icon" aria-hidden="true">›</span>
             <div>
-              <strong>How to apply:</strong> Contact the property directly about open units, waitlist status, and application requirements.
+              <strong>{t("property.howToApply")}:</strong> {t("property.applyDirect")}
             </div>
           </>
         ) : (
           <>
             <span className="apply-icon" aria-hidden="true">›</span>
             <div>
-              <strong>How to apply:</strong> Search for this property name online or contact your local housing authority about availability.
+              <strong>{t("property.howToApply")}:</strong> {t("property.applySearch")}
             </div>
           </>
         )}
@@ -1039,8 +1120,8 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
       {(p.populationTypes.length > 0 || p.hasRentalAssistance || p.isNonProfit) && (
         <div className="tag-row" aria-label="Property tags">
           {p.populationTypes.map(t => <span key={t} className="tag">{t}</span>)}
-          {p.hasRentalAssistance && <span className="tag tag-blue">Rental Assistance</span>}
-          {p.isNonProfit && <span className="tag">Non-Profit</span>}
+          {p.hasRentalAssistance && <span className="tag tag-blue">{t("property.rentalAssistance")}</span>}
+          {p.isNonProfit && <span className="tag">{t("property.nonProfit")}</span>}
         </div>
       )}
 
@@ -1067,7 +1148,7 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
           onClick={() => setGuideOpen(v => !v)}
           aria-expanded={guideOpen}
         >
-          Application guide {guideOpen ? "▲" : "▼"}
+          {t("property.appGuide")} {guideOpen ? "▲" : "▼"}
         </button>
         {guideOpen && (
           <div className="app-guide-body">
@@ -1302,73 +1383,6 @@ function SavingsCard({ property: p, marketData, ami, householdIncome, bedroomSiz
           Add <code>HUD_API_TOKEN</code> env var for Section 8 FMR data.
         </p>
       )}
-    </div>
-  );
-}
-
-// ── Unit Mix Chart ────────────────────────────────────────────────────────────
-
-function UnitMixChart({ property: p }: { property: DisplayProperty }) {
-  const hasSJTiers = p.source === "sj" && ((p.eliunits ?? 0) + (p.vliunits ?? 0) + (p.liunits ?? 0) + (p.moderateunits ?? 0)) > 0;
-  const hasBedroomData = p.source === "lihtc" && (p.bedrooms.studio + p.bedrooms.br1 + p.bedrooms.br2 + p.bedrooms.br3 + p.bedrooms.br4plus) > 0;
-
-  if (!hasSJTiers && !hasBedroomData) return null;
-
-  if (hasSJTiers) {
-    const total = (p.eliunits ?? 0) + (p.vliunits ?? 0) + (p.liunits ?? 0) + (p.moderateunits ?? 0);
-    const rows = [
-      { label: "ELI", desc: "30% AMI", count: p.eliunits ?? 0, color: "var(--tier-eli)" },
-      { label: "VLI", desc: "50% AMI", count: p.vliunits ?? 0, color: "var(--tier-vli)" },
-      { label: "LI",  desc: "80% AMI", count: p.liunits ?? 0,  color: "var(--tier-li)"  },
-      { label: "Mod", desc: "120% AMI", count: p.moderateunits ?? 0, color: "var(--tier-mod)" },
-    ].filter(r => r.count > 0);
-    return (
-      <div className="unit-mix-chart" aria-label="Unit mix by income tier">
-        <h4 className="unit-mix-title">Unit Mix by Income Tier</h4>
-        {rows.map(r => (
-          <div key={r.label} className="unit-mix-row">
-            <span className="unit-mix-label" style={{ color: r.color }}>{r.label}</span>
-            <span className="unit-mix-desc">{r.desc}</span>
-            <div className="unit-mix-track" aria-hidden="true">
-              <div
-                className="unit-mix-fill"
-                style={{ width: `${(r.count / total) * 100}%`, background: r.color }}
-              />
-            </div>
-            <span className="unit-mix-count">{r.count}</span>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  // LIHTC bedroom breakdown
-  const b = p.bedrooms;
-  const total = b.studio + b.br1 + b.br2 + b.br3 + b.br4plus;
-  const rows = [
-    { label: "Studio", count: b.studio },
-    { label: "1BR",    count: b.br1    },
-    { label: "2BR",    count: b.br2    },
-    { label: "3BR",    count: b.br3    },
-    { label: "4BR+",   count: b.br4plus },
-  ].filter(r => r.count > 0);
-  const colors = ["var(--accent)", "var(--tier-vli)", "var(--tier-li)", "var(--tier-eli)", "var(--tier-mod)"];
-  return (
-    <div className="unit-mix-chart" aria-label="Unit mix by bedroom size">
-      <h4 className="unit-mix-title">Unit Mix by Bedroom Size</h4>
-      {rows.map((r, i) => (
-        <div key={r.label} className="unit-mix-row">
-          <span className="unit-mix-label" style={{ color: colors[i % colors.length] }}>{r.label}</span>
-          <span className="unit-mix-desc" />
-          <div className="unit-mix-track" aria-hidden="true">
-            <div
-              className="unit-mix-fill"
-              style={{ width: `${(r.count / total) * 100}%`, background: colors[i % colors.length] }}
-            />
-          </div>
-          <span className="unit-mix-count">{r.count}</span>
-        </div>
-      ))}
     </div>
   );
 }

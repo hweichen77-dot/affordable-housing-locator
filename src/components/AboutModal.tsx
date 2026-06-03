@@ -44,7 +44,7 @@ export function AboutModal({ onClose }: AboutModalProps) {
       className="modal-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label="About Affordable Housing Locator"
+      aria-labelledby="about-modal-title"
       onClick={onClose}
     >
       <div
@@ -53,7 +53,7 @@ export function AboutModal({ onClose }: AboutModalProps) {
         onClick={e => e.stopPropagation()}
       >
         <div className="modal-header">
-          <h2 className="modal-title">Affordable Housing Locator</h2>
+          <h2 id="about-modal-title" className="modal-title">Affordable Housing Locator</h2>
           <button
             className="modal-close-btn"
             onClick={onClose}

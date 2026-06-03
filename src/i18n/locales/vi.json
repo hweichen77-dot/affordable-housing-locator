@@ -1,0 +1,70 @@
+{
+  "search": {
+    "placeholder": "Thành phố, mã ZIP hoặc địa chỉ",
+    "button": "Tìm kiếm",
+    "nearMe": "Gần tôi",
+    "searching": "Đang tìm...",
+    "clear": "Xóa"
+  },
+  "filters": {
+    "title": "Bộ lọc",
+    "activeOnly": "Chỉ hoạt động",
+    "voucherOnly": "Chỉ Mục 8",
+    "anyHousehold": "Tất cả hộ gia đình",
+    "family": "Gia đình",
+    "elderly": "Người cao tuổi",
+    "disabled": "Khuyết tật / Nhu cầu đặc biệt",
+    "homeless": "Vô gia cư",
+    "anyIncome": "Bất kỳ mức thu nhập",
+    "eli": "Thu nhập rất thấp (≤30% AMI)",
+    "vli": "Thu nhập rất thấp (≤50% AMI)",
+    "li": "Thu nhập thấp (≤80% AMI)",
+    "moderate": "Vừa phải (≤120% AMI)",
+    "anySize": "Bất kỳ kích thước",
+    "studio": "Studio",
+    "sortBy": "Sắp xếp theo",
+    "sortName": "Tên",
+    "sortUnits": "Đơn vị",
+    "sortDistance": "Khoảng cách",
+    "sortRent": "Giá thấp nhất",
+    "sortMatch": "Phù hợp nhất"
+  },
+  "property": {
+    "units": "đơn vị nhà ở",
+    "section8": "Mục 8 OK",
+    "rentalAssistance": "Hỗ trợ thuê nhà",
+    "nonProfit": "Phi lợi nhuận",
+    "howToApply": "Cách đăng ký",
+    "applyDirect": "Liên hệ trực tiếp với bất động sản về các đơn vị trống, tình trạng danh sách chờ và yêu cầu đăng ký.",
+    "applySearch": "Tìm kiếm tên bất động sản này trực tuyến hoặc liên hệ cơ quan nhà ở địa phương.",
+    "appGuide": "Hướng dẫn đăng ký",
+    "interested": "Quan tâm",
+    "applied": "Đã nộp",
+    "waitlisted": "Danh sách chờ",
+    "website": "Trang web",
+    "back": "← Quay lại",
+    "save": "Lưu",
+    "saved": "Đã lưu",
+    "share": "Chia sẻ",
+    "copied": "Đã sao chép"
+  },
+  "welcome": {
+    "stat1num": "40M+",
+    "stat1label": "Người Mỹ bị gánh nặng thuê nhà",
+    "stat2num": "50K+",
+    "stat2label": "bất động sản được trợ cấp",
+    "stat3num": "50",
+    "stat3label": "tiểu bang được bao phủ"
+  },
+  "status": {
+    "found": "{{count}} bất động sản tìm thấy",
+    "noResults": "Không tìm thấy bất động sản",
+    "loading": "Đang tải...",
+    "offline": "Chế độ ngoại tuyến"
+  },
+  "lang": {
+    "en": "English",
+    "es": "Español",
+    "vi": "Tiếng Việt"
+  }
+}
