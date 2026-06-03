@@ -1,0 +1,70 @@
+{
+  "search": {
+    "placeholder": "City, ZIP, or address",
+    "button": "Search",
+    "nearMe": "Near me",
+    "searching": "Searching...",
+    "clear": "Clear"
+  },
+  "filters": {
+    "title": "Filters",
+    "activeOnly": "Active only",
+    "voucherOnly": "Section 8 only",
+    "anyHousehold": "All households",
+    "family": "Family",
+    "elderly": "Seniors / Elderly",
+    "disabled": "Disabled / Special Needs",
+    "homeless": "Experiencing Homelessness",
+    "anyIncome": "Any income level",
+    "eli": "Ext. Low Income (≤30% AMI)",
+    "vli": "Very Low Income (≤50% AMI)",
+    "li": "Low Income (≤80% AMI)",
+    "moderate": "Moderate (≤120% AMI)",
+    "anySize": "Any size",
+    "studio": "Studio",
+    "sortBy": "Sort by",
+    "sortName": "Name",
+    "sortUnits": "Units",
+    "sortDistance": "Distance",
+    "sortRent": "Lowest rent",
+    "sortMatch": "Best match"
+  },
+  "property": {
+    "units": "affordable units",
+    "section8": "Section 8 OK",
+    "rentalAssistance": "Rental Assistance",
+    "nonProfit": "Non-Profit",
+    "howToApply": "How to apply",
+    "applyDirect": "Contact the property directly about open units, waitlist status, and application requirements.",
+    "applySearch": "Search for this property name online or contact your local housing authority about availability.",
+    "appGuide": "Application guide",
+    "interested": "Interested",
+    "applied": "Applied",
+    "waitlisted": "Waitlisted",
+    "website": "Website",
+    "back": "← Back",
+    "save": "Save",
+    "saved": "Saved",
+    "share": "Share",
+    "copied": "Copied"
+  },
+  "welcome": {
+    "stat1num": "40M+",
+    "stat1label": "Americans cost-burdened by rent",
+    "stat2num": "50K+",
+    "stat2label": "subsidized properties searchable",
+    "stat3num": "50",
+    "stat3label": "states covered"
+  },
+  "status": {
+    "found": "{{count}} properties found",
+    "noResults": "No properties found",
+    "loading": "Loading...",
+    "offline": "Offline mode"
+  },
+  "lang": {
+    "en": "English",
+    "es": "Español",
+    "vi": "Tiếng Việt"
+  }
+}

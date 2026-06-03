@@ -1,0 +1,70 @@
+{
+  "search": {
+    "placeholder": "Ciudad, código postal o dirección",
+    "button": "Buscar",
+    "nearMe": "Cerca de mí",
+    "searching": "Buscando...",
+    "clear": "Limpiar"
+  },
+  "filters": {
+    "title": "Filtros",
+    "activeOnly": "Solo activos",
+    "voucherOnly": "Solo Sección 8",
+    "anyHousehold": "Todos los hogares",
+    "family": "Familia",
+    "elderly": "Adultos mayores",
+    "disabled": "Discapacitados / Necesidades especiales",
+    "homeless": "Sin hogar",
+    "anyIncome": "Cualquier nivel de ingresos",
+    "eli": "Ingresos muy bajos (≤30% AMI)",
+    "vli": "Ingresos muy bajos (≤50% AMI)",
+    "li": "Ingresos bajos (≤80% AMI)",
+    "moderate": "Moderado (≤120% AMI)",
+    "anySize": "Cualquier tamaño",
+    "studio": "Estudio",
+    "sortBy": "Ordenar por",
+    "sortName": "Nombre",
+    "sortUnits": "Unidades",
+    "sortDistance": "Distancia",
+    "sortRent": "Menor precio",
+    "sortMatch": "Mejor coincidencia"
+  },
+  "property": {
+    "units": "unidades asequibles",
+    "section8": "Sección 8 OK",
+    "rentalAssistance": "Asistencia de alquiler",
+    "nonProfit": "Sin fines de lucro",
+    "howToApply": "Cómo aplicar",
+    "applyDirect": "Contacte la propiedad directamente sobre unidades disponibles, estado de lista de espera y requisitos de solicitud.",
+    "applySearch": "Busque el nombre de esta propiedad en línea o contacte a su autoridad local de vivienda.",
+    "appGuide": "Guía de solicitud",
+    "interested": "Interesado",
+    "applied": "Aplicado",
+    "waitlisted": "En lista de espera",
+    "website": "Sitio web",
+    "back": "← Volver",
+    "save": "Guardar",
+    "saved": "Guardado",
+    "share": "Compartir",
+    "copied": "Copiado"
+  },
+  "welcome": {
+    "stat1num": "40M+",
+    "stat1label": "Estadounidenses con carga de alquiler",
+    "stat2num": "50K+",
+    "stat2label": "propiedades subsidiadas disponibles",
+    "stat3num": "50",
+    "stat3label": "estados cubiertos"
+  },
+  "status": {
+    "found": "{{count}} propiedades encontradas",
+    "noResults": "No se encontraron propiedades",
+    "loading": "Cargando...",
+    "offline": "Modo sin conexión"
+  },
+  "lang": {
+    "en": "English",
+    "es": "Español",
+    "vi": "Tiếng Việt"
+  }
+}
