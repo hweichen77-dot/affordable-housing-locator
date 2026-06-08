@@ -7,6 +7,175 @@ import { rentRangeForTier, fmt } from "../lib/ami";
 import { haversineKm, fmtDist } from "../lib/geo";
 import { AboutModal } from "./AboutModal";
 
+// ── OSM tile helpers ──────────────────────────────────────────────────────────
+
+function latLngToTile(lat: number, lng: number, zoom: number) {
+  const tileN = 2 ** zoom;
+  const x = (lng + 180) / 360 * tileN;
+  const latRad = lat * Math.PI / 180;
+  const y = (1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * tileN;
+  return { x, y, tx: Math.floor(x), ty: Math.floor(y) };
+}
+
+function PropertyMapThumb({ lat, lng, name }: { lat: number; lng: number; name: string }) {
+  const ZOOM = 15;
+  const TILE = 256;
+  const COLS = 3;
+  const ROWS = 2;
+  const PANEL_W = 336; // content width (368px panel - 32px bleed margins)
+  const DISPLAY_H = 172;
+
+  const { x, y, tx, ty } = latLngToTile(lat, lng, ZOOM);
+
+  const tiles: { tx: number; ty: number }[] = [];
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < COLS; col++) {
+      tiles.push({ tx: tx - 1 + col, ty: ty - 1 + row });
+    }
+  }
+
+  const RAW_W = COLS * TILE; // 768
+  const SCALE = PANEL_W / RAW_W; // ~0.4375
+  const SCALED_H = ROWS * TILE * SCALE; // ~224
+
+  // Property pixel pos in pre-scale grid
+  const propRawX = (x - (tx - 1)) * TILE;
+  const propRawY = (y - (ty - 1)) * TILE;
+
+  // Vertical offset: center property in the visible area
+  const propScaledY = propRawY * SCALE;
+  const idealOffset = propScaledY - DISPLAY_H / 2;
+  const maxOffset = Math.max(0, SCALED_H - DISPLAY_H);
+  const vOffset = Math.max(0, Math.min(idealOffset, maxOffset));
+
+  // Marker position in container coords
+  const markerLeft = propRawX * SCALE;
+  const markerTop = propScaledY - vOffset;
+
+  // Pre-scale translateY to achieve vOffset visual shift
+  const translateY = -vOffset / SCALE;
+
+  return (
+    <div className="prop-map-thumb" aria-label={`Neighborhood map for ${name}`}>
+      <div
+        className="prop-map-tiles"
+        style={{
+          transform: `scale(${SCALE}) translateY(${translateY}px)`,
+          transformOrigin: "top left",
+          width: RAW_W,
+        }}
+      >
+        {tiles.map(({ tx: ttx, ty: tty }) => (
+          <img
+            key={`${ttx}-${tty}`}
+            src={`https://tile.openstreetmap.org/${ZOOM}/${ttx}/${tty}.png`}
+            width={TILE}
+            height={TILE}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+          />
+        ))}
+      </div>
+      <div
+        className="prop-map-marker"
+        style={{ left: markerLeft, top: markerTop }}
+        aria-hidden="true"
+      />
+      <a
+        className="prop-map-osm-link"
+        href={`https://www.openstreetmap.org/?mlat=${lat.toFixed(5)}&mlon=${lng.toFixed(5)}#map=16/${lat.toFixed(5)}/${lng.toFixed(5)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Open in OpenStreetMap"
+      />
+      <a
+        className="prop-map-attribution"
+        href="https://www.openstreetmap.org/copyright"
+        target="_blank"
+        rel="noopener noreferrer"
+        tabIndex={-1}
+      >
+        © OpenStreetMap
+      </a>
+    </div>
+  );
+}
+
+// ── Map + external links ──────────────────────────────────────────────────────
+
+function MapLinks({ lat, lng, address, city, state, name }: {
+  lat: number; lng: number; address: string; city: string; state: string; name: string;
+}) {
+  const fullAddr = encodeURIComponent(`${address}, ${city}, ${state}`);
+  const nameEnc = encodeURIComponent(name);
+  return (
+    <>
+      <div className="map-links" role="group" aria-label="Map and navigation links">
+        <a
+          className="map-link"
+          href={`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Get directions in Google Maps"
+        >
+          <span className="map-link-icon">↗</span>
+          <span className="map-link-text">Directions</span>
+        </a>
+        <a
+          className="map-link"
+          href={`https://maps.google.com/?q=${lat},${lng}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="View in Google Maps"
+        >
+          <span className="map-link-icon">⊙</span>
+          <span className="map-link-text">Google Maps</span>
+        </a>
+        <a
+          className="map-link"
+          href={`https://maps.apple.com/?q=${fullAddr}&ll=${lat},${lng}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="View in Apple Maps"
+        >
+          <span className="map-link-icon">⊙</span>
+          <span className="map-link-text">Apple Maps</span>
+        </a>
+      </div>
+      <div className="map-links-row2">
+        <a
+          className="map-link-pill"
+          href={`https://www.walkscore.com/score/loc/lat=${lat.toFixed(4)}/lng=${lng.toFixed(4)}/`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Check Walk Score for this address"
+        >
+          Walk Score ↗
+        </a>
+        <a
+          className="map-link-pill"
+          href={`https://www.google.com/maps/search/transit/@${lat},${lng},15z`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="View nearby transit options"
+        >
+          Nearby transit ↗
+        </a>
+        <a
+          className="map-link-pill"
+          href={`https://affordablehousingonline.com/search?name=${nameEnc}&city=${encodeURIComponent(city)}&state=${encodeURIComponent(state)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Check for open waitlists"
+        >
+          Check waitlist ↗
+        </a>
+      </div>
+    </>
+  );
+}
+
 interface SidePanelProps {
   properties: DisplayProperty[];
   totalCount: number;
@@ -514,6 +683,7 @@ export function SidePanel({
                 role="listitem"
                 aria-label={`${p.name}, ${p.address}${p.city ? `, ${p.city}` : ""}${dist ? `, ${dist}` : ""}`}
               >
+                <span className="property-item-idx" aria-hidden="true" />
                 <div className="property-item-top">
                   <span className="property-item-name">{p.name}</span>
                   <button
@@ -933,7 +1103,11 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
         </div>
       </div>
 
-      <div className="detail-header">
+      {p.lat != null && p.lng != null && (
+        <PropertyMapThumb lat={p.lat} lng={p.lng} name={p.name} />
+      )}
+
+      <div className="detail-header" style={{ marginTop: p.lat != null && p.lng != null ? 14 : 0 }}>
         <h2>{p.name}</h2>
         <span className={`badge ${badge.cls}`}>{badge.text}</span>
       </div>
@@ -945,6 +1119,17 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
           </p>
           <CopyButton text={fullAddress} label="address" />
         </div>
+      )}
+
+      {p.lat != null && p.lng != null && (
+        <MapLinks
+          lat={p.lat}
+          lng={p.lng}
+          address={p.address}
+          city={p.city}
+          state={p.state}
+          name={p.name}
+        />
       )}
 
       <div className="contact-actions">
@@ -1176,9 +1361,10 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
           href={`https://affordablehousingonline.com/search?name=${encodeURIComponent(p.name)}&city=${encodeURIComponent(p.city)}&state=${encodeURIComponent(p.state)}`}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Search for current listings on Affordable Housing Online"
+          aria-label="Search for open waitlists on Affordable Housing Online"
         >
-          Search current listings ↗
+          <span>Affordable Housing Online</span>
+          <span style={{ opacity: 0.5, fontSize: 11 }}>Open waitlists ↗</span>
         </a>
         {p.source === "lihtc" && (
           <a
@@ -1188,7 +1374,30 @@ function DetailView({ property: p, isFav, onToggleFav, onClear, userLocation, am
             rel="noopener noreferrer"
             aria-label="Browse available units on Socialserve"
           >
-            Browse Socialserve ↗
+            <span>Socialserve</span>
+            <span style={{ opacity: 0.5, fontSize: 11 }}>Browse units ↗</span>
+          </a>
+        )}
+        <a
+          className="listings-btn listings-btn-secondary"
+          href={`https://www.211.org/find-resources/search?keyword=affordable+housing&location=${encodeURIComponent(`${p.city}, ${p.state}`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Find local housing resources via 211"
+        >
+          <span>211 Local Resources</span>
+          <span style={{ opacity: 0.5, fontSize: 11 }}>Find help ↗</span>
+        </a>
+        {p.lat != null && p.lng != null && (
+          <a
+            className="listings-btn listings-btn-secondary"
+            href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${p.lat},${p.lng}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="View property in Google Street View"
+          >
+            <span>Street View</span>
+            <span style={{ opacity: 0.5, fontSize: 11 }}>See the building ↗</span>
           </a>
         )}
       </div>
