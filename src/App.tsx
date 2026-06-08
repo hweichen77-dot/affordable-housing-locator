@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { SidePanel } from "./components/SidePanel";
+import { AmiSurvey, hasSurveyCompleted } from "./components/AmiSurvey";
 const Map = lazy(() => import("./components/Map").then(m => ({ default: m.Map })));
 import type { HousingCollection, GeoLocation, DisplayProperty, MarketData, FmrData, AcsRentData, IlData, RentcastListing } from "./types/housing";
 import { normalizeFeatures, hasBedroomType, popMatches, qualifiesForIncome } from "./lib/normalize";
@@ -71,6 +72,7 @@ export default function App() {
   });
 
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const [showSurvey, setShowSurvey] = useState(() => !hasSurveyCompleted());
 
   const [marketData, setMarketData] = useState<MarketData | null>(null);
   const marketCacheRef = useRef<Record<string, MarketData>>({});
@@ -265,6 +267,20 @@ export default function App() {
     setSearchError(null);
   }, []);
 
+  // ── AMI Survey ───────────────────────────────────────────────────────────
+  const handleSurveyComplete = useCallback((filterPatch: Partial<FilterState>, locationQuery: string) => {
+    setShowSurvey(false);
+    setFilters(f => ({ ...f, ...filterPatch }));
+    if (locationQuery) {
+      handleSearch(locationQuery);
+    }
+  }, [handleSearch]);
+
+  const handleSurveySkip = useCallback(() => {
+    setShowSurvey(false);
+    try { localStorage.setItem("housing-survey-v1", "skipped"); } catch { /* */ }
+  }, []);
+
   // ── Favorites ────────────────────────────────────────────────────────────
   const toggleFavorite = useCallback((id: string) => {
     setFavorites(prev => {
@@ -445,6 +461,10 @@ export default function App() {
   const error = dataError || searchError;
 
   return (
+    <>
+    {showSurvey && (
+      <AmiSurvey onComplete={handleSurveyComplete} onSkip={handleSurveySkip} />
+    )}
     <div className={`app-layout${panelOpen ? "" : " panel-hidden"}`}>
       <SidePanel
         properties={filtered}
@@ -518,5 +538,6 @@ export default function App() {
         )}
       </div>
     </div>
+    </>
   );
 }
