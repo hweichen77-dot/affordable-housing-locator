@@ -32,11 +32,11 @@ const INCOME_PRESETS = [
   { label: "Over $150k",  value: 160000 },
 ];
 
-const POP_OPTIONS: { value: PopType; label: string; icon: string }[] = [
-  { value: "",         label: "General / Any",          icon: "⌂" },
-  { value: "Family",   label: "Family with children",   icon: "👨‍👩‍👧" },
-  { value: "Elderly",  label: "Senior (62+)",           icon: "♿" },
-  { value: "Disabled", label: "Accessibility needs",    icon: "⊕" },
+const POP_OPTIONS: { value: PopType; label: string }[] = [
+  { value: "",         label: "General / Any" },
+  { value: "Family",   label: "Family with children" },
+  { value: "Elderly",  label: "Senior (62+)" },
+  { value: "Disabled", label: "Accessibility needs" },
 ];
 
 const BR_OPTIONS: { value: BedroomPref; label: string }[] = [
@@ -182,15 +182,14 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
             <div className="survey-field">
               <label className="survey-label">Who is in your household?</label>
               <div className="survey-pop-grid">
-                {POP_OPTIONS.map(({ value, label, icon }) => (
+                {POP_OPTIONS.map(({ value, label }) => (
                   <button
                     key={label}
                     className={`survey-pop-btn${popType === value ? " selected" : ""}`}
                     onClick={() => setPopType(value)}
                     type="button"
                   >
-                    <span className="survey-pop-icon">{icon}</span>
-                    <span className="survey-pop-label">{label}</span>
+                    {label}
                   </button>
                 ))}
               </div>
@@ -297,7 +296,7 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
             <div className="survey-actions survey-actions-two">
               <button className="survey-back-btn" onClick={() => setStep(3)} type="button">← Back</button>
               <button className="survey-complete-btn" onClick={handleComplete} type="button">
-                {locationQuery.trim() ? "Find housing for me →" : "Start exploring →"}
+                {locationQuery.trim() ? "Find housing for me →" : "Find housing near me →"}
               </button>
             </div>
           </div>
