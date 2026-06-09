@@ -270,11 +270,15 @@ export default function App() {
   // ── AMI Survey ───────────────────────────────────────────────────────────
   const handleSurveyComplete = useCallback((filterPatch: Partial<FilterState>, locationQuery: string) => {
     setShowSurvey(false);
-    setFilters(f => ({ ...f, ...filterPatch }));
     if (locationQuery) {
+      setFilters(f => ({ ...f, ...filterPatch }));
       handleSearch(locationQuery);
+    } else {
+      // No location → auto near-me so user sees suggestions immediately
+      setFilters(f => ({ ...f, ...filterPatch, sortBy: "distance" }));
+      handleNearMe();
     }
-  }, [handleSearch]);
+  }, [handleSearch, handleNearMe]);
 
   const handleSurveySkip = useCallback(() => {
     setShowSurvey(false);
