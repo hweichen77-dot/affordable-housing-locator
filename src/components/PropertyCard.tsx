@@ -1,3 +1,4 @@
+import { openUrl } from "@tauri-apps/plugin-opener";
 import type { DisplayProperty } from "../types/housing";
 import type { UserLocation } from "../App";
 import { haversineKm, fmtDist } from "../lib/geo";
@@ -44,8 +45,11 @@ function latLngToTile(lat: number, lng: number, zoom: number) {
   return { x, y, tx: Math.floor(x), ty: Math.floor(y) };
 }
 
+// ESRI World Imagery satellite tiles — free, no API key required for reasonable use
+const ESRI_SAT = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile";
+
 function PropertyHero({ lat, lng, name }: { lat: number; lng: number; name: string }) {
-  const ZOOM = 15;
+  const ZOOM = 19; // building-level satellite view
   const TILE = 256;
 
   const { x, y, tx, ty } = latLngToTile(lat, lng, ZOOM);
@@ -61,7 +65,7 @@ function PropertyHero({ lat, lng, name }: { lat: number; lng: number; name: stri
   const vOffset = Math.max(0, Math.min(propY - DISPLAY_H / 2, SCALED_H - DISPLAY_H));
 
   return (
-    <div className="prop-hero-map" aria-label={`Neighborhood map near ${name}`}>
+    <div className="prop-hero-map" aria-label={`Aerial view near ${name}`}>
       <div
         className="prop-hero-tiles"
         style={{
@@ -73,14 +77,14 @@ function PropertyHero({ lat, lng, name }: { lat: number; lng: number; name: stri
         {tiles.map(({ tx: ttx, ty: tty }) => (
           <img
             key={`${ttx}-${tty}`}
-            src={`https://tile.openstreetmap.org/${ZOOM}/${ttx}/${tty}.png`}
+            src={`${ESRI_SAT}/${ZOOM}/${tty}/${ttx}`}
             width={TILE} height={TILE}
             alt="" aria-hidden="true" loading="lazy"
           />
         ))}
       </div>
       <div
-        className="prop-hero-marker"
+        className="prop-hero-pin"
         style={{
           left: (x - (tx - 1)) * TILE * SCALE,
           top: propY - vOffset,
@@ -133,6 +137,14 @@ export function PropertyCard({ property: p, userLocation, saved, onSelect, onSav
     ? fmtDist(haversineKm(userLocation.lat, userLocation.lng, p.lat, p.lng))
     : null;
 
+  const applyUrl = p.website
+    || `https://affordablehousingonline.com/search?name=${encodeURIComponent(p.name)}&city=${encodeURIComponent(p.city)}&state=${encodeURIComponent(p.state)}`;
+
+  const handleApply = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    openUrl(applyUrl).catch(() => window.open(applyUrl, "_blank", "noopener,noreferrer"));
+  };
+
   return (
     <article className="prop-card" onClick={() => onSelect(p)} tabIndex={0}
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(p); } }}
@@ -144,15 +156,22 @@ export function PropertyCard({ property: p, userLocation, saved, onSelect, onSav
           ? <PropertyHero lat={p.lat} lng={p.lng} name={p.name} />
           : <GradientHero name={p.name} />
         }
-        {/* Tier badge over hero */}
-        <div className={`prop-tier-badge ${tier.colorClass}`}>
-          {tier.label}
-        </div>
+        <div className={`prop-tier-badge ${tier.colorClass}`}>{tier.label}</div>
         {dist && <div className="prop-dist-badge">{dist} away</div>}
+        <button
+          className={`prop-save-icon${saved ? " saved" : ""}`}
+          onClick={e => { e.stopPropagation(); onSave(p.id); }}
+          aria-label={saved ? "Remove from saved" : "Save this home"}
+          aria-pressed={saved}
+          type="button"
+        >
+          {saved ? "♥" : "♡"}
+        </button>
       </div>
 
       {/* Card body */}
       <div className="prop-card-body">
+        <div className="prop-card-name">{p.name}</div>
         <div className="prop-card-address">{plainAddress(p)}</div>
 
         {/* Affordability bar */}
@@ -166,21 +185,20 @@ export function PropertyCard({ property: p, userLocation, saved, onSelect, onSav
         {/* CTAs */}
         <div className="prop-card-actions">
           <button
-            className="prop-cta-primary"
+            className="prop-cta-apply"
+            onClick={handleApply}
+            aria-label={`Apply or request info for ${p.name}`}
+            type="button"
+          >
+            Apply Now
+          </button>
+          <button
+            className="prop-cta-info"
             onClick={e => { e.stopPropagation(); onSelect(p); }}
             aria-label={`See details for ${p.name}`}
             type="button"
           >
-            See Details
-          </button>
-          <button
-            className={`prop-cta-save${saved ? " saved" : ""}`}
-            onClick={e => { e.stopPropagation(); onSave(p.id); }}
-            aria-label={saved ? "Remove from saved" : "Save this home"}
-            aria-pressed={saved}
-            type="button"
-          >
-            {saved ? "Saved" : "Save"}
+            Request Info
           </button>
         </div>
       </div>

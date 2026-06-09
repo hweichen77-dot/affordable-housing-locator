@@ -157,51 +157,43 @@ function addOrUpdateSource(map: maplibregl.Map, data: HousingCollection) {
     map.addSource(SOURCE_ID, {
       type: "geojson",
       data: data as GeoJSON.FeatureCollection,
-      cluster: true,
-      clusterMaxZoom: 14,
-      clusterRadius: 40,
     });
   }
 }
 
 function addMapLayers(map: maplibregl.Map, onSelectRef: React.MutableRefObject<(props: Record<string, unknown>) => void>, popupRef: React.MutableRefObject<maplibregl.Popup | null>) {
-  // Guard: layers might already exist if this is called twice
-  if (map.getLayer("clusters")) return;
+  if (map.getLayer("housing-heat")) return;
 
+  // Heatmap — visible at low zoom, fades out as user zooms in
   map.addLayer({
-    id: "clusters",
-    type: "circle",
+    id: "housing-heat",
+    type: "heatmap",
     source: SOURCE_ID,
-    filter: ["has", "point_count"],
+    maxzoom: 13,
     paint: {
-      "circle-color": ["step", ["get", "point_count"], "#16a34a", 10, "#15803d", 30, "#166534"],
-      "circle-radius": ["step", ["get", "point_count"], 18, 10, 24, 30, 30],
-      "circle-stroke-width": 2,
-      "circle-stroke-color": "#fff",
-      "circle-opacity": 0.9,
+      "heatmap-weight": 1,
+      "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 0, 1, 12, 3],
+      "heatmap-color": [
+        "interpolate", ["linear"], ["heatmap-density"],
+        0,   "rgba(0,0,0,0)",
+        0.2, "rgba(74,222,128,0.25)",
+        0.5, "rgba(34,197,94,0.6)",
+        0.8, "rgba(22,163,74,0.85)",
+        1.0, "rgba(21,128,61,0.95)",
+      ],
+      "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 0, 6, 12, 24],
+      "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 10, 1, 13, 0],
     },
   });
 
-  map.addLayer({
-    id: "cluster-count",
-    type: "symbol",
-    source: SOURCE_ID,
-    filter: ["has", "point_count"],
-    layout: {
-      "text-field": "{point_count_abbreviated}",
-      "text-size": 12,
-      "text-font": ["Open Sans Bold", "Arial Unicode MS Regular"],
-    },
-    paint: { "text-color": "#fff" },
-  });
-
+  // Individual pins — fade in as zoom increases
   map.addLayer({
     id: "housing-points",
     type: "circle",
     source: SOURCE_ID,
-    filter: ["!", ["has", "point_count"]],
+    minzoom: 10,
     paint: {
-      "circle-radius": 8,
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 5, 14, 9],
       "circle-color": [
         "case",
         ["==", ["get", "ARSTATUS"], "Active"], "#16a34a",
@@ -209,7 +201,7 @@ function addMapLayers(map: maplibregl.Map, onSelectRef: React.MutableRefObject<(
       ],
       "circle-stroke-width": 2,
       "circle-stroke-color": "#fff",
-      "circle-opacity": 0.9,
+      "circle-opacity": ["interpolate", ["linear"], ["zoom"], 10, 0, 12, 0.9],
     },
   });
 
@@ -227,17 +219,6 @@ function addMapLayers(map: maplibregl.Map, onSelectRef: React.MutableRefObject<(
     },
   });
 
-  map.on("click", "clusters", async (e) => {
-    const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
-    if (!features.length) return;
-    const clusterId = features[0].properties?.cluster_id;
-    if (clusterId == null) return;
-    const zoom = await (map.getSource(SOURCE_ID) as maplibregl.GeoJSONSource)
-      .getClusterExpansionZoom(clusterId);
-    const coords = (features[0].geometry as GeoJSON.Point).coordinates as [number, number];
-    map.easeTo({ center: coords, zoom });
-  });
-
   map.on("click", "housing-points", (e) => {
     const feature = e.features?.[0];
     if (!feature?.properties || !feature.geometry) return;
@@ -251,35 +232,38 @@ function addMapLayers(map: maplibregl.Map, onSelectRef: React.MutableRefObject<(
     onSelectRef.current(props);
   });
 
-  map.on("mouseenter", "clusters", () => { map.getCanvas().style.cursor = "pointer"; });
-  map.on("mouseleave", "clusters", () => { map.getCanvas().style.cursor = ""; });
   map.on("mouseenter", "housing-points", () => { map.getCanvas().style.cursor = "pointer"; });
   map.on("mouseleave", "housing-points", () => { map.getCanvas().style.cursor = ""; });
 
-  // Keyboard accessibility for map interactions
   map.getCanvas().setAttribute("tabindex", "0");
   map.getCanvas().setAttribute("aria-label", "Interactive housing map. Use arrow keys to pan, +/- to zoom.");
 }
 
+function affordabilityLabel(incCeil: number | undefined): string {
+  if (!incCeil) return "Income-assisted housing";
+  if (incCeil <= 30) return "Very Affordable";
+  if (incCeil <= 50) return "Affordable";
+  if (incCeil <= 80) return "Good Fit";
+  return "Moderately Assisted";
+}
+
 function buildPopupHTML(p: Record<string, unknown>): string {
-  const name = String(p.PROJECT ?? p.DEVELOPMENTNAME ?? "Unknown Property");
+  const name = String(p.PROJECT ?? p.DEVELOPMENTNAME ?? "Housing Property");
   const addr = [String(p.PROJ_ADD ?? p.ADDRESS ?? ""), String(p.PROJ_CTY ?? p.CITY ?? "")]
-    .filter(Boolean).join(", ");
+    .filter(s => s && s !== "undefined").join(", ");
   const units = Number(p.LI_UNITS ?? p.TOTALAFFUNITS ?? 0);
   const phone = String(p.CO_TEL ?? p.PHONE ?? "");
   const arstatus = String(p.ARSTATUS ?? "");
-  const incCeil = p.INC_CEIL ? `≤${p.INC_CEIL}% AMI` : "";
-
-  const status = arstatus === "Active"
-    ? `<div class="popup-status active">● Active</div>`
-    : incCeil ? `<div class="popup-status">${incCeil}</div>` : "";
+  const incCeil = p.INC_CEIL ? Number(p.INC_CEIL) : undefined;
+  const tierLabel = arstatus === "Active" ? "● Available now" : affordabilityLabel(incCeil);
 
   return `<div class="popup-content">
     <strong class="popup-name">${escHtml(name)}</strong>
-    ${status}
+    <div class="popup-tier">${escHtml(tierLabel)}</div>
     ${addr ? `<div class="popup-addr">${escHtml(addr)}</div>` : ""}
-    ${units > 0 ? `<div class="popup-stat">${units} affordable units</div>` : ""}
+    ${units > 0 ? `<div class="popup-stat">${units} income-restricted home${units !== 1 ? "s" : ""}</div>` : ""}
     ${phone ? `<a class="popup-phone" href="tel:${escAttr(phone.replace(/\s/g, ""))}">${escHtml(phone)}</a>` : ""}
+    <div class="popup-cta">Tap to see details →</div>
   </div>`;
 }
 
