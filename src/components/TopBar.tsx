@@ -1,0 +1,204 @@
+import { useRef, useState } from "react";
+
+interface TopBarProps {
+  searchDisplay?: string;
+  hasSearched: boolean;
+  loading: boolean;
+  hhSize: number;
+  onHhSizeChange: (n: number) => void;
+  incomeValue: number;
+  onIncomeChange: (v: number) => void;
+  onSearch: (q: string) => void;
+  onNearMe: () => void;
+  onGoHome?: () => void;
+  showMapView: boolean;
+  onToggleMap: () => void;
+  resultCount: number;
+}
+
+const HH_ICONS = [
+  { n: 1, svg: <SingleIcon /> },
+  { n: 2, svg: <PairIcon /> },
+  { n: 3, svg: <ThreeIcon /> },
+  { n: 4, svg: <FourIcon /> },
+  { n: 5, svg: <FiveIcon /> },
+];
+
+const INCOME_STOPS = [0, 20000, 35000, 50000, 65000, 80000, 100000, 130000, 160000, 200000];
+const MAX_SLIDER = INCOME_STOPS.length - 1;
+
+function sliderToIncome(v: number): number {
+  return INCOME_STOPS[Math.round(v)] ?? 0;
+}
+
+function incomeLabel(v: number): string {
+  if (v === 0) return "Any income";
+  if (v >= 200000) return "$200k+";
+  return `$${(v / 1000).toFixed(0)}k/yr`;
+}
+
+export function TopBar({
+  searchDisplay, hasSearched, loading, hhSize, onHhSizeChange,
+  incomeValue, onIncomeChange, onSearch, onNearMe, onGoHome,
+  showMapView, onToggleMap, resultCount,
+}: TopBarProps) {
+  const [input, setInput] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const sliderIdx = INCOME_STOPS.findIndex(s => s >= incomeValue);
+  const sliderVal = sliderIdx < 0 ? MAX_SLIDER : sliderIdx;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (input.trim()) onSearch(input.trim());
+  };
+
+  return (
+    <header className="topbar">
+      <div className="topbar-brand">
+        {onGoHome ? (
+          <button className="topbar-home-btn" onClick={onGoHome} aria-label="Start over">
+            Find Your Next Home
+          </button>
+        ) : (
+          <span className="topbar-title">Find Your Next Home</span>
+        )}
+      </div>
+
+      <form className="topbar-search" onSubmit={handleSubmit} role="search">
+        <input
+          ref={inputRef}
+          className="topbar-search-input"
+          placeholder="Enter a city or ZIP code…"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          aria-label="Search by city or ZIP code"
+          autoComplete="off"
+        />
+        <button className="topbar-search-btn" type="submit" disabled={loading} aria-label="Search">
+          {loading ? "…" : "Search"}
+        </button>
+        <button className="topbar-nearme-btn" type="button" onClick={onNearMe} disabled={loading} aria-label="Near me">
+          Near Me
+        </button>
+      </form>
+
+      <div className="topbar-controls">
+        {/* Household size */}
+        <div className="topbar-control-group">
+          <span className="topbar-control-label">Household</span>
+          <div className="hh-picker" role="group" aria-label="Household size">
+            {HH_ICONS.map(({ n, svg }) => (
+              <button
+                key={n}
+                className={`hh-btn${hhSize === n ? " selected" : ""}`}
+                onClick={() => onHhSizeChange(n)}
+                aria-pressed={hhSize === n}
+                aria-label={`${n === 5 ? "5 or more" : n} ${n === 1 ? "person" : "people"}`}
+                type="button"
+              >
+                {svg}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Income slider */}
+        <div className="topbar-control-group topbar-income-group">
+          <div className="topbar-income-label-row">
+            <span className="topbar-control-label">Max income</span>
+            <span className="topbar-income-value">{incomeLabel(incomeValue)}</span>
+          </div>
+          <input
+            type="range"
+            className="income-slider"
+            min={0}
+            max={MAX_SLIDER}
+            step={1}
+            value={sliderVal}
+            onChange={e => onIncomeChange(sliderToIncome(Number(e.target.value)))}
+            aria-label="Set your annual income to filter properties"
+            aria-valuetext={incomeLabel(incomeValue)}
+          />
+        </div>
+
+        {/* Map toggle */}
+        {hasSearched && (
+          <button
+            className={`topbar-map-toggle${showMapView ? " active" : ""}`}
+            onClick={onToggleMap}
+            aria-pressed={showMapView}
+            type="button"
+          >
+            {showMapView ? "List" : "Map"}
+          </button>
+        )}
+      </div>
+
+      {hasSearched && searchDisplay && (
+        <div className="topbar-location-pill">
+          <span>{searchDisplay.split(",").slice(0, 2).join(",")}</span>
+          {resultCount > 0 && <span className="topbar-count">{resultCount} homes</span>}
+        </div>
+      )}
+    </header>
+  );
+}
+
+// ── People SVG icons ─────────────────────────────────────────────────────────
+
+function PersonSvg({ x = 0 }: { x?: number }) {
+  return (
+    <g transform={`translate(${x}, 0)`}>
+      <circle cx="4" cy="3" r="2.2" fill="currentColor" />
+      <path d="M1 10c0-1.657 1.343-3 3-3s3 1.343 3 3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+    </g>
+  );
+}
+
+function SingleIcon() {
+  return <svg width="16" height="14" viewBox="0 0 8 14" aria-hidden="true"><PersonSvg /></svg>;
+}
+
+function PairIcon() {
+  return (
+    <svg width="22" height="14" viewBox="0 0 16 14" aria-hidden="true">
+      <PersonSvg x={0} />
+      <PersonSvg x={8} />
+    </svg>
+  );
+}
+
+function ThreeIcon() {
+  return (
+    <svg width="30" height="14" viewBox="0 0 24 14" aria-hidden="true">
+      <PersonSvg x={0} />
+      <PersonSvg x={8} />
+      <PersonSvg x={16} />
+    </svg>
+  );
+}
+
+function FourIcon() {
+  return (
+    <svg width="38" height="14" viewBox="0 0 32 14" aria-hidden="true">
+      <PersonSvg x={0} />
+      <PersonSvg x={8} />
+      <PersonSvg x={16} />
+      <PersonSvg x={24} />
+    </svg>
+  );
+}
+
+function FiveIcon() {
+  return (
+    <svg width="44" height="14" viewBox="0 0 40 14" aria-hidden="true">
+      <PersonSvg x={0} />
+      <PersonSvg x={8} />
+      <PersonSvg x={16} />
+      <PersonSvg x={24} />
+      <PersonSvg x={32} />
+      <text x="39" y="10" fontSize="6" fill="currentColor">+</text>
+    </svg>
+  );
+}

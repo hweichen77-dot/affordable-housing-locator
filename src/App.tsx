@@ -1,12 +1,15 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { SidePanel } from "./components/SidePanel";
+import { TopBar } from "./components/TopBar";
+import { PropertyCard } from "./components/PropertyCard";
+import { DetailPanel } from "./components/DetailPanel";
 import { AmiSurvey, hasSurveyCompleted } from "./components/AmiSurvey";
-const Map = lazy(() => import("./components/Map").then(m => ({ default: m.Map })));
 import type { HousingCollection, GeoLocation, DisplayProperty, MarketData, FmrData, AcsRentData, IlData, RentcastListing } from "./types/housing";
-import { normalizeFeatures, hasBedroomType, popMatches, qualifiesForIncome } from "./lib/normalize";
+import { normalizeFeatures, qualifiesForIncome } from "./lib/normalize";
 import { haversineKm } from "./lib/geo";
-import { getAmi, rentRangeForTier, adjustedAmi } from "./lib/ami";
+import { getAmi } from "./lib/ami";
+
+const FullMap = lazy(() => import("./components/Map").then(m => ({ default: m.Map })));
 
 export interface FilterState {
   activeOnly: boolean;
@@ -35,73 +38,110 @@ export const DEFAULT_FILTERS: FilterState = {
   householdSize: 1,
 };
 
+// Welcome screen shown when no search yet
+function WelcomeScreen({ onSearch, onNearMe, loading, error }: {
+  onSearch: (q: string) => void;
+  onNearMe: () => void;
+  loading: boolean;
+  error: string | null;
+}) {
+  const cities = ["San Jose, CA", "Austin, TX", "Chicago, IL", "Seattle, WA", "Miami, FL", "Denver, CO"];
+  return (
+    <div className="welcome-screen">
+      <div className="welcome-content">
+        <div className="welcome-icon-wrap">
+          <svg viewBox="0 0 40 36" fill="none" aria-hidden="true" className="welcome-svg">
+            <path d="M20 3L2 16h4v17h10V22h8v11h10V16h4L20 3z"
+              stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+          </svg>
+        </div>
+        <h2 className="welcome-heading">Find a Home That Fits Your Budget</h2>
+        <p className="welcome-sub">We'll match you with affordable homes based on your income — no jargon, no complexity.</p>
+
+        {error && <p className="welcome-error" role="alert">{error}</p>}
+
+        <button
+          className="welcome-nearme-btn"
+          onClick={onNearMe}
+          disabled={loading}
+          type="button"
+        >
+          {loading ? "Finding homes near you…" : "Find Homes Near Me"}
+        </button>
+
+        <p className="welcome-or">or search a city</p>
+
+        <div className="welcome-chips">
+          {cities.map(city => (
+            <button key={city} className="welcome-chip" onClick={() => onSearch(city)} type="button">
+              {city}
+            </button>
+          ))}
+        </div>
+
+        <p className="welcome-note">
+          Over 50,000 income-limited homes across all 50 states.
+          <br />No account needed. Completely free.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// Empty state after search with no results
+function EmptyState({ onReset }: { onReset: () => void }) {
+  return (
+    <div className="empty-screen">
+      <p className="empty-icon">○</p>
+      <p className="empty-heading">No homes found in this area</p>
+      <p className="empty-sub">Try adjusting your income filter or searching a nearby city.</p>
+      <button className="empty-reset-btn" onClick={onReset} type="button">
+        Clear Filters
+      </button>
+    </div>
+  );
+}
+
 export default function App() {
+  // ── Data state ────────────────────────────────────────────────────────────
   const [rawData, setRawData] = useState<DisplayProperty[]>([]);
   const [dataSource, setDataSource] = useState<"sj" | "lihtc">("sj");
   const [dataLoading, setDataLoading] = useState(false);
-  const [dataError, setDataError] = useState<string | null>(null);
-  const [hasSearched, setHasSearched] = useState(false);
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchLocation, setSearchLocation] = useState<GeoLocation | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-
-  const [selected, setSelected] = useState<DisplayProperty | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [searchLocation, setSearchLocation] = useState<GeoLocation | null>(null);
+  const [_searchQuery, setSearchQuery] = useState("");
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [mapFly, setMapFly] = useState<{ lat: number; lng: number; zoom: number; bbox?: [number, number, number, number] } | null>(null);
 
-  const [panelOpen, setPanelOpen] = useState(true);
-  const exportToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [exportDone, setExportDone] = useState(false);
+  // ── UI state ─────────────────────────────────────────────────────────────
+  const [selectedProperty, setSelectedProperty] = useState<DisplayProperty | null>(null);
+  const [showMapView, setShowMapView] = useState(false);
+  const [mapFly, setMapFly] = useState<{ lat: number; lng: number; zoom: number; bbox?: [number, number, number, number] } | null>(null);
+  const [hhSize, setHhSize] = useState(1);
+  const [incomeValue, setIncomeValue] = useState(0);
+  const [favorites, setFavorites] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem("housing-favorites-v2") ?? "[]")); }
+    catch { return new Set(); }
+  });
+  const [showSurvey, setShowSurvey] = useState(() => !hasSurveyCompleted());
+
+  // ── Filters (mostly for internal logic, income/hh exposed via UI state) ──
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+
+  const [_marketData, setMarketData] = useState<MarketData | null>(null);
+  const marketCacheRef = useRef<Record<string, MarketData>>({});
   const lastSearchRef = useRef<number>(0);
   const searchCounterRef = useRef<number>(0);
 
-  const [favorites, setFavorites] = useState<Set<string>>(() => {
-    try {
-      const raw = localStorage.getItem("housing-favorites-v2");
-      return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
-    } catch { return new Set(); }
-  });
-
-  const [applicationStatuses, setApplicationStatuses] = useState<AppStatuses>(() => {
-    try {
-      const raw = localStorage.getItem("housing-app-statuses-v1");
-      return raw ? JSON.parse(raw) as AppStatuses : {};
-    } catch { return {}; }
-  });
-
-  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
-  const [showSurvey, setShowSurvey] = useState(() => !hasSurveyCompleted());
-
-  const [marketData, setMarketData] = useState<MarketData | null>(null);
-  const marketCacheRef = useRef<Record<string, MarketData>>({});
-
-  const setAppStatus = useCallback((id: string, status: AppStatusValue | null) => {
-    setApplicationStatuses(prev => {
-      const next = { ...prev };
-      if (status === null) delete next[id];
-      else next[id] = status;
-      localStorage.setItem("housing-app-statuses-v1", JSON.stringify(next));
-      return next;
-    });
-  }, []);
-
-  // ── Market data fetch on property select ─────────────────────────────────
+  // Market data fetch on property select
   useEffect(() => {
-    if (!selected?.zip) { setMarketData(null); return; }
-    const zip = selected.zip.replace(/\D/g, "").slice(0, 5);
+    if (!selectedProperty?.zip) { setMarketData(null); return; }
+    const zip = selectedProperty.zip.replace(/\D/g, "").slice(0, 5);
     if (zip.length !== 5) { setMarketData(null); return; }
-
-    if (marketCacheRef.current[zip]) {
-      setMarketData(marketCacheRef.current[zip]);
-      return;
-    }
-
+    if (marketCacheRef.current[zip]) { setMarketData(marketCacheRef.current[zip]); return; }
     let cancelled = false;
-    const lat = selected.lat ?? null;
-    const lng = selected.lng ?? null;
-
+    const { lat, lng } = selectedProperty;
     Promise.all([
       invoke<FmrData | null>("fetch_fmr", { zip }).catch(() => null),
       invoke<AcsRentData | null>("fetch_acs_rent", { zip }).catch(() => null),
@@ -115,15 +155,13 @@ export default function App() {
       marketCacheRef.current[zip] = data;
       setMarketData(data);
     });
-
     return () => { cancelled = true; };
-  }, [selected?.zip]);
+  }, [selectedProperty?.zip]);
 
-  // ── City / ZIP search ────────────────────────────────────────────────────
+  // ── City / ZIP search ─────────────────────────────────────────────────────
   const handleSearch = useCallback(async (query: string) => {
     if (!query.trim()) return;
     const myCount = ++searchCounterRef.current;
-
     const now = Date.now();
     const gap = now - lastSearchRef.current;
     if (gap < 500) await new Promise(r => setTimeout(r, 500 - gap));
@@ -133,17 +171,13 @@ export default function App() {
     setSearchQuery(query);
     setSearchError(null);
     setSearchLoading(true);
-    setSelected(null);
+    setSelectedProperty(null);
 
     try {
       const loc = await invoke<GeoLocation>("geocode", { query });
       if (myCount !== searchCounterRef.current) return;
-
       setSearchLocation(loc);
-      setMapFly({
-        lat: loc.lat, lng: loc.lng, zoom: 12,
-        bbox: loc.bbox as [number, number, number, number],
-      });
+      setMapFly({ lat: loc.lat, lng: loc.lng, zoom: 12, bbox: loc.bbox as [number, number, number, number] });
 
       const cityPart = loc.display_name.split(",")[0].trim().toLowerCase();
       const displayLower = loc.display_name.toLowerCase();
@@ -151,26 +185,22 @@ export default function App() {
         && (displayLower.includes("california") || displayLower.includes(", ca,") || displayLower.includes(", ca "));
 
       setDataLoading(true);
-      setDataError(null);
 
       if (isSJ) {
         const d = await invoke<HousingCollection>("fetch_housing");
         if (myCount !== searchCounterRef.current) return;
         setRawData(normalizeFeatures(d.features, "sj"));
         setDataSource("sj");
-        setFilters(f => ({ ...f, activeOnly: true }));
       } else {
-        const d = await invoke<HousingCollection>("fetch_lihtc", {
-          lat: loc.lat, lng: loc.lng, radiusKm: 25,
-        });
+        const d = await invoke<HousingCollection>("fetch_lihtc", { lat: loc.lat, lng: loc.lng, radiusKm: 25 });
         if (myCount !== searchCounterRef.current) return;
         setRawData(normalizeFeatures(d.features, "lihtc"));
         setDataSource("lihtc");
-        setFilters(f => ({ ...f, activeOnly: false, incomeTier: "", voucherOnly: false }));
       }
 
       setHasSearched(true);
       setDataLoading(false);
+      setSearchLoading(false);
     } catch (e) {
       if (myCount !== searchCounterRef.current) return;
       const msg = typeof e === "string" ? e : JSON.stringify(e);
@@ -179,52 +209,27 @@ export default function App() {
       } else {
         setSearchError("Search failed. Check your connection and try again.");
       }
-      setHasSearched(true); // show empty state, not welcome
+      setHasSearched(true);
       setSearchLoading(false);
       setDataLoading(false);
-      return;
     }
-    if (myCount !== searchCounterRef.current) return;
-    setSearchLoading(false);
   }, []);
 
-  const handleWidenSearch = useCallback(async () => {
-    if (!searchLocation) return;
-    setDataLoading(true);
-    setDataError(null);
-    try {
-      const d = await invoke<HousingCollection>("fetch_lihtc", {
-        lat: searchLocation.lat, lng: searchLocation.lng, radiusKm: 60,
-      });
-      setRawData(normalizeFeatures(d.features, "lihtc"));
-      setDataSource("lihtc");
-      setDataLoading(false);
-    } catch (e) {
-      setDataError(typeof e === "string" ? e : "Failed to load housing data. Try again.");
-      setDataLoading(false);
-    }
-  }, [searchLocation]);
-
-  // ── Near me: geolocate immediately, then fetch LIHTC ────────────────────
+  // ── Near me ───────────────────────────────────────────────────────────────
   const handleNearMe = useCallback(() => {
     if (!navigator.geolocation) {
-      setSearchError("Geolocation is not supported by your browser.");
+      setSearchError("Geolocation is not available. Please search by city name.");
       return;
     }
-    // Set loading immediately — before the geolocation callback fires
     setDataLoading(true);
-    setDataError(null);
     setSearchError(null);
-    setSelected(null);
+    setSelectedProperty(null);
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
+        const { latitude: lat, longitude: lng } = pos.coords;
         setUserLocation({ lat, lng });
-        setFilters(f => ({ ...f, sortBy: "distance" }));
         setMapFly({ lat, lng, zoom: 12 });
-
         try {
           const [loc, d] = await Promise.all([
             invoke<GeoLocation>("reverse_geocode", { lat, lng }).catch(() => null),
@@ -233,11 +238,10 @@ export default function App() {
           if (loc) setSearchLocation(loc);
           setRawData(normalizeFeatures(d.features, "lihtc"));
           setDataSource("lihtc");
-          setFilters(f => ({ ...f, activeOnly: false, incomeTier: "", voucherOnly: false }));
           setHasSearched(true);
           setDataLoading(false);
-        } catch (e) {
-          setDataError("Failed to load housing data near your location. Try searching by city name.");
+        } catch {
+          setSearchError("Couldn't find homes near your location. Try searching by city name.");
           setDataLoading(false);
           setHasSearched(true);
         }
@@ -245,37 +249,46 @@ export default function App() {
       (err) => {
         setDataLoading(false);
         const msg =
-          err.code === 1 ? "Location access denied. Please allow location access or search by city name." :
-          err.code === 3 ? "Location request timed out. Try again or search by city." :
-          "Could not get your location. Search by city name instead.";
+          err.code === 1 ? "Location access was denied. Please search by city or ZIP code." :
+          err.code === 3 ? "Location request timed out. Try searching by city name." :
+          "Couldn't get your location. Try searching by city name.";
         setSearchError(msg);
       },
       { enableHighAccuracy: true, timeout: 8500 }
     );
   }, []);
 
-  // ── Clear search → welcome state ─────────────────────────────────────────
+  // ── Go home ───────────────────────────────────────────────────────────────
   const handleGoHome = useCallback(() => {
     setRawData([]);
     setDataSource("sj");
     setSearchQuery("");
     setSearchLocation(null);
-    setSelected(null);
+    setSelectedProperty(null);
     setHasSearched(false);
-    setFilters(DEFAULT_FILTERS);
-    setDataError(null);
     setSearchError(null);
+    setShowMapView(false);
   }, []);
 
-  // ── AMI Survey ───────────────────────────────────────────────────────────
+  // ── Favorites ─────────────────────────────────────────────────────────────
+  const toggleFavorite = useCallback((id: string) => {
+    setFavorites(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      localStorage.setItem("housing-favorites-v2", JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
+
+  // ── Survey ────────────────────────────────────────────────────────────────
   const handleSurveyComplete = useCallback((filterPatch: Partial<FilterState>, locationQuery: string) => {
     setShowSurvey(false);
+    if (filterPatch.householdSize) setHhSize(filterPatch.householdSize);
+    if (filterPatch.householdIncome) setIncomeValue(filterPatch.householdIncome);
+    setFilters(f => ({ ...f, ...filterPatch }));
     if (locationQuery) {
-      setFilters(f => ({ ...f, ...filterPatch }));
       handleSearch(locationQuery);
     } else {
-      // No location → auto near-me so user sees suggestions immediately
-      setFilters(f => ({ ...f, ...filterPatch, sortBy: "distance" }));
       handleNearMe();
     }
   }, [handleSearch, handleNearMe]);
@@ -285,134 +298,39 @@ export default function App() {
     try { localStorage.setItem("housing-survey-v1", "skipped"); } catch { /* */ }
   }, []);
 
-  // ── Favorites ────────────────────────────────────────────────────────────
-  const toggleFavorite = useCallback((id: string) => {
-    setFavorites(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      localStorage.setItem("housing-favorites-v2", JSON.stringify([...next]));
-      return next;
-    });
-  }, []);
-
-  // ── AMI for current location ─────────────────────────────────────────────
+  // ── AMI for current location ──────────────────────────────────────────────
   const ami = useMemo(() => {
-    if (!searchLocation) return 97800; // national median fallback
+    if (!searchLocation) return 97800;
     const city = searchLocation.display_name.split(",")[0];
     const state = rawData[0]?.state ?? "CA";
     return getAmi(state, city);
   }, [searchLocation, rawData]);
 
-  // ── Match score computation ──────────────────────────────────────────────
-  const matchScores = useMemo<Record<string, number>>(() => {
-    const scores: Record<string, number> = {};
-    for (const p of rawData) {
-      let score = 0;
-      if (userLocation && p.lat != null && p.lng != null) {
-        const km = haversineKm(userLocation.lat, userLocation.lng, p.lat, p.lng);
-        if (km < 1) score += 30;
-        else if (km < 5) score += 20;
-        else if (km < 15) score += 10;
-      }
-      if (filters.householdIncome > 0) {
-        const adjAmi = adjustedAmi(ami, filters.householdSize);
-        const incomeRatio = filters.householdIncome / adjAmi;
-        const ceiling = (p.incomeCeilingPct ?? 80) / 100;
-        if (incomeRatio <= ceiling) score += 25;
-      }
-      if (p.hasRentalAssistance) score += 15;
-      const expiryYear = p.source === "sj" && p.arExpiry
-        ? new Date(p.arExpiry).getFullYear()
-        : p.yearBuilt ? p.yearBuilt + 30 : null;
-      if (expiryYear) {
-        const yearsLeft = expiryYear - new Date().getFullYear();
-        if (yearsLeft < 0) score -= 20;
-        else if (yearsLeft > 20) score += 15;
-        else if (yearsLeft > 10) score += 10;
-      }
-      if (filters.populationType && p.populationTypes.includes(filters.populationType)) score += 10;
-      scores[p.id] = Math.max(0, Math.min(100, score));
-    }
-    return scores;
-  }, [rawData, userLocation, filters.householdIncome, filters.householdSize, filters.populationType, ami]);
-
-  // ── Filtered + sorted list ───────────────────────────────────────────────
+  // ── Filtered list (using UI-level hhSize + incomeValue) ──────────────────
   const filtered = useMemo<DisplayProperty[]>(() => {
     let items = rawData;
 
     if (filters.activeOnly && dataSource === "sj") {
       items = items.filter(p => p.arstatus === "Active");
     }
-    if (filters.populationType) {
-      items = items.filter(p => popMatches(p, filters.populationType));
-    }
-    if (filters.bedroomSize) {
-      items = items.filter(p => hasBedroomType(p, filters.bedroomSize));
-    }
-    if (filters.voucherOnly) {
-      items = items.filter(p => p.hasRentalAssistance);
-    }
-    if (filters.incomeTier) {
-      const tierCeiling = { ELI: 30, VLI: 50, LI: 80, Moderate: 120 }[filters.incomeTier] ?? 0;
-      if (dataSource === "sj") {
-        items = items.filter(p => {
-          if (filters.incomeTier === "ELI")      return (p.eliunits ?? 0) > 0;
-          if (filters.incomeTier === "VLI")      return (p.vliunits ?? 0) > 0;
-          if (filters.incomeTier === "LI")       return (p.liunits ?? 0) > 0;
-          if (filters.incomeTier === "Moderate") return (p.moderateunits ?? 0) > 0;
-          return true;
-        });
-      } else {
-        items = items.filter(p => !p.incomeCeilingPct || p.incomeCeilingPct <= tierCeiling);
-      }
-    }
 
-    if (filters.householdIncome > 0) {
-      items = items.filter(p => qualifiesForIncome(p, filters.householdIncome, filters.householdSize, ami));
+    if (incomeValue > 0) {
+      items = items.filter(p => qualifiesForIncome(p, incomeValue, hhSize, ami));
     }
 
     return [...items].sort((a, b) => {
-      if (filters.sortBy === "units") return b.affordableUnits - a.affordableUnits;
-      if (filters.sortBy === "distance" && userLocation) {
+      if (userLocation) {
         const dA = a.lat != null && a.lng != null
           ? haversineKm(userLocation.lat, userLocation.lng, a.lat, a.lng) : Infinity;
         const dB = b.lat != null && b.lng != null
           ? haversineKm(userLocation.lat, userLocation.lng, b.lat, b.lng) : Infinity;
-        return dA - dB;
-      }
-      if (filters.sortBy === "rent") {
-        const estRent = (p: DisplayProperty): number => {
-          if (p.source === "lihtc" && p.incomeCeilingPct) {
-            const r = rentRangeForTier(p.incomeCeilingPct, ami);
-            if (filters.bedroomSize === "0") return r.studio;
-            if (filters.bedroomSize === "1") return r.oneBed;
-            if (filters.bedroomSize === "2") return r.twoBed;
-            if (filters.bedroomSize === "3") return r.threeBed;
-            const b = p.bedrooms;
-            if (b.studio > 0) return r.studio;
-            if (b.br1 > 0) return r.oneBed;
-            if (b.br2 > 0) return r.twoBed;
-            return r.threeBed;
-          }
-          if (p.source === "sj") {
-            const tier = (p.eliunits ?? 0) > 0 ? "ELI"
-              : (p.vliunits ?? 0) > 0 ? "VLI"
-              : (p.liunits ?? 0) > 0 ? "LI" : "Moderate";
-            return rentRangeForTier(tier, ami).studio;
-          }
-          return Infinity;
-        };
-        return estRent(a) - estRent(b);
-      }
-      if (filters.sortBy === "match") {
-        return (matchScores[b.id] ?? 0) - (matchScores[a.id] ?? 0);
+        if (dA !== dB) return dA - dB;
       }
       return a.name.localeCompare(b.name);
     });
-  }, [rawData, filters, userLocation, dataSource, ami, matchScores]);
+  }, [rawData, filters.activeOnly, dataSource, incomeValue, hhSize, ami, userLocation]);
 
-  // ── Map GeoJSON ──────────────────────────────────────────────────────────
+  // ── Map GeoJSON ───────────────────────────────────────────────────────────
   const mapData = useMemo<HousingCollection>(() => ({
     type: "FeatureCollection",
     features: filtered
@@ -425,123 +343,124 @@ export default function App() {
       })),
   }), [filtered]);
 
+  const handleIncomeChange = useCallback((v: number) => {
+    setIncomeValue(v);
+    setFilters(f => ({ ...f, householdIncome: v }));
+  }, []);
+
+  const handleHhChange = useCallback((n: number) => {
+    setHhSize(n);
+    setFilters(f => ({ ...f, householdSize: n }));
+  }, []);
+
   const handleSelectFromMap = useCallback((rawProps: Record<string, unknown>) => {
     const id = String(rawProps._displayId ?? "");
     const found = filtered.find(p => p.id === id) ?? rawData.find(p => p.id === id);
-    if (found) setSelected(found);
+    if (found) setSelectedProperty(found);
   }, [filtered, rawData]);
 
-  const handleLocate = useCallback((loc: UserLocation) => {
-    setUserLocation(loc);
-    setFilters(f => ({ ...f, sortBy: "distance" }));
-  }, []);
-
-  const handleExportFavorites = useCallback(() => {
-    const favs = rawData.filter(p => favorites.has(p.id));
-    if (!favs.length) return;
-    const lines = favs.map(p => {
-      const status = applicationStatuses[p.id];
-      return [
-        p.name,
-        `${p.address}, ${p.city}, ${p.state} ${p.zip}`.trim().replace(/,\s*,/g, ","),
-        p.phone ? `Phone: ${p.phone}` : "",
-        p.website ? `Website: ${p.website}` : "",
-        p.affordableUnits ? `${p.affordableUnits} affordable units` : "",
-        status ? `Status: ${status}` : "",
-      ].filter(Boolean).join("\n");
-    });
-    const blob = new Blob([lines.join("\n\n---\n\n")], { type: "text/plain" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "saved-housing.txt";
-    a.click();
-    URL.revokeObjectURL(a.href);
-    if (exportToastRef.current) clearTimeout(exportToastRef.current);
-    setExportDone(true);
-    exportToastRef.current = setTimeout(() => setExportDone(false), 2500);
-  }, [rawData, favorites, applicationStatuses]);
-
   const loading = dataLoading || searchLoading;
-  const error = dataError || searchError;
 
   return (
     <>
-    {showSurvey && (
-      <AmiSurvey onComplete={handleSurveyComplete} onSkip={handleSurveySkip} />
-    )}
-    <div className={`app-layout${panelOpen ? "" : " panel-hidden"}`}>
-      <SidePanel
-        properties={filtered}
-        totalCount={rawData.length}
-        selected={selected}
-        loading={loading}
-        error={error}
-        filters={filters}
-        setFilters={setFilters}
-        favorites={favorites}
-        onToggleFavorite={toggleFavorite}
-        userLocation={userLocation}
-        onSelect={(p) => { setSelected(p); setPanelOpen(true); }}
-        onClear={() => setSelected(null)}
-        onRetry={searchQuery ? () => handleSearch(searchQuery) : handleGoHome}
-        onSearch={handleSearch}
-        onWidenSearch={searchLocation && dataSource !== "sj" ? handleWidenSearch : undefined}
-        onGoHome={hasSearched ? handleGoHome : undefined}
-        onExportFavorites={handleExportFavorites}
-        onNearMe={handleNearMe}
-        dataSource={dataSource}
-        ami={ami}
-        searchDisplay={searchLocation?.display_name}
-        hasSearched={hasSearched}
-        applicationStatuses={applicationStatuses}
-        onSetAppStatus={setAppStatus}
-        marketData={marketData}
-        matchScores={matchScores}
-      />
-      <div className="map-container">
-        <Suspense fallback={<div style={{ width: "100%", height: "100%", background: "var(--bg-deep)" }} />}>
-          <Map
-            data={mapData}
-            userLocation={userLocation}
-            mapFly={mapFly}
-            dataSource={dataSource}
-            selectedId={selected?.id ?? null}
-            onSelectFeature={(props) => { handleSelectFromMap(props); setPanelOpen(true); }}
-            onLocate={handleLocate}
-          />
-        </Suspense>
-        <button
-          className="panel-toggle-btn"
-          onClick={() => setPanelOpen(v => !v)}
-          aria-label={panelOpen ? "Hide panel" : "Show panel"}
-          title={panelOpen ? "Hide panel" : "Show panel"}
-        >
-          {panelOpen ? "◀" : "▶"}
-        </button>
-        <div className="map-legend" aria-label="Map legend">
-          <div className="legend-item">
-            <span className="legend-dot legend-cluster" aria-hidden="true" />
-            <span>Cluster</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-dot legend-selected" aria-hidden="true" />
-            <span>Selected</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-dot legend-active" aria-hidden="true" />
-            <span>{dataSource === "sj" ? "SJ Active" : "LIHTC"}</span>
-          </div>
-          <div className="legend-source" aria-label="Data source">
-            {dataSource === "sj" ? "City of San Jose" : "HUD LIHTC 2024"}
-          </div>
-        </div>
-        {exportDone && (
-          <div className="export-toast" role="status" aria-live="polite">
-            ✓ Saved to file
+      {showSurvey && (
+        <AmiSurvey onComplete={handleSurveyComplete} onSkip={handleSurveySkip} />
+      )}
+
+      <div className="new-app-layout">
+        <TopBar
+          searchDisplay={searchLocation?.display_name}
+          hasSearched={hasSearched}
+          loading={loading}
+          hhSize={hhSize}
+          onHhSizeChange={handleHhChange}
+          incomeValue={incomeValue}
+          onIncomeChange={handleIncomeChange}
+          onSearch={handleSearch}
+          onNearMe={handleNearMe}
+          onGoHome={hasSearched ? handleGoHome : undefined}
+          showMapView={showMapView}
+          onToggleMap={() => setShowMapView(v => !v)}
+          resultCount={filtered.length}
+        />
+
+        {/* Map view (toggled) */}
+        {showMapView && hasSearched && (
+          <div className="map-fullview">
+            <Suspense fallback={<div className="map-loading" />}>
+              <FullMap
+                data={mapData}
+                userLocation={userLocation}
+                mapFly={mapFly}
+                dataSource={dataSource}
+                selectedId={selectedProperty?.id ?? null}
+                onSelectFeature={props => { handleSelectFromMap(props); }}
+                onLocate={loc => setUserLocation(loc)}
+              />
+            </Suspense>
           </div>
         )}
+
+        {/* Card grid + detail panel */}
+        <div className={`content-area${selectedProperty ? " has-detail" : ""}`}>
+          {/* Left: card grid or welcome/empty */}
+          <div className="card-grid-area">
+            {!hasSearched && (
+              <WelcomeScreen
+                onSearch={handleSearch}
+                onNearMe={handleNearMe}
+                loading={loading}
+                error={searchError}
+              />
+            )}
+
+            {hasSearched && loading && (
+              <div className="loading-grid">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <div key={i} className="skeleton-card">
+                    <div className="skeleton-hero" />
+                    <div className="skeleton-body">
+                      <div className="skeleton-line" />
+                      <div className="skeleton-line short" />
+                      <div className="skeleton-btns" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {hasSearched && !loading && filtered.length === 0 && (
+              <EmptyState onReset={() => { setIncomeValue(0); setFilters(DEFAULT_FILTERS); }} />
+            )}
+
+            {hasSearched && !loading && filtered.length > 0 && (
+              <div className="prop-grid">
+                {filtered.map(p => (
+                  <PropertyCard
+                    key={p.id}
+                    property={p}
+                    userLocation={userLocation}
+                    saved={favorites.has(p.id)}
+                    onSelect={setSelectedProperty}
+                    onSave={toggleFavorite}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Right: detail panel */}
+          {selectedProperty && (
+            <DetailPanel
+              property={selectedProperty}
+              userLocation={userLocation}
+              saved={favorites.has(selectedProperty.id)}
+              onClose={() => setSelectedProperty(null)}
+              onSave={toggleFavorite}
+            />
+          )}
+        </div>
       </div>
-    </div>
     </>
   );
 }
