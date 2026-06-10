@@ -17,7 +17,7 @@ This app changes that.
 ## Features
 
 - **Nationwide coverage** — search any city or ZIP across all 50 states using the HUD LIHTC database (50,000+ properties)
-- **San Jose enhanced data** — detailed local housing inventory from the City of San Jose GeoHub
+- **Enhanced local data** — supplemental housing inventory from city/county open data portals (currently includes San Jose GeoHub)
 - **Income eligibility calculator** — enter your household income and size to see which programs you qualify for based on HUD Area Median Income (AMI) limits
 - **Accurate rent estimates** — HUD-regulated maximum rents per bedroom type and AMI tier
 - **My Applications tracker** — mark properties as Interested, Applied, or Waitlisted; persists across sessions
