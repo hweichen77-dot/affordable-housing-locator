@@ -235,7 +235,13 @@ export function DetailPanel({ property: p, userLocation, ami, saved, onClose, on
                 </span>
               </div>
             )}
-            {p.developer && (
+            {p.propertyManager && (
+              <div className="detail-fact-row">
+                <span className="detail-fact-label">Property manager</span>
+                <span className="detail-fact-value">{p.propertyManager}</span>
+              </div>
+            )}
+            {p.developer && p.developer !== p.propertyManager && (
               <div className="detail-fact-row">
                 <span className="detail-fact-label">Developer</span>
                 <span className="detail-fact-value">{p.developer}</span>
@@ -249,7 +255,10 @@ export function DetailPanel({ property: p, userLocation, ami, saved, onClose, on
             )}
             <div className="detail-fact-row">
               <span className="detail-fact-label">Data source</span>
-              <span className="detail-fact-value">{p.source === "sj" ? "City of San Jose" : "HUD LIHTC Database"}</span>
+              <span className="detail-fact-value detail-source-note">
+                {p.source === "sj" ? "City of San Jose" : "HUD LIHTC Database"}
+                <span className="detail-source-sub"> · info may differ from property website</span>
+              </span>
             </div>
           </div>
         </div>

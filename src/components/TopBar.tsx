@@ -8,6 +8,8 @@ interface TopBarProps {
   onHhSizeChange: (n: number) => void;
   incomeValue: number;
   onIncomeChange: (v: number) => void;
+  amiCeiling: number;
+  onAmiCeilingChange: (v: number) => void;
   onSearch: (q: string) => void;
   onNearMe: () => void;
   onGoHome?: () => void;
@@ -27,6 +29,18 @@ const HH_ICONS = [
 const INCOME_STOPS = [0, 20000, 35000, 50000, 65000, 80000, 100000, 130000, 160000, 200000];
 const MAX_SLIDER = INCOME_STOPS.length - 1;
 
+const AMI_STOPS = [0, 30, 50, 60, 80, 100, 120];
+const AMI_MAX = AMI_STOPS.length - 1;
+
+function sliderToAmi(v: number): number {
+  return AMI_STOPS[Math.round(v)] ?? 0;
+}
+
+function amiLabel(v: number): string {
+  if (v === 0) return "Any AMI";
+  return `≤${v}% AMI`;
+}
+
 function sliderToIncome(v: number): number {
   return INCOME_STOPS[Math.round(v)] ?? 0;
 }
@@ -39,14 +53,17 @@ function incomeLabel(v: number): string {
 
 export function TopBar({
   searchDisplay, hasSearched, loading, hhSize, onHhSizeChange,
-  incomeValue, onIncomeChange, onSearch, onNearMe, onGoHome,
-  showMapView, onToggleMap, resultCount,
+  incomeValue, onIncomeChange, amiCeiling, onAmiCeilingChange,
+  onSearch, onNearMe, onGoHome, showMapView, onToggleMap, resultCount,
 }: TopBarProps) {
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const sliderIdx = INCOME_STOPS.findIndex(s => s >= incomeValue);
   const sliderVal = sliderIdx < 0 ? MAX_SLIDER : sliderIdx;
+
+  const amiSliderVal = AMI_STOPS.findIndex(s => s >= amiCeiling);
+  const amiVal = amiSliderVal < 0 ? AMI_MAX : amiSliderVal;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,10 +120,29 @@ export function TopBar({
           </div>
         </div>
 
+        {/* AMI ceiling slider */}
+        <div className="topbar-control-group topbar-income-group">
+          <div className="topbar-income-label-row">
+            <span className="topbar-control-label">AMI limit</span>
+            <span className="topbar-income-value">{amiLabel(amiCeiling)}</span>
+          </div>
+          <input
+            type="range"
+            className="income-slider"
+            min={0}
+            max={AMI_MAX}
+            step={1}
+            value={amiVal}
+            onChange={e => onAmiCeilingChange(sliderToAmi(Number(e.target.value)))}
+            aria-label="Filter by maximum AMI percentage"
+            aria-valuetext={amiLabel(amiCeiling)}
+          />
+        </div>
+
         {/* Income slider */}
         <div className="topbar-control-group topbar-income-group">
           <div className="topbar-income-label-row">
-            <span className="topbar-control-label">Max income</span>
+            <span className="topbar-control-label">My income</span>
             <span className="topbar-income-value">{incomeLabel(incomeValue)}</span>
           </div>
           <input
