@@ -157,6 +157,9 @@ export function PropertyCard({ property: p, userLocation, saved, onSelect, onSav
           : <GradientHero name={p.name} />
         }
         <div className={`prop-tier-badge ${tier.colorClass}`}>{tier.label}</div>
+        {p.incomeCeilingPct != null && (
+          <div className="prop-ami-badge">≤{p.incomeCeilingPct}% AMI</div>
+        )}
         {dist && <div className="prop-dist-badge">{dist} away</div>}
         <button
           className={`prop-save-icon${saved ? " saved" : ""}`}

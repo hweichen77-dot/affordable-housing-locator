@@ -2723,10 +2723,25 @@ html, body, #root { height: 100%; overflow: hidden; }
 .prop-tier-badge.tier-mod  { background: oklch(22% 0.05 55 / 0.9);  color: oklch(72% 0.18 55); }
 
 /* Distance badge */
+.prop-ami-badge {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: oklch(12% 0.006 230 / 0.85);
+  color: oklch(80% 0.12 230);
+  border-radius: 20px;
+  padding: 3px 9px;
+  font-size: 10px;
+  font-weight: 700;
+  backdrop-filter: blur(4px);
+  z-index: 3;
+  letter-spacing: 0.03em;
+}
+
 .prop-dist-badge {
   position: absolute;
   top: 10px;
-  right: 10px;
+  right: 46px;
   background: oklch(12% 0.006 230 / 0.85);
   color: var(--text-secondary);
   border-radius: 20px;
@@ -2987,6 +3002,8 @@ html, body, #root { height: 100%; overflow: hidden; }
 .detail-fact-row:last-child { border-bottom: none; }
 .detail-fact-label { color: var(--text-muted); }
 .detail-fact-value { color: var(--text-primary); font-weight: 500; text-align: right; }
+.detail-source-note { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.detail-source-sub { font-size: 10px; color: var(--text-muted); font-weight: 400; }
 .detail-fact-link { color: var(--accent); font-weight: 500; text-decoration: none; }
 .detail-fact-link:hover { text-decoration: underline; }
 .detail-badge-assist {

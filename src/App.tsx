@@ -120,6 +120,7 @@ export default function App() {
   const [mapFly, setMapFly] = useState<{ lat: number; lng: number; zoom: number; bbox?: [number, number, number, number] } | null>(null);
   const [hhSize, setHhSize] = useState(1);
   const [incomeValue, setIncomeValue] = useState(0);
+  const [amiCeiling, setAmiCeiling] = useState(0);
   const [favorites, setFavorites] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem("housing-favorites-v2") ?? "[]")); }
     catch { return new Set(); }
@@ -318,7 +319,17 @@ export default function App() {
       items = items.filter(p => qualifiesForIncome(p, incomeValue, hhSize, ami));
     }
 
+    if (amiCeiling > 0) {
+      items = items.filter(p =>
+        p.incomeCeilingPct == null || p.incomeCeilingPct <= amiCeiling
+      );
+    }
+
     return [...items].sort((a, b) => {
+      // Sort by AMI ceiling ascending (most affordable first) when AMI filter active
+      if (amiCeiling > 0 && a.incomeCeilingPct != null && b.incomeCeilingPct != null) {
+        if (a.incomeCeilingPct !== b.incomeCeilingPct) return a.incomeCeilingPct - b.incomeCeilingPct;
+      }
       if (userLocation) {
         const dA = a.lat != null && a.lng != null
           ? haversineKm(userLocation.lat, userLocation.lng, a.lat, a.lng) : Infinity;
@@ -328,7 +339,7 @@ export default function App() {
       }
       return a.name.localeCompare(b.name);
     });
-  }, [rawData, filters.activeOnly, dataSource, incomeValue, hhSize, ami, userLocation]);
+  }, [rawData, filters.activeOnly, dataSource, incomeValue, hhSize, ami, amiCeiling, userLocation]);
 
   // ── Map GeoJSON ───────────────────────────────────────────────────────────
   const mapData = useMemo<HousingCollection>(() => ({
@@ -376,6 +387,8 @@ export default function App() {
           onHhSizeChange={handleHhChange}
           incomeValue={incomeValue}
           onIncomeChange={handleIncomeChange}
+          amiCeiling={amiCeiling}
+          onAmiCeilingChange={setAmiCeiling}
           onSearch={handleSearch}
           onNearMe={handleNearMe}
           onGoHome={hasSearched ? handleGoHome : undefined}
@@ -430,7 +443,7 @@ export default function App() {
             )}
 
             {hasSearched && !loading && filtered.length === 0 && (
-              <EmptyState onReset={() => { setIncomeValue(0); setFilters(DEFAULT_FILTERS); }} />
+              <EmptyState onReset={() => { setIncomeValue(0); setAmiCeiling(0); setFilters(DEFAULT_FILTERS); }} />
             )}
 
             {hasSearched && !loading && filtered.length > 0 && (
@@ -454,6 +467,7 @@ export default function App() {
             <DetailPanel
               property={selectedProperty}
               userLocation={userLocation}
+              ami={ami}
               saved={favorites.has(selectedProperty.id)}
               onClose={() => setSelectedProperty(null)}
               onSave={toggleFavorite}
