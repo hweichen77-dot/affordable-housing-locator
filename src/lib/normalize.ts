@@ -41,6 +41,14 @@ function normalizeSJ(feature: HousingFeature): DisplayProperty | null {
   const arExpRaw = p.AREXP;
   const arExpiry = typeof arExpRaw === "number" && arExpRaw > 0 ? arExpRaw : undefined;
 
+  // Derive lowest AMI tier present (most affordable tier available)
+  const eli = num(p.ELIUNITS);
+  const vli = num(p.VLIUNITS);
+  const li  = num(p.LIUNITS);
+  const mod = num(p.MODERATEUNITS);
+  const sjIncomeCeilingPct: number | undefined =
+    eli > 0 ? 30 : vli > 0 ? 50 : li > 0 ? 80 : mod > 0 ? 120 : undefined;
+
   return {
     id: `sj-${objectId || stableSlug(str(p.DEVELOPMENTNAME), str(p.ADDRESS))}`,
     source: "sj" as DataSource,
@@ -55,10 +63,11 @@ function normalizeSJ(feature: HousingFeature): DisplayProperty | null {
     website: str(p.WEBSITE) || undefined,
     developer: str(p.DEVELOPER) || undefined,
     isNonProfit: str(p.DEVTYPE) === "Non-Profit",
-    totalUnits: num(p.TOTALAFFUNITS) || total,
+    // SJ dataset only tracks affordable units; we don't have total building units
+    totalUnits: 0,
     affordableUnits: num(p.TOTALAFFUNITS) || total,
     bedrooms: emptyBedrooms(),
-    incomeCeilingPct: undefined,
+    incomeCeilingPct: sjIncomeCeilingPct,
     populationTypes: popTypes,
     hasRentalAssistance: false,
     yearBuilt: undefined,
