@@ -3310,3 +3310,268 @@ html, body, #root { height: 100%; overflow: hidden; }
   transition: background 0.12s, color 0.12s;
 }
 .detail-link-pill:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+/* ─── Detail Panel: Qualification Banner ─── */
+.detail-qualify-banner {
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.qualify-yes { background: oklch(17% 0.055 145); border: 1px solid oklch(32% 0.12 145); }
+.qualify-no  { background: oklch(17% 0.055 25);  border: 1px solid oklch(32% 0.12 25); }
+.qualify-icon { font-size: 18px; font-weight: 800; flex-shrink: 0; margin-top: 1px; }
+.qualify-yes .qualify-icon { color: var(--accent); }
+.qualify-no  .qualify-icon { color: oklch(65% 0.2 25); }
+.qualify-title { font-size: 13px; font-weight: 700; }
+.qualify-yes .qualify-title { color: oklch(75% 0.18 145); }
+.qualify-no  .qualify-title { color: oklch(72% 0.18 25); }
+.qualify-detail { font-size: 11px; color: var(--text-secondary); margin-top: 3px; font-variant-numeric: tabular-nums; line-height: 1.5; }
+.qualify-tip { font-size: 10px; color: var(--text-muted); margin-top: 4px; line-height: 1.4; font-style: italic; }
+
+/* ─── Detail Panel: AMI Explainer ─── */
+.detail-ami-explainer {
+  background: oklch(17% 0.04 235);
+  border: 1px solid oklch(27% 0.06 235);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.detail-ami-explainer-icon {
+  color: oklch(60% 0.15 235);
+  flex-shrink: 0;
+  font-size: 13px;
+  margin-top: 1px;
+}
+
+/* ─── Detail Panel: Income table highlights ─── */
+.detail-fact-header {
+  background: var(--bg-deep);
+  border-bottom: 1px solid var(--border) !important;
+}
+.detail-fact-header .detail-fact-label,
+.detail-fact-header .detail-fact-value {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+.detail-row-highlight { background: oklch(18% 0.05 145 / 0.6); }
+.detail-ok { color: var(--accent) !important; }
+.detail-you-tag { color: var(--accent); font-weight: 600; font-size: 10px; }
+
+.detail-fact-section-break {
+  background: var(--bg-deep);
+  border-top: 1px solid var(--border) !important;
+  padding: 8px 14px !important;
+}
+.detail-rent-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary) !important;
+}
+.detail-rent-note {
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 8px 14px;
+  line-height: 1.5;
+  border-top: 1px solid var(--border-light);
+  font-style: italic;
+}
+
+/* ─── Detail Panel: AMI Tier Guide ─── */
+.detail-ami-tiers { display: flex; flex-direction: column; gap: 3px; }
+.detail-ami-tier-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px 10px;
+  border-radius: 6px;
+  opacity: 0.45;
+  border: 1px solid transparent;
+}
+.detail-ami-tier-row.detail-ami-tier-active {
+  background: oklch(17% 0.055 145);
+  border-color: oklch(32% 0.12 145);
+  opacity: 1;
+}
+.detail-ami-tier-row.detail-ami-tier-above { opacity: 0.25; }
+.detail-ami-tier-pct {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  min-width: 78px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  margin-top: 1px;
+}
+.detail-ami-tier-active .detail-ami-tier-pct { color: var(--accent); }
+.detail-ami-tier-info { display: flex; flex-direction: column; gap: 2px; }
+.detail-ami-tier-name { font-size: 11px; font-weight: 600; color: var(--text-muted); line-height: 1.3; }
+.detail-ami-tier-active .detail-ami-tier-name { color: var(--text-primary); }
+.detail-ami-tier-programs { font-size: 10px; color: var(--text-muted); line-height: 1.4; }
+.detail-ami-guide-note {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  padding-left: 2px;
+  font-style: italic;
+}
+
+/* ─── Detail Panel: Application Checklist ─── */
+.detail-apply-intro {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+.detail-checklist { display: flex; flex-direction: column; gap: 5px; margin: 8px 0; }
+.detail-checklist-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+.detail-checklist-item {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+.detail-check-icon { color: var(--text-muted); flex-shrink: 0; font-size: 12px; margin-top: 1px; }
+.detail-apply-tip {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  font-style: italic;
+  border-top: 1px solid var(--border-light);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+/* ─── Survey: AMI Education Callout ─── */
+.survey-ami-callout {
+  background: oklch(15% 0.04 235);
+  border: 1px solid oklch(25% 0.06 235);
+  border-radius: 10px;
+  padding: 13px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.survey-ami-callout-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: oklch(68% 0.15 235);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.survey-ami-callout p {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin: 0;
+}
+.survey-ami-tier-pills { display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0; }
+.survey-tier-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.tier-eli { background: oklch(19% 0.06 20);  color: oklch(72% 0.18 20); }
+.tier-vli { background: oklch(19% 0.06 50);  color: oklch(72% 0.18 50); }
+.tier-li  { background: oklch(18% 0.055 145); color: var(--accent); }
+.tier-mod { background: oklch(18% 0.05 220); color: oklch(68% 0.15 220); }
+
+/* ─── Survey: Label hint ─── */
+.survey-label-hint { font-size: 10px; color: var(--text-muted); font-weight: 400; margin-left: 4px; }
+
+/* ─── Survey: Live AMI Tier Preview ─── */
+.survey-live-tier {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--tier-color, var(--accent));
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 2px;
+}
+.survey-live-tier-left { flex-shrink: 0; text-align: center; }
+.survey-live-tier-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 2px; }
+.survey-live-tier-pct {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--tier-color, var(--accent));
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.survey-live-tier-right { display: flex; flex-direction: column; gap: 3px; }
+.survey-live-tier-name { font-size: 12px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
+.survey-live-tier-desc { font-size: 10px; color: var(--text-muted); line-height: 1.5; }
+
+/* ─── Survey Step 4: Programs ─── */
+.survey-programs-section {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.survey-programs-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.survey-programs { display: flex; flex-direction: column; gap: 5px; }
+.survey-program-item {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+.survey-program-bullet { color: var(--accent); flex-shrink: 0; font-weight: 700; }
+.survey-program-tip {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  border-top: 1px solid var(--border-light);
+  padding-top: 8px;
+  font-style: italic;
+}
+
+/* ─── Survey Step 4: AMI note ─── */
+.survey-ami-note {
+  background: oklch(15% 0.04 235);
+  border: 1px solid oklch(25% 0.06 235);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.survey-ami-note strong { color: oklch(68% 0.15 235); }
+.survey-ami-note p { margin: 0; }

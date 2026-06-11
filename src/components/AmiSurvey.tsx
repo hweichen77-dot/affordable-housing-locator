@@ -48,6 +48,56 @@ const BR_OPTIONS: { value: BedroomPref; label: string }[] = [
   { value: "4", label: "4+ Bedrooms" },
 ];
 
+const TIER_PROGRAMS: Record<string, { programs: string[]; tip: string }> = {
+  ELI: {
+    programs: [
+      "Public Housing (HUD direct subsidy)",
+      "Emergency Housing Vouchers (EHV)",
+      "HUD-VASH (veterans)",
+      "Permanent Supportive Housing",
+      "Section 8 / Housing Choice Voucher (priority)",
+    ],
+    tip: "You're in the highest-priority income bracket. Seek a housing counselor — you may qualify for direct rental assistance.",
+  },
+  VLI: {
+    programs: [
+      "Section 8 / Housing Choice Vouchers",
+      "LIHTC apartments (50% & 60% AMI tiers)",
+      "HOME program rentals",
+      "HUD-assisted multifamily",
+      "Most city affordable housing programs",
+    ],
+    tip: "Most LIHTC affordable housing is available to you. Apply to multiple properties — waitlists can be long.",
+  },
+  LI: {
+    programs: [
+      "LIHTC apartments (60% & 80% AMI tiers)",
+      "Workforce housing programs",
+      "HOME program rentals",
+      "City/county affordable housing programs",
+      "Inclusionary units in market-rate buildings",
+    ],
+    tip: "You qualify for the most common type of affordable housing (LIHTC 60%). Prioritize properties marked 'Low Income'.",
+  },
+  Moderate: {
+    programs: [
+      "LIHTC 80–120% AMI units (less common)",
+      "City moderate-income programs",
+      "Inclusionary affordable units",
+      "Below-market-rate (BMR) programs",
+    ],
+    tip: "Fewer programs target moderate income. Look for inclusionary units in market-rate buildings and city BMR programs.",
+  },
+  AboveAMI: {
+    programs: [
+      "Market-rate housing",
+      "Employer housing assistance programs",
+      "Some workforce housing in high-cost metros",
+    ],
+    tip: "Most subsidized programs have income limits you exceed. You may still qualify for some workforce programs in high-cost metros like San Francisco or New York.",
+  },
+};
+
 function fmt$(n: number): string {
   return "$" + n.toLocaleString();
 }
@@ -107,11 +157,33 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
           </button>
         </div>
 
-        {/* Step 1: Household */}
+        {/* Step 1: Household + income */}
         {step === 1 && (
           <div className="survey-step">
             <h2 id="survey-title" className="survey-title">Tell us about your household</h2>
-            <p className="survey-sub">We'll help you find housing you actually qualify for.</p>
+            <p className="survey-sub">We'll filter housing you actually qualify for based on your income.</p>
+
+            {/* AMI education callout */}
+            <div className="survey-ami-callout">
+              <div className="survey-ami-callout-title">
+                <span>📊</span> Why your income matters
+              </div>
+              <p>
+                Affordable housing uses <strong>AMI (Area Median Income)</strong> — the middle income
+                for your metro area — to set eligibility limits. Most affordable apartments require
+                income below a set % of AMI.
+              </p>
+              <div className="survey-ami-tier-pills">
+                <span className="survey-tier-pill tier-eli">≤30% AMI: Emergency/Public</span>
+                <span className="survey-tier-pill tier-vli">≤50% AMI: Section 8</span>
+                <span className="survey-tier-pill tier-li">≤60% AMI: Most LIHTC</span>
+                <span className="survey-tier-pill tier-mod">≤80% AMI: Workforce</span>
+              </div>
+              <p>
+                The lower your % AMI, the more programs you qualify for and the lower your rent.
+                Your household size also matters — limits adjust for larger families.
+              </p>
+            </div>
 
             <div className="survey-field">
               <label className="survey-label">Household size</label>
@@ -130,7 +202,10 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
             </div>
 
             <div className="survey-field">
-              <label className="survey-label">Annual household income</label>
+              <label className="survey-label">
+                Annual household income
+                <span className="survey-label-hint"> (gross, before taxes)</span>
+              </label>
               <div className="survey-income-presets">
                 {INCOME_PRESETS.map(({ label, value }) => (
                   <button
@@ -160,6 +235,23 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
               </div>
             </div>
 
+            {/* Live AMI tier preview */}
+            {result && (
+              <div
+                className="survey-live-tier"
+                style={{ "--tier-color": result.color } as React.CSSProperties}
+              >
+                <div className="survey-live-tier-left">
+                  <div className="survey-live-tier-label">Your estimated AMI tier</div>
+                  <div className="survey-live-tier-pct">{result.amiPct}% AMI</div>
+                </div>
+                <div className="survey-live-tier-right">
+                  <div className="survey-live-tier-name">{result.label}</div>
+                  <div className="survey-live-tier-desc">{result.description}</div>
+                </div>
+              </div>
+            )}
+
             <div className="survey-actions">
               <button
                 className="survey-next-btn"
@@ -173,7 +265,7 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
           </div>
         )}
 
-        {/* Step 2: Housing Needs */}
+        {/* Step 2: Housing needs */}
         {step === 2 && (
           <div className="survey-step">
             <h2 className="survey-title">Your housing needs</h2>
@@ -229,7 +321,7 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
               <input
                 className="survey-location-input"
                 type="text"
-                placeholder="e.g. San Jose, CA  or  94103"
+                placeholder="e.g. Austin, TX  or  78701"
                 value={locationQuery}
                 onChange={e => setLocationQuery(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") setStep(4); }}
@@ -287,6 +379,34 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
                       <strong>{locationQuery}</strong>
                     </div>
                   )}
+                </div>
+
+                {/* Programs you qualify for */}
+                {TIER_PROGRAMS[result.tier] && (
+                  <div className="survey-programs-section">
+                    <div className="survey-programs-title">Programs you likely qualify for</div>
+                    <div className="survey-programs">
+                      {TIER_PROGRAMS[result.tier].programs.map(prog => (
+                        <div className="survey-program-item" key={prog}>
+                          <span className="survey-program-bullet">✓</span>
+                          <span>{prog}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="survey-program-tip">{TIER_PROGRAMS[result.tier].tip}</div>
+                  </div>
+                )}
+
+                {/* What AMI means in dollars */}
+                <div className="survey-ami-note">
+                  <strong>What does {result.amiPct}% AMI mean?</strong>
+                  <p>
+                    At {result.amiPct}% of the area median income, your household earns{" "}
+                    {result.amiPct < 100 ? "below" : "above"} the midpoint for your metro.
+                    {result.amiPct <= 60 && " This puts you in range for most LIHTC affordable housing."}
+                    {result.amiPct > 60 && result.amiPct <= 80 && " You qualify for workforce housing and some LIHTC properties."}
+                    {result.amiPct > 80 && " Look for moderate-income and inclusionary affordable programs."}
+                  </p>
                 </div>
               </>
             ) : (
