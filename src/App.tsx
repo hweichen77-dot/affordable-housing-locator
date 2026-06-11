@@ -468,6 +468,8 @@ export default function App() {
               property={selectedProperty}
               userLocation={userLocation}
               ami={ami}
+              userIncome={incomeValue}
+              userHhSize={hhSize}
               saved={favorites.has(selectedProperty.id)}
               onClose={() => setSelectedProperty(null)}
               onSave={toggleFavorite}
