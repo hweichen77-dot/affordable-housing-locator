@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react";
+import { useTranslation } from "react-i18next";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import type { DisplayProperty, HousingCollection } from "../types/housing";
 import type { UserLocation } from "../App";
@@ -82,6 +83,7 @@ export function DetailPanel({
   onClose,
   onSave,
 }: DetailPanelProps) {
+  const { t } = useTranslation();
   const tier = getAffordabilityTier(p);
   const dist = userLocation && p.lat != null && p.lng != null
     ? fmtDist(haversineKm(userLocation.lat, userLocation.lng, p.lat, p.lng))
@@ -113,7 +115,7 @@ export function DetailPanel({
     }],
   } : null;
 
-  // Use Google search as fallback — AHO's /search endpoint returns raw JSON, not a page
+  const hasWebsite = !!p.website;
   const applyUrl = p.website
     || `https://www.google.com/search?q=${encodeURIComponent(`"${p.name}" ${p.city} ${p.state} affordable housing apply`)}`;
 
@@ -128,14 +130,14 @@ export function DetailPanel({
   return (
     <aside className="detail-panel" aria-label={`Details for ${p.name}`}>
       <div className="detail-header">
-        <button className="detail-close-btn" onClick={onClose} aria-label="Close details" type="button">×</button>
+        <button className="detail-close-btn" onClick={onClose} aria-label={t("ui.closeDetails")} type="button">×</button>
         <button
           className={`detail-save-btn${saved ? " saved" : ""}`}
           onClick={() => onSave(p.id)}
           aria-pressed={saved}
           type="button"
         >
-          {saved ? "Saved" : "Save Home"}
+          {saved ? t("ui.saved") : t("ui.saveHome")}
         </button>
       </div>
 
@@ -407,13 +409,16 @@ export function DetailPanel({
         </div>
 
         {/* Primary CTA */}
+        {!hasWebsite && (
+          <p className="detail-no-website-note">{t("ui.noWebsiteNote")}</p>
+        )}
         <button
           className="detail-apply-btn"
           onClick={() => openExternal(applyUrl)}
           type="button"
-          aria-label="Apply or get more information"
+          aria-label={hasWebsite ? t("ui.applyNow") : t("ui.findAndApply")}
         >
-          Apply Now / Get Info
+          {hasWebsite ? t("ui.applyOrInfo") : t("ui.findAndApply")}
         </button>
 
         {/* Secondary links */}
@@ -425,14 +430,14 @@ export function DetailPanel({
                 onClick={() => openExternal(`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`)}
                 type="button"
               >
-                Get Directions
+                {t("ui.getDirections")}
               </button>
               <button
                 className="detail-link-pill"
                 onClick={() => openExternal(`https://www.google.com/maps/search/transit/@${p.lat},${p.lng},15z`)}
                 type="button"
               >
-                Nearby Transit
+                {t("ui.nearbyTransit")}
               </button>
             </>
           )}
@@ -441,7 +446,7 @@ export function DetailPanel({
             onClick={() => openExternal(`https://www.google.com/search?q=${encodeURIComponent(`${p.name} ${p.city} ${p.state} affordable housing waitlist apply`)}`)}
             type="button"
           >
-            Check Waitlist
+            {t("ui.checkWaitlist")}
           </button>
           {p.website && (
             <button
@@ -449,7 +454,7 @@ export function DetailPanel({
               onClick={() => openExternal(p.website!)}
               type="button"
             >
-              Official Website
+              {t("ui.officialWebsite")}
             </button>
           )}
         </div>
