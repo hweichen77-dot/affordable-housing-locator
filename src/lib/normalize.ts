@@ -103,6 +103,8 @@ function normalizeLIHTC(feature: HousingFeature): DisplayProperty | null {
 
   const yr = num(p.YR_PIS);
   const yearBuilt = yr > 0 && yr < 9000 ? yr : undefined;
+  const currentYear = new Date().getFullYear();
+  const isLikelyExpired = yearBuilt != null && (yearBuilt + 30) < currentYear;
 
   const zip = str(p.PROJ_ZIP);
   const lat = coords ? coords[1] : (typeof p.LAT === "number" ? p.LAT : null);
@@ -142,6 +144,7 @@ function normalizeLIHTC(feature: HousingFeature): DisplayProperty | null {
     populationTypes: popTypes,
     hasRentalAssistance: flag(p.RENTASSIST),
     yearBuilt,
+    isLikelyExpired: isLikelyExpired || undefined,
     raw: p,
   };
 }

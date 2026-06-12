@@ -67,6 +67,7 @@ export interface DisplayProperty {
   // LIHTC-specific
   lowCeil?: number;           // decoded lower AMI tier % (50 or 60) for mixed-tier properties
   ceilUnit?: number;          // units at lower AMI tier
+  isLikelyExpired?: boolean;  // yearBuilt + 30 < currentYear — affordability period may have ended
   raw: Record<string, unknown>;
 }
 
