@@ -112,7 +112,7 @@ export function AboutModal({ onClose }: AboutModalProps) {
               <li>Contact properties directly about open waitlists — apply to several at once</li>
               <li>Gather documents: photo ID, Social Security cards, proof of income, bank statements, rental history</li>
               <li>Submit and follow up periodically — waitlists move faster than expected</li>
-              <li>Use the <strong>My Applications</strong> tracker to stay organized</li>
+              <li>Use the status buttons on each property (Interested / Applied / Waitlisted) to track where you are</li>
             </ol>
             <p className="about-note">
               Need local help?{" "}

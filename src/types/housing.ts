@@ -20,7 +20,7 @@ export interface GeoLocation {
 }
 
 // Unified display model — source-agnostic
-export type DataSource = "sj" | "lihtc";
+export type DataSource = "sj" | "lihtc" | "public";
 
 export interface BedroomCounts {
   studio: number;

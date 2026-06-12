@@ -218,9 +218,16 @@ export default function App() {
         setRawData(normalizeFeatures(d.features, "sj"));
         setDataSource("sj");
       } else {
-        const d = await invoke<HousingCollection>("fetch_lihtc", { lat: loc.lat, lng: loc.lng, radiusKm: 25 });
+        const [d, pubD] = await Promise.all([
+          invoke<HousingCollection>("fetch_lihtc", { lat: loc.lat, lng: loc.lng, radiusKm: 25 }),
+          invoke<HousingCollection>("fetch_public_housing", { lat: loc.lat, lng: loc.lng, radiusKm: 25 })
+            .catch(() => ({ type: "FeatureCollection", features: [] } as HousingCollection)),
+        ]);
         if (myCount !== searchCounterRef.current) return;
-        setRawData(normalizeFeatures(d.features, "lihtc"));
+        setRawData([
+          ...normalizeFeatures(d.features, "lihtc"),
+          ...normalizeFeatures(pubD.features, "public"),
+        ]);
         setDataSource("lihtc");
       }
 
@@ -263,17 +270,22 @@ export default function App() {
         setUserLocation({ lat, lng });
         setMapFly({ lat, lng, zoom: 12 });
         try {
-          const [loc, d] = await Promise.all([
+          const [loc, d, pubD] = await Promise.all([
             invoke<GeoLocation>("reverse_geocode", { lat, lng }).catch(() => null),
             invoke<HousingCollection>("fetch_lihtc", { lat, lng, radiusKm: 25 }),
+            invoke<HousingCollection>("fetch_public_housing", { lat, lng, radiusKm: 25 })
+              .catch(() => ({ type: "FeatureCollection", features: [] } as HousingCollection)),
           ]);
           if (loc) setSearchLocation(loc);
-          setRawData(normalizeFeatures(d.features, "lihtc"));
+          setRawData([
+            ...normalizeFeatures(d.features, "lihtc"),
+            ...normalizeFeatures(pubD.features, "public"),
+          ]);
           setDataSource("lihtc");
           setHasSearched(true);
           setDataLoading(false);
         } catch {
-          setSearchError("Couldn't find homes near your location. Try searching by city name.");
+          setSearchError("Couldn't find homes near your location. Try searching by city or ZIP code.");
           setDataLoading(false);
           setHasSearched(true);
         }
@@ -528,6 +540,44 @@ export default function App() {
                 ))}
               </div>
             )}
+
+            {hasSearched && !loading && (() => {
+              const savedCount = rawData.filter(p => favorites.has(p.id)).length;
+              const trackingCount = rawData.filter(p => appStatuses[p.id]).length;
+              if (savedCount === 0 && trackingCount === 0) return null;
+              return (
+                <div className="results-filter-bar">
+                  {savedCount > 0 && (
+                    <button
+                      className={`results-filter-chip${filters.savedOnly ? " active" : ""}`}
+                      onClick={() => setFilters(f => ({ ...f, savedOnly: !f.savedOnly }))}
+                      type="button"
+                    >
+                      Saved ({savedCount})
+                    </button>
+                  )}
+                  {trackingCount > 0 && (
+                    <button
+                      className={`results-filter-chip${filters.savedOnly ? "" : ""}`}
+                      onClick={() => setFilters(f => ({ ...f, savedOnly: false }))}
+                      type="button"
+                      style={{ opacity: 0.7 }}
+                    >
+                      Tracking ({trackingCount})
+                    </button>
+                  )}
+                  {(filters.savedOnly) && (
+                    <button
+                      className="results-filter-clear"
+                      onClick={() => setFilters(f => ({ ...f, savedOnly: false }))}
+                      type="button"
+                    >
+                      Show all
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
 
             {hasSearched && !loading && filtered.length === 0 && (
               <EmptyState onReset={() => { setIncomeValue(0); setAmiCeiling(0); setFilters(DEFAULT_FILTERS); }} />
