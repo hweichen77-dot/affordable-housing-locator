@@ -161,27 +161,41 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
         {step === 1 && (
           <div className="survey-step">
             <h2 id="survey-title" className="survey-title">Tell us about your household</h2>
-            <p className="survey-sub">We'll filter housing you actually qualify for based on your income.</p>
+            <p className="survey-sub">Enter your income and household size to see which programs and properties you qualify for.</p>
 
             {/* AMI education callout */}
             <div className="survey-ami-callout">
-              <div className="survey-ami-callout-title">
-                <span>📊</span> Why your income matters
-              </div>
+              <div className="survey-ami-callout-title">How affordable housing eligibility works</div>
               <p>
-                Affordable housing uses <strong>AMI (Area Median Income)</strong> — the middle income
-                for your metro area — to set eligibility limits. Most affordable apartments require
-                income below a set % of AMI.
+                Every affordable housing program sets an income limit based on <strong>AMI — Area Median Income</strong>,
+                which is the midpoint household income for your metro area, published annually by HUD.
+                If the median income in your area is $100,000 for a family of 4:
               </p>
-              <div className="survey-ami-tier-pills">
-                <span className="survey-tier-pill tier-eli">≤30% AMI: Emergency/Public</span>
-                <span className="survey-tier-pill tier-vli">≤50% AMI: Section 8</span>
-                <span className="survey-tier-pill tier-li">≤60% AMI: Most LIHTC</span>
-                <span className="survey-tier-pill tier-mod">≤80% AMI: Workforce</span>
+              <div className="survey-ami-example-table">
+                <div className="survey-ami-ex-row tier-eli-bg">
+                  <span className="survey-ami-ex-pct">≤30% AMI</span>
+                  <span className="survey-ami-ex-dollar">≤$30,000/yr</span>
+                  <span className="survey-ami-ex-prog">Public housing, emergency vouchers</span>
+                </div>
+                <div className="survey-ami-ex-row tier-vli-bg">
+                  <span className="survey-ami-ex-pct">≤50% AMI</span>
+                  <span className="survey-ami-ex-dollar">≤$50,000/yr</span>
+                  <span className="survey-ami-ex-prog">Section 8, most HUD programs</span>
+                </div>
+                <div className="survey-ami-ex-row tier-li-bg">
+                  <span className="survey-ami-ex-pct">≤60% AMI</span>
+                  <span className="survey-ami-ex-dollar">≤$60,000/yr</span>
+                  <span className="survey-ami-ex-prog">Most LIHTC apartments</span>
+                </div>
+                <div className="survey-ami-ex-row tier-mod-bg">
+                  <span className="survey-ami-ex-pct">≤80% AMI</span>
+                  <span className="survey-ami-ex-dollar">≤$80,000/yr</span>
+                  <span className="survey-ami-ex-prog">Workforce &amp; inclusionary housing</span>
+                </div>
               </div>
-              <p>
-                The lower your % AMI, the more programs you qualify for and the lower your rent.
-                Your household size also matters — limits adjust for larger families.
+              <p className="survey-ami-note-small">
+                Limits adjust for household size — a family of 6 can earn more than a single person at the same % AMI.
+                Your actual dollar limit depends on your specific metro.
               </p>
             </div>
 
@@ -269,7 +283,7 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
         {step === 2 && (
           <div className="survey-step">
             <h2 className="survey-title">Your housing needs</h2>
-            <p className="survey-sub">Help us match you with relevant properties.</p>
+            <p className="survey-sub">Filter results by your specific housing needs.</p>
 
             <div className="survey-field">
               <label className="survey-label">Who is in your household?</label>
@@ -314,7 +328,7 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
         {step === 3 && (
           <div className="survey-step">
             <h2 className="survey-title">Where are you looking?</h2>
-            <p className="survey-sub">Enter a city or ZIP code to get personalized suggestions. You can also search later.</p>
+            <p className="survey-sub">Enter a city or ZIP code, or skip to search from the main screen.</p>
 
             <div className="survey-field">
               <label className="survey-label">City or ZIP code <span className="survey-optional">(optional)</span></label>
@@ -416,7 +430,7 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
             <div className="survey-actions survey-actions-two">
               <button className="survey-back-btn" onClick={() => setStep(3)} type="button">← Back</button>
               <button className="survey-complete-btn" onClick={handleComplete} type="button">
-                {locationQuery.trim() ? "Find housing for me →" : "Find housing near me →"}
+                {locationQuery.trim() ? "Search for housing →" : "Browse results →"}
               </button>
             </div>
           </div>

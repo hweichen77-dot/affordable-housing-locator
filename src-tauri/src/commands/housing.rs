@@ -98,6 +98,9 @@ const SJ_URL: &str =
 const LIHTC_URL: &str =
     "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/LIHTC/FeatureServer/0/query";
 
+const PUBLIC_HOUSING_URL: &str =
+    "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Public_Housing_Buildings/FeatureServer/0/query";
+
 const NOMINATIM_URL: &str = "https://nominatim.openstreetmap.org/search";
 const NOMINATIM_REVERSE_URL: &str = "https://nominatim.openstreetmap.org/reverse";
 
@@ -105,6 +108,10 @@ const LIHTC_FIELDS: &str =
     "OBJECTID,PROJECT,PROJ_ADD,PROJ_CTY,PROJ_ST,PROJ_ZIP,N_UNITS,LI_UNITS,\
      N_0BR,N_1BR,N_2BR,N_3BR,N_4BR,INC_CEIL,LOW_CEIL,CEILUNIT,TRGT_FAM,TRGT_ELD,\
      TRGT_DIS,TRGT_HML,RENTASSIST,NON_PROF,YR_PIS,CO_TEL,COMPANY,LAT,LON";
+
+const PUBLIC_HOUSING_FIELDS: &str =
+    "OBJECTID,PROJECT_NAME,BUILDING_NAME,STD_ADDR,STD_CITY,STD_ST,STD_ZIP5,\
+     LAT,LON,ACC_UNITS,TOTAL_DWELLING_UNITS,HA_PHN_NUM,BUILDING_STATUS_TYPE_CODE";
 
 const LIHTC_PAGE: usize = 1000;
 const LIHTC_MAX: usize = 5000;
@@ -286,6 +293,40 @@ pub async fn fetch_lihtc(
         collection_type: "FeatureCollection".into(),
         features: all_features,
     })
+}
+
+/// Fetch HUD Public Housing buildings within radius_km of lat/lng.
+/// Source: HUD Public Housing Buildings ArcGIS service (no API key required).
+#[tauri::command]
+pub async fn fetch_public_housing(
+    client: tauri::State<'_, reqwest::Client>,
+    lat: f64,
+    lng: f64,
+    radius_km: f64,
+) -> Result<HousingCollection, HousingError> {
+    let d_lat = radius_km / 111.0;
+    let d_lng = radius_km / (111.0 * (lat * PI / 180.0).cos());
+
+    let bbox = serde_json::json!({
+        "xmin": lng - d_lng,
+        "ymin": lat - d_lat,
+        "xmax": lng + d_lng,
+        "ymax": lat + d_lat,
+    })
+    .to_string();
+
+    let params: Vec<(&str, &str)> = vec![
+        ("geometry", bbox.as_str()),
+        ("geometryType", "esriGeometryEnvelope"),
+        ("inSR", "4326"),
+        ("outFields", PUBLIC_HOUSING_FIELDS),
+        ("where", "BUILDING_STATUS_TYPE_CODE='A'"),
+        ("returnGeometry", "true"),
+        ("f", "geojson"),
+        ("resultRecordCount", "2000"),
+    ];
+
+    fetch_geojson(&client, PUBLIC_HOUSING_URL, &params).await
 }
 
 /// Reverse geocode lat/lng to a location display name via Nominatim.

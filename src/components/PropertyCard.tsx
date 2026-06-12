@@ -195,6 +195,19 @@ export function PropertyCard({ property: p, userLocation, saved, appStatus, onSe
       <div className="prop-card-body">
         <div className="prop-card-name">{p.name}</div>
         <div className="prop-card-address">{plainAddress(p)}</div>
+        {p.source === "public" && (
+          <div className="prop-source-badge">Public Housing</div>
+        )}
+        {p.phone && (
+          <a
+            className="prop-phone"
+            href={`tel:${p.phone.replace(/[^0-9+]/g, "")}`}
+            onClick={e => e.stopPropagation()}
+            aria-label={`Call ${p.name}: ${p.phone}`}
+          >
+            {p.phone}
+          </a>
+        )}
 
         {/* Affordability bar */}
         <div className="prop-afford-row">
