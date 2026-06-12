@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useTranslation } from "react-i18next";
 import { TopBar } from "./components/TopBar";
 import { PropertyCard } from "./components/PropertyCard";
 import { DetailPanel } from "./components/DetailPanel";
@@ -45,6 +46,7 @@ function WelcomeScreen({ onSearch, onNearMe, loading, error }: {
   loading: boolean;
   error: string | null;
 }) {
+  const { t } = useTranslation();
   const cities = ["San Jose, CA", "Austin, TX", "Chicago, IL", "Seattle, WA", "Miami, FL", "Denver, CO"];
   return (
     <div className="welcome-screen">
@@ -55,8 +57,8 @@ function WelcomeScreen({ onSearch, onNearMe, loading, error }: {
               stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
           </svg>
         </div>
-        <h2 className="welcome-heading">Find a Home That Fits Your Budget</h2>
-        <p className="welcome-sub">We'll match you with affordable homes based on your income — no jargon, no complexity.</p>
+        <h2 className="welcome-heading">{t("welcome.heading")}</h2>
+        <p className="welcome-sub">{t("welcome.sub")}</p>
 
         {error && <p className="welcome-error" role="alert">{error}</p>}
 
@@ -66,10 +68,10 @@ function WelcomeScreen({ onSearch, onNearMe, loading, error }: {
           disabled={loading}
           type="button"
         >
-          {loading ? "Finding homes near you…" : "Find Homes Near Me"}
+          {loading ? t("welcome.findingNearMe") : t("welcome.findNearMe")}
         </button>
 
-        <p className="welcome-or">or search a city</p>
+        <p className="welcome-or">{t("welcome.searchCity")}</p>
 
         <div className="welcome-chips">
           {cities.map(city => (
@@ -79,10 +81,7 @@ function WelcomeScreen({ onSearch, onNearMe, loading, error }: {
           ))}
         </div>
 
-        <p className="welcome-note">
-          Over 50,000 income-limited homes across all 50 states.
-          <br />No account needed. Completely free.
-        </p>
+        <p className="welcome-note">{t("welcome.note")}</p>
       </div>
     </div>
   );
@@ -90,13 +89,14 @@ function WelcomeScreen({ onSearch, onNearMe, loading, error }: {
 
 // Empty state after search with no results
 function EmptyState({ onReset }: { onReset: () => void }) {
+  const { t } = useTranslation();
   return (
     <div className="empty-screen">
       <p className="empty-icon">○</p>
-      <p className="empty-heading">No homes found in this area</p>
-      <p className="empty-sub">Try adjusting your income filter or searching a nearby city.</p>
+      <p className="empty-heading">{t("empty.heading")}</p>
+      <p className="empty-sub">{t("empty.sub")}</p>
       <button className="empty-reset-btn" onClick={onReset} type="button">
-        Clear Filters
+        {t("empty.clearFilters")}
       </button>
     </div>
   );
@@ -129,6 +129,7 @@ export default function App() {
 
   // ── Filters (mostly for internal logic, income/hh exposed via UI state) ──
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const [showExpired, setShowExpired] = useState(false);
 
   const [_marketData, setMarketData] = useState<MarketData | null>(null);
   const marketCacheRef = useRef<Record<string, MarketData>>({});
@@ -315,6 +316,11 @@ export default function App() {
       items = items.filter(p => p.arstatus === "Active");
     }
 
+    // Filter out LIHTC properties whose 30-year affordability period has likely ended
+    if (!showExpired && dataSource === "lihtc") {
+      items = items.filter(p => !p.isLikelyExpired);
+    }
+
     if (incomeValue > 0) {
       items = items.filter(p => qualifiesForIncome(p, incomeValue, hhSize, ami));
     }
@@ -339,7 +345,7 @@ export default function App() {
       }
       return a.name.localeCompare(b.name);
     });
-  }, [rawData, filters.activeOnly, dataSource, incomeValue, hhSize, ami, amiCeiling, userLocation]);
+  }, [rawData, filters.activeOnly, dataSource, incomeValue, hhSize, ami, amiCeiling, userLocation, showExpired]);
 
   // ── Map GeoJSON ───────────────────────────────────────────────────────────
   const mapData = useMemo<HousingCollection>(() => ({
@@ -395,6 +401,9 @@ export default function App() {
           showMapView={showMapView}
           onToggleMap={() => setShowMapView(v => !v)}
           resultCount={filtered.length}
+          dataSource={dataSource}
+          showExpired={showExpired}
+          onToggleExpired={() => setShowExpired(v => !v)}
         />
 
         {/* Map view (toggled) */}

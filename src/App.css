@@ -3575,3 +3575,99 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .survey-ami-note strong { color: oklch(68% 0.15 235); }
 .survey-ami-note p { margin: 0; }
+
+/* ── New styles for P0/P1 fixes ─────────────────────────────────────────── */
+
+/* Expired property badge on PropertyCard hero */
+.prop-expired-badge {
+  position: absolute;
+  bottom: 36px;
+  left: 8px;
+  right: 8px;
+  background: oklch(18% 0.06 55 / 0.9);
+  border: 1px solid oklch(60% 0.16 55 / 0.6);
+  color: oklch(80% 0.18 55);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 5px;
+  text-align: center;
+  backdrop-filter: blur(4px);
+}
+
+/* No-website note on PropertyCard */
+.prop-no-website-note {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin: 0 0 4px;
+  line-height: 1.4;
+}
+
+/* No-website note on DetailPanel */
+.detail-no-website-note {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  background: oklch(18% 0.01 230);
+  border-radius: 6px;
+  border: 1px solid oklch(30% 0.01 230);
+  line-height: 1.5;
+}
+
+/* Household size numeric buttons (6, 7, 8+) */
+.hh-btn-num {
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 26px;
+  padding: 3px 5px;
+  font-family: inherit;
+}
+
+/* Language picker */
+.topbar-lang-picker {
+  display: flex;
+  gap: 2px;
+  border: 1px solid oklch(32% 0.012 230);
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.topbar-lang-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 6px;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  font-family: inherit;
+  transition: background 0.12s, color 0.12s;
+}
+.topbar-lang-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.topbar-lang-btn.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+/* Expiry toggle */
+.topbar-expiry-toggle {
+  background: oklch(20% 0.01 230);
+  border: 1px solid oklch(32% 0.012 230);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.topbar-expiry-toggle:hover { background: var(--bg-hover); color: var(--text-primary); }
+.topbar-expiry-toggle.active {
+  background: oklch(18% 0.04 55);
+  border-color: oklch(60% 0.16 55 / 0.5);
+  color: oklch(80% 0.18 55);
+}

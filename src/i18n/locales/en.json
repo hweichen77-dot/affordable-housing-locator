@@ -1,8 +1,8 @@
 {
   "search": {
-    "placeholder": "City, ZIP, or address",
+    "placeholder": "Enter a city or ZIP code…",
     "button": "Search",
-    "nearMe": "Near me",
+    "nearMe": "Near Me",
     "searching": "Searching...",
     "clear": "Clear"
   },
@@ -27,7 +27,52 @@
     "sortUnits": "Units",
     "sortDistance": "Distance",
     "sortRent": "Lowest rent",
-    "sortMatch": "Best match"
+    "sortMatch": "Best match",
+    "showExpired": "Show expired",
+    "hideExpired": "Hide expired"
+  },
+  "ui": {
+    "findHome": "Find Your Next Home",
+    "household": "Household",
+    "amiLimit": "AMI limit",
+    "myIncome": "My income",
+    "anyAmi": "Any AMI",
+    "anyIncome": "Any income",
+    "map": "Map",
+    "list": "List",
+    "homes": "homes",
+    "saveHome": "Save Home",
+    "saved": "Saved",
+    "closeDetails": "Close details",
+    "getDirections": "Get Directions",
+    "nearbyTransit": "Nearby Transit",
+    "checkWaitlist": "Check Waitlist",
+    "officialWebsite": "Official Website",
+    "applyNow": "Apply Now",
+    "searchOnline": "Search Online",
+    "requestInfo": "Request Info",
+    "applyOrInfo": "Apply Now / Get Info",
+    "findAndApply": "Find & Apply",
+    "noWebsiteNote": "No direct website on file — link opens a web search."
+  },
+  "welcome": {
+    "heading": "Find a Home That Fits Your Budget",
+    "sub": "We'll match you with affordable homes based on your income — no jargon, no complexity.",
+    "findNearMe": "Find Homes Near Me",
+    "findingNearMe": "Finding homes near you…",
+    "searchCity": "or search a city",
+    "note": "Over 50,000 income-limited homes across all 50 states. No account needed. Completely free.",
+    "stat1num": "40M+",
+    "stat1label": "Americans cost-burdened by rent",
+    "stat2num": "50K+",
+    "stat2label": "subsidized properties searchable",
+    "stat3num": "50",
+    "stat3label": "states covered"
+  },
+  "empty": {
+    "heading": "No homes found in this area",
+    "sub": "Try adjusting your income filter or searching a nearby city.",
+    "clearFilters": "Clear Filters"
   },
   "property": {
     "units": "affordable units",
@@ -46,15 +91,8 @@
     "save": "Save",
     "saved": "Saved",
     "share": "Share",
-    "copied": "Copied"
-  },
-  "welcome": {
-    "stat1num": "40M+",
-    "stat1label": "Americans cost-burdened by rent",
-    "stat2num": "50K+",
-    "stat2label": "subsidized properties searchable",
-    "stat3num": "50",
-    "stat3label": "states covered"
+    "copied": "Copied",
+    "expiredWarning": "Affordability period may have ended"
   },
   "status": {
     "found": "{{count}} properties found",

@@ -1,4 +1,5 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { useTranslation } from "react-i18next";
 import type { DisplayProperty } from "../types/housing";
 import type { UserLocation } from "../App";
 import { haversineKm, fmtDist } from "../lib/geo";
@@ -8,8 +9,8 @@ import { haversineKm, fmtDist } from "../lib/geo";
 export interface AffordabilityTier {
   label: string;
   sublabel: string;
-  barPct: number;          // 0-100 for progress bar fill
-  colorClass: string;      // CSS class for color
+  barPct: number;
+  colorClass: string;
 }
 
 export function getAffordabilityTier(p: DisplayProperty): AffordabilityTier {
@@ -35,7 +36,7 @@ export function getAffordabilityTier(p: DisplayProperty): AffordabilityTier {
   return { label: "Income Assisted", sublabel: "Income limits apply", barPct: 45, colorClass: "tier-mod" };
 }
 
-// ── OSM Tile hero image (uses property's lat/lng) ─────────────────────────────
+// ── OSM Tile hero image ────────────────────────────────────────────────────────
 
 function latLngToTile(lat: number, lng: number, zoom: number) {
   const n = 2 ** zoom;
@@ -45,11 +46,10 @@ function latLngToTile(lat: number, lng: number, zoom: number) {
   return { x, y, tx: Math.floor(x), ty: Math.floor(y) };
 }
 
-// ESRI World Imagery satellite tiles — free, no API key required for reasonable use
 const ESRI_SAT = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile";
 
 function PropertyHero({ lat, lng, name }: { lat: number; lng: number; name: string }) {
-  const ZOOM = 19; // building-level satellite view
+  const ZOOM = 19;
   const TILE = 256;
 
   const { x, y, tx, ty } = latLngToTile(lat, lng, ZOOM);
@@ -113,8 +113,6 @@ function GradientHero({ name }: { name: string }) {
   );
 }
 
-// ── Plain address display ─────────────────────────────────────────────────────
-
 function plainAddress(p: DisplayProperty): string {
   const parts = [p.address, p.city, p.state].filter(Boolean);
   if (p.zip) parts.push(p.zip);
@@ -132,13 +130,15 @@ interface PropertyCardProps {
 }
 
 export function PropertyCard({ property: p, userLocation, saved, onSelect, onSave }: PropertyCardProps) {
+  const { t } = useTranslation();
   const tier = getAffordabilityTier(p);
   const dist = userLocation && p.lat != null && p.lng != null
     ? fmtDist(haversineKm(userLocation.lat, userLocation.lng, p.lat, p.lng))
     : null;
 
+  const hasWebsite = !!p.website;
   const applyUrl = p.website
-    || `https://affordablehousingonline.com/search?name=${encodeURIComponent(p.name)}&city=${encodeURIComponent(p.city)}&state=${encodeURIComponent(p.state)}`;
+    || `https://www.google.com/search?q=${encodeURIComponent(`"${p.name}" ${p.city} ${p.state} affordable housing apply`)}`;
 
   const handleApply = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -161,10 +161,15 @@ export function PropertyCard({ property: p, userLocation, saved, onSelect, onSav
           <div className="prop-ami-badge">≤{p.incomeCeilingPct}% AMI</div>
         )}
         {dist && <div className="prop-dist-badge">{dist} away</div>}
+        {p.isLikelyExpired && (
+          <div className="prop-expired-badge" title={t("property.expiredWarning")}>
+            ⚠ {t("property.expiredWarning")}
+          </div>
+        )}
         <button
           className={`prop-save-icon${saved ? " saved" : ""}`}
           onClick={e => { e.stopPropagation(); onSave(p.id); }}
-          aria-label={saved ? "Remove from saved" : "Save this home"}
+          aria-label={saved ? t("ui.saved") : t("ui.saveHome")}
           aria-pressed={saved}
           type="button"
         >
@@ -185,23 +190,28 @@ export function PropertyCard({ property: p, userLocation, saved, onSelect, onSav
           <span className="prop-afford-sublabel">{tier.sublabel}</span>
         </div>
 
+        {/* Apply Now note for properties without a website */}
+        {!hasWebsite && (
+          <p className="prop-no-website-note">{t("ui.noWebsiteNote")}</p>
+        )}
+
         {/* CTAs */}
         <div className="prop-card-actions">
           <button
             className="prop-cta-apply"
             onClick={handleApply}
-            aria-label={`Apply or request info for ${p.name}`}
+            aria-label={`${hasWebsite ? t("ui.applyNow") : t("ui.searchOnline")} for ${p.name}`}
             type="button"
           >
-            Apply Now
+            {hasWebsite ? t("ui.applyNow") : t("ui.searchOnline")}
           </button>
           <button
             className="prop-cta-info"
             onClick={e => { e.stopPropagation(); onSelect(p); }}
-            aria-label={`See details for ${p.name}`}
+            aria-label={`${t("ui.requestInfo")} for ${p.name}`}
             type="button"
           >
-            Request Info
+            {t("ui.requestInfo")}
           </button>
         </div>
       </div>

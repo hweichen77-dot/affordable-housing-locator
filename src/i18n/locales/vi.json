@@ -1,6 +1,6 @@
 {
   "search": {
-    "placeholder": "Thành phố, mã ZIP hoặc địa chỉ",
+    "placeholder": "Thành phố hoặc mã ZIP…",
     "button": "Tìm kiếm",
     "nearMe": "Gần tôi",
     "searching": "Đang tìm...",
@@ -17,7 +17,7 @@
     "homeless": "Vô gia cư",
     "anyIncome": "Bất kỳ mức thu nhập",
     "eli": "Thu nhập rất thấp (≤30% AMI)",
-    "vli": "Thu nhập rất thấp (≤50% AMI)",
+    "vli": "Thu nhập thấp (≤50% AMI)",
     "li": "Thu nhập thấp (≤80% AMI)",
     "moderate": "Vừa phải (≤120% AMI)",
     "anySize": "Bất kỳ kích thước",
@@ -27,7 +27,52 @@
     "sortUnits": "Đơn vị",
     "sortDistance": "Khoảng cách",
     "sortRent": "Giá thấp nhất",
-    "sortMatch": "Phù hợp nhất"
+    "sortMatch": "Phù hợp nhất",
+    "showExpired": "Hiện đã hết hạn",
+    "hideExpired": "Ẩn đã hết hạn"
+  },
+  "ui": {
+    "findHome": "Tìm Ngôi Nhà Tiếp Theo",
+    "household": "Hộ gia đình",
+    "amiLimit": "Giới hạn AMI",
+    "myIncome": "Thu nhập của tôi",
+    "anyAmi": "Bất kỳ AMI",
+    "anyIncome": "Bất kỳ thu nhập",
+    "map": "Bản đồ",
+    "list": "Danh sách",
+    "homes": "nhà",
+    "saveHome": "Lưu",
+    "saved": "Đã lưu",
+    "closeDetails": "Đóng",
+    "getDirections": "Chỉ đường",
+    "nearbyTransit": "Giao thông gần đây",
+    "checkWaitlist": "Xem danh sách chờ",
+    "officialWebsite": "Trang web chính thức",
+    "applyNow": "Đăng ký ngay",
+    "searchOnline": "Tìm kiếm trực tuyến",
+    "requestInfo": "Yêu cầu thông tin",
+    "applyOrInfo": "Đăng ký / Thông tin",
+    "findAndApply": "Tìm & Đăng ký",
+    "noWebsiteNote": "Không có trang web — liên kết mở tìm kiếm trực tuyến."
+  },
+  "welcome": {
+    "heading": "Tìm Ngôi Nhà Phù Hợp Với Ngân Sách",
+    "sub": "Chúng tôi kết nối bạn với nhà ở giá rẻ dựa trên thu nhập — không thuật ngữ, không phức tạp.",
+    "findNearMe": "Tìm Nhà Gần Tôi",
+    "findingNearMe": "Đang tìm nhà gần bạn…",
+    "searchCity": "hoặc tìm kiếm thành phố",
+    "note": "Hơn 50,000 ngôi nhà giới hạn thu nhập trên 50 tiểu bang. Không cần tài khoản. Hoàn toàn miễn phí.",
+    "stat1num": "40M+",
+    "stat1label": "Người Mỹ bị gánh nặng thuê nhà",
+    "stat2num": "50K+",
+    "stat2label": "bất động sản được trợ cấp",
+    "stat3num": "50",
+    "stat3label": "tiểu bang được bao phủ"
+  },
+  "empty": {
+    "heading": "Không tìm thấy nhà trong khu vực này",
+    "sub": "Hãy thử điều chỉnh bộ lọc thu nhập hoặc tìm kiếm thành phố lân cận.",
+    "clearFilters": "Xóa bộ lọc"
   },
   "property": {
     "units": "đơn vị nhà ở",
@@ -46,15 +91,8 @@
     "save": "Lưu",
     "saved": "Đã lưu",
     "share": "Chia sẻ",
-    "copied": "Đã sao chép"
-  },
-  "welcome": {
-    "stat1num": "40M+",
-    "stat1label": "Người Mỹ bị gánh nặng thuê nhà",
-    "stat2num": "50K+",
-    "stat2label": "bất động sản được trợ cấp",
-    "stat3num": "50",
-    "stat3label": "tiểu bang được bao phủ"
+    "copied": "Đã sao chép",
+    "expiredWarning": "Thời gian giá rẻ có thể đã hết"
   },
   "status": {
     "found": "{{count}} bất động sản tìm thấy",

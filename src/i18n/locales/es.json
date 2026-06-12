@@ -1,6 +1,6 @@
 {
   "search": {
-    "placeholder": "Ciudad, código postal o dirección",
+    "placeholder": "Ciudad o código postal…",
     "button": "Buscar",
     "nearMe": "Cerca de mí",
     "searching": "Buscando...",
@@ -17,7 +17,7 @@
     "homeless": "Sin hogar",
     "anyIncome": "Cualquier nivel de ingresos",
     "eli": "Ingresos muy bajos (≤30% AMI)",
-    "vli": "Ingresos muy bajos (≤50% AMI)",
+    "vli": "Ingresos bajos (≤50% AMI)",
     "li": "Ingresos bajos (≤80% AMI)",
     "moderate": "Moderado (≤120% AMI)",
     "anySize": "Cualquier tamaño",
@@ -27,7 +27,52 @@
     "sortUnits": "Unidades",
     "sortDistance": "Distancia",
     "sortRent": "Menor precio",
-    "sortMatch": "Mejor coincidencia"
+    "sortMatch": "Mejor coincidencia",
+    "showExpired": "Ver vencidos",
+    "hideExpired": "Ocultar vencidos"
+  },
+  "ui": {
+    "findHome": "Encuentra Tu Próximo Hogar",
+    "household": "Hogar",
+    "amiLimit": "Límite AMI",
+    "myIncome": "Mi ingreso",
+    "anyAmi": "Cualquier AMI",
+    "anyIncome": "Cualquier ingreso",
+    "map": "Mapa",
+    "list": "Lista",
+    "homes": "hogares",
+    "saveHome": "Guardar",
+    "saved": "Guardado",
+    "closeDetails": "Cerrar",
+    "getDirections": "Cómo llegar",
+    "nearbyTransit": "Transporte cercano",
+    "checkWaitlist": "Ver lista de espera",
+    "officialWebsite": "Sitio oficial",
+    "applyNow": "Solicitar ahora",
+    "searchOnline": "Buscar en línea",
+    "requestInfo": "Solicitar info",
+    "applyOrInfo": "Solicitar / Más info",
+    "findAndApply": "Buscar y solicitar",
+    "noWebsiteNote": "Sin sitio web registrado — el enlace abre una búsqueda web."
+  },
+  "welcome": {
+    "heading": "Encuentra un Hogar Dentro de Tu Presupuesto",
+    "sub": "Te conectamos con viviendas asequibles según tus ingresos — sin jerga, sin complicaciones.",
+    "findNearMe": "Buscar Cerca de Mí",
+    "findingNearMe": "Buscando hogares cerca de ti…",
+    "searchCity": "o busca una ciudad",
+    "note": "Más de 50,000 hogares con límite de ingresos en los 50 estados. Sin cuenta. Completamente gratis.",
+    "stat1num": "40M+",
+    "stat1label": "Estadounidenses con carga de alquiler",
+    "stat2num": "50K+",
+    "stat2label": "propiedades subsidiadas disponibles",
+    "stat3num": "50",
+    "stat3label": "estados cubiertos"
+  },
+  "empty": {
+    "heading": "No se encontraron hogares en esta área",
+    "sub": "Intenta ajustar tu filtro de ingresos o busca una ciudad cercana.",
+    "clearFilters": "Limpiar filtros"
   },
   "property": {
     "units": "unidades asequibles",
@@ -46,15 +91,8 @@
     "save": "Guardar",
     "saved": "Guardado",
     "share": "Compartir",
-    "copied": "Copiado"
-  },
-  "welcome": {
-    "stat1num": "40M+",
-    "stat1label": "Estadounidenses con carga de alquiler",
-    "stat2num": "50K+",
-    "stat2label": "propiedades subsidiadas disponibles",
-    "stat3num": "50",
-    "stat3label": "estados cubiertos"
+    "copied": "Copiado",
+    "expiredWarning": "El período de asequibilidad puede haber terminado"
   },
   "status": {
     "found": "{{count}} propiedades encontradas",
