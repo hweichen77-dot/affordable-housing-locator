@@ -1,7 +1,7 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useTranslation } from "react-i18next";
 import type { DisplayProperty } from "../types/housing";
-import type { UserLocation } from "../App";
+import type { UserLocation, AppStatusValue } from "../App";
 import { haversineKm, fmtDist } from "../lib/geo";
 
 // ── Affordability tier from property data ─────────────────────────────────────
@@ -125,11 +125,25 @@ interface PropertyCardProps {
   property: DisplayProperty;
   userLocation: UserLocation | null;
   saved: boolean;
+  appStatus?: AppStatusValue;
   onSelect: (p: DisplayProperty) => void;
   onSave: (id: string) => void;
+  onStatusChange?: (id: string, status: AppStatusValue | null) => void;
 }
 
-export function PropertyCard({ property: p, userLocation, saved, onSelect, onSave }: PropertyCardProps) {
+const STATUS_LABELS: Record<AppStatusValue, string> = {
+  interested: "Interested",
+  applied: "Applied",
+  waitlisted: "Waitlisted",
+};
+
+const STATUS_COLORS: Record<AppStatusValue, string> = {
+  interested: "#3b82f6",
+  applied: "#10b981",
+  waitlisted: "#f59e0b",
+};
+
+export function PropertyCard({ property: p, userLocation, saved, appStatus, onSelect, onSave, onStatusChange }: PropertyCardProps) {
   const { t } = useTranslation();
   const tier = getAffordabilityTier(p);
   const dist = userLocation && p.lat != null && p.lng != null
@@ -196,6 +210,22 @@ export function PropertyCard({ property: p, userLocation, saved, onSelect, onSav
         )}
 
         {/* CTAs */}
+        {onStatusChange && (
+          <div className="prop-status-row" onClick={e => e.stopPropagation()}>
+            {(["interested", "applied", "waitlisted"] as AppStatusValue[]).map(s => (
+              <button
+                key={s}
+                className={`prop-status-btn${appStatus === s ? " active" : ""}`}
+                style={appStatus === s ? { borderColor: STATUS_COLORS[s], color: STATUS_COLORS[s] } : undefined}
+                onClick={() => onStatusChange(p.id, appStatus === s ? null : s)}
+                type="button"
+                aria-pressed={appStatus === s}
+              >
+                {STATUS_LABELS[s]}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="prop-card-actions">
           <button
             className="prop-cta-apply"
