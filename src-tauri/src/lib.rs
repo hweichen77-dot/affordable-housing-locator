@@ -5,7 +5,7 @@ use commands::housing::{fetch_housing, fetch_lihtc, geocode, reverse_geocode, fe
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let client = reqwest::Client::builder()
-        .user_agent("AffordableHousingLocator/1.0.0 (affordable-housing-locator; open-source)")
+        .user_agent("AffordableHousingLocator/1.4.0 (affordable-housing-locator; contact: jason.huang317235@gmail.com)")
         .timeout(std::time::Duration::from_secs(20))
         .build()
         .expect("failed to build HTTP client");
