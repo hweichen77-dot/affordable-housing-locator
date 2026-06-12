@@ -149,12 +149,54 @@ function normalizeLIHTC(feature: HousingFeature): DisplayProperty | null {
   };
 }
 
+// ─── HUD Public Housing Buildings ────────────────────────────────────────────
+
+function normalizePublicHousing(feature: HousingFeature): DisplayProperty | null {
+  const p = feature.properties;
+  if (!p) return null;
+  const coords = feature.geometry?.coordinates;
+
+  const name = str(p.PROJECT_NAME) || str(p.BUILDING_NAME) || "Public Housing";
+  const addr = str(p.STD_ADDR).trim();
+  const lat = coords ? coords[1] : (typeof p.LAT === "number" ? p.LAT : null);
+  const lng = coords ? coords[0] : (typeof p.LON === "number" ? p.LON : null);
+  const objectId = str(p.OBJECTID);
+  const units = num(p.ACC_UNITS) || num(p.TOTAL_DWELLING_UNITS);
+
+  return {
+    id: `pub-${objectId || stableSlug(name, addr)}`,
+    source: "public" as DataSource,
+    name,
+    address: addr,
+    city: str(p.STD_CITY).trim(),
+    state: str(p.STD_ST).trim(),
+    zip: str(p.STD_ZIP5).trim(),
+    lat,
+    lng,
+    phone: str(p.HA_PHN_NUM) || undefined,
+    website: undefined,
+    developer: undefined,
+    isNonProfit: false,
+    totalUnits: num(p.TOTAL_DWELLING_UNITS),
+    affordableUnits: units,
+    bedrooms: emptyBedrooms(),
+    incomeCeilingPct: 30,      // Public housing is ELI (≤30% AMI) by statute
+    populationTypes: [],
+    hasRentalAssistance: true, // Direct federal subsidy
+    yearBuilt: undefined,
+    raw: p,
+  };
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 export function normalizeFeatures(features: HousingFeature[], source: DataSource): DisplayProperty[] {
   const results: DisplayProperty[] = [];
   for (const f of features) {
-    const norm = source === "sj" ? normalizeSJ(f) : normalizeLIHTC(f);
+    let norm: DisplayProperty | null = null;
+    if (source === "sj") norm = normalizeSJ(f);
+    else if (source === "public") norm = normalizePublicHousing(f);
+    else norm = normalizeLIHTC(f);
     if (norm && (norm.lat !== null || norm.address)) results.push(norm);
   }
   return results;

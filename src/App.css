@@ -2642,6 +2642,42 @@ html, body, #root { height: 100%; overflow: hidden; }
   padding: 20px;
 }
 
+/* ─── Results filter bar (saved / tracking chips) ─── */
+.results-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px 0;
+  flex-wrap: wrap;
+}
+.results-filter-chip {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.results-filter-chip.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.results-filter-chip:hover:not(.active) { color: var(--text-primary); border-color: var(--accent-dim); }
+.results-filter-clear {
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  text-decoration: underline;
+}
+.results-filter-clear:hover { color: var(--text-primary); }
+
 /* ─── Property card ─── */
 .prop-card {
   background: var(--bg-panel);
@@ -2778,6 +2814,26 @@ html, body, #root { height: 100%; overflow: hidden; }
   color: var(--text-secondary);
   line-height: 1.4;
 }
+.prop-source-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+  margin-top: 3px;
+}
+.prop-phone {
+  display: block;
+  font-size: 11px;
+  color: var(--accent-dim);
+  text-decoration: none;
+  margin-top: 2px;
+}
+.prop-phone:hover { color: var(--accent); text-decoration: underline; }
 
 /* Affordability bar */
 .prop-afford-row {
@@ -3549,6 +3605,32 @@ html, body, #root { height: 100%; overflow: hidden; }
 .tier-vli { background: oklch(19% 0.06 50);  color: oklch(72% 0.18 50); }
 .tier-li  { background: oklch(18% 0.055 145); color: var(--accent); }
 .tier-mod { background: oklch(18% 0.05 220); color: oklch(68% 0.15 220); }
+
+/* ─── Survey: AMI example table ─── */
+.survey-ami-example-table {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 4px 0;
+}
+.survey-ami-ex-row {
+  display: grid;
+  grid-template-columns: 72px 90px 1fr;
+  gap: 6px;
+  align-items: center;
+  padding: 5px 8px;
+  font-size: 10px;
+}
+.tier-eli-bg { background: oklch(19% 0.06 20); }
+.tier-vli-bg { background: oklch(19% 0.06 50); }
+.tier-li-bg  { background: oklch(18% 0.055 145); }
+.tier-mod-bg { background: oklch(18% 0.05 220); }
+.survey-ami-ex-pct { font-weight: 700; color: var(--text-primary); }
+.survey-ami-ex-dollar { font-weight: 600; color: var(--text-secondary); }
+.survey-ami-ex-prog { color: var(--text-muted); }
+.survey-ami-note-small { font-size: 10px; color: var(--text-muted); margin: 0; line-height: 1.5; }
 
 /* ─── Survey: Label hint ─── */
 .survey-label-hint { font-size: 10px; color: var(--text-muted); font-weight: 400; margin-left: 4px; }
