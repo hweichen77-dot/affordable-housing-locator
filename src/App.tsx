@@ -6,7 +6,7 @@ import { PropertyCard } from "./components/PropertyCard";
 import { DetailPanel } from "./components/DetailPanel";
 import { AmiSurvey, hasSurveyCompleted } from "./components/AmiSurvey";
 import type { HousingCollection, GeoLocation, DisplayProperty, MarketData, FmrData, AcsRentData, IlData, RentcastListing } from "./types/housing";
-import { normalizeFeatures, qualifiesForIncome } from "./lib/normalize";
+import { normalizeFeatures, qualifiesForIncome, hasBedroomType, popMatches } from "./lib/normalize";
 import { haversineKm } from "./lib/geo";
 import { getAmi } from "./lib/ami";
 
@@ -18,6 +18,7 @@ export interface FilterState {
   incomeTier: "" | "ELI" | "VLI" | "LI" | "Moderate";
   bedroomSize: "" | "0" | "1" | "2" | "3" | "4";
   voucherOnly: boolean;
+  savedOnly: boolean;
   sortBy: "name" | "units" | "distance" | "rent" | "match";
   householdIncome: number;
   householdSize: number;
@@ -34,17 +35,19 @@ export const DEFAULT_FILTERS: FilterState = {
   incomeTier: "",
   bedroomSize: "",
   voucherOnly: false,
+  savedOnly: false,
   sortBy: "name",
   householdIncome: 0,
   householdSize: 1,
 };
 
 // Welcome screen shown when no search yet
-function WelcomeScreen({ onSearch, onNearMe, loading, error }: {
+function WelcomeScreen({ onSearch, onNearMe, loading, error, searchHistory }: {
   onSearch: (q: string) => void;
   onNearMe: () => void;
   loading: boolean;
   error: string | null;
+  searchHistory: string[];
 }) {
   const { t } = useTranslation();
   const cities = ["San Jose, CA", "Austin, TX", "Chicago, IL", "Seattle, WA", "Miami, FL", "Denver, CO"];
@@ -70,6 +73,19 @@ function WelcomeScreen({ onSearch, onNearMe, loading, error }: {
         >
           {loading ? t("welcome.findingNearMe") : t("welcome.findNearMe")}
         </button>
+
+        {searchHistory.length > 0 && (
+          <>
+            <p className="welcome-or">{t("welcome.recentSearches")}</p>
+            <div className="welcome-chips">
+              {searchHistory.map(q => (
+                <button key={q} className="welcome-chip welcome-chip-recent" onClick={() => onSearch(q)} type="button">
+                  {q}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
         <p className="welcome-or">{t("welcome.searchCity")}</p>
 
@@ -113,6 +129,10 @@ export default function App() {
   const [searchLocation, setSearchLocation] = useState<GeoLocation | null>(null);
   const [_searchQuery, setSearchQuery] = useState("");
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem("housing-search-history") ?? "[]"); }
+    catch { return []; }
+  });
 
   // ── UI state ─────────────────────────────────────────────────────────────
   const [selectedProperty, setSelectedProperty] = useState<DisplayProperty | null>(null);
@@ -126,6 +146,10 @@ export default function App() {
     catch { return new Set(); }
   });
   const [showSurvey, setShowSurvey] = useState(() => !hasSurveyCompleted());
+  const [appStatuses, setAppStatuses] = useState<AppStatuses>(() => {
+    try { return JSON.parse(localStorage.getItem("housing-app-status-v1") ?? "{}"); }
+    catch { return {}; }
+  });
 
   // ── Filters (mostly for internal logic, income/hh exposed via UI state) ──
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
@@ -203,6 +227,12 @@ export default function App() {
       setHasSearched(true);
       setDataLoading(false);
       setSearchLoading(false);
+      // Save to search history (last 5 unique successful searches)
+      setSearchHistory(prev => {
+        const next = [query, ...prev.filter(q => q !== query)].slice(0, 5);
+        try { localStorage.setItem("housing-search-history", JSON.stringify(next)); } catch { /* */ }
+        return next;
+      });
     } catch (e) {
       if (myCount !== searchCounterRef.current) return;
       const msg = typeof e === "string" ? e : JSON.stringify(e);
@@ -261,6 +291,7 @@ export default function App() {
   }, []);
 
   // ── Go home ───────────────────────────────────────────────────────────────
+  // handleGoHome defined after searchQuery state exists
   const handleGoHome = useCallback(() => {
     setRawData([]);
     setDataSource("sj");
@@ -278,6 +309,20 @@ export default function App() {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       localStorage.setItem("housing-favorites-v2", JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
+
+  // ── App status tracking ───────────────────────────────────────────────────
+  const handleStatusChange = useCallback((id: string, status: AppStatusValue | null) => {
+    setAppStatuses(prev => {
+      const next = { ...prev };
+      if (status === null) {
+        delete next[id];
+      } else {
+        next[id] = status;
+      }
+      try { localStorage.setItem("housing-app-status-v1", JSON.stringify(next)); } catch { /* */ }
       return next;
     });
   }, []);
@@ -308,7 +353,7 @@ export default function App() {
     return getAmi(state, city);
   }, [searchLocation, rawData]);
 
-  // ── Filtered list (using UI-level hhSize + incomeValue) ──────────────────
+  // ── Filtered list ─────────────────────────────────────────────────────────
   const filtered = useMemo<DisplayProperty[]>(() => {
     let items = rawData;
 
@@ -331,21 +376,53 @@ export default function App() {
       );
     }
 
+    // P0 fix: apply previously-dead filters
+    if (filters.bedroomSize) {
+      items = items.filter(p => hasBedroomType(p, filters.bedroomSize));
+    }
+
+    if (filters.populationType) {
+      items = items.filter(p => popMatches(p, filters.populationType));
+    }
+
+    if (filters.voucherOnly) {
+      items = items.filter(p => p.hasRentalAssistance);
+    }
+
+    if (filters.savedOnly) {
+      items = items.filter(p => favorites.has(p.id));
+    }
+
+    const dist = (p: DisplayProperty) =>
+      userLocation && p.lat != null && p.lng != null
+        ? haversineKm(userLocation.lat, userLocation.lng, p.lat, p.lng)
+        : Infinity;
+
+    // P0 fix: implement proper sortBy
     return [...items].sort((a, b) => {
-      // Sort by AMI ceiling ascending (most affordable first) when AMI filter active
-      if (amiCeiling > 0 && a.incomeCeilingPct != null && b.incomeCeilingPct != null) {
-        if (a.incomeCeilingPct !== b.incomeCeilingPct) return a.incomeCeilingPct - b.incomeCeilingPct;
+      switch (filters.sortBy) {
+        case "name":
+          return a.name.localeCompare(b.name);
+        case "distance":
+          return dist(a) - dist(b);
+        case "units":
+          return (b.affordableUnits || 0) - (a.affordableUnits || 0);
+        case "rent":
+          return (a.incomeCeilingPct ?? 999) - (b.incomeCeilingPct ?? 999);
+        case "match": {
+          // Qualified first (if income set), then by distance
+          if (incomeValue > 0) {
+            const aQ = qualifiesForIncome(a, incomeValue, hhSize, ami);
+            const bQ = qualifiesForIncome(b, incomeValue, hhSize, ami);
+            if (aQ !== bQ) return aQ ? -1 : 1;
+          }
+          return dist(a) - dist(b);
+        }
+        default:
+          return a.name.localeCompare(b.name);
       }
-      if (userLocation) {
-        const dA = a.lat != null && a.lng != null
-          ? haversineKm(userLocation.lat, userLocation.lng, a.lat, a.lng) : Infinity;
-        const dB = b.lat != null && b.lng != null
-          ? haversineKm(userLocation.lat, userLocation.lng, b.lat, b.lng) : Infinity;
-        if (dA !== dB) return dA - dB;
-      }
-      return a.name.localeCompare(b.name);
     });
-  }, [rawData, filters.activeOnly, dataSource, incomeValue, hhSize, ami, amiCeiling, userLocation, showExpired]);
+  }, [rawData, filters, dataSource, incomeValue, hhSize, ami, amiCeiling, userLocation, showExpired, favorites]);
 
   // ── Map GeoJSON ───────────────────────────────────────────────────────────
   const mapData = useMemo<HousingCollection>(() => ({
@@ -433,6 +510,7 @@ export default function App() {
                 onNearMe={handleNearMe}
                 loading={loading}
                 error={searchError}
+                searchHistory={searchHistory}
               />
             )}
 
@@ -463,8 +541,10 @@ export default function App() {
                     property={p}
                     userLocation={userLocation}
                     saved={favorites.has(p.id)}
+                    appStatus={appStatuses[p.id]}
                     onSelect={setSelectedProperty}
                     onSave={toggleFavorite}
+                    onStatusChange={handleStatusChange}
                   />
                 ))}
               </div>
@@ -480,8 +560,10 @@ export default function App() {
               userIncome={incomeValue}
               userHhSize={hhSize}
               saved={favorites.has(selectedProperty.id)}
+              appStatus={appStatuses[selectedProperty.id]}
               onClose={() => setSelectedProperty(null)}
               onSave={toggleFavorite}
+              onStatusChange={handleStatusChange}
             />
           )}
         </div>

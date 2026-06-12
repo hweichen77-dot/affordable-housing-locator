@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import type { DisplayProperty, HousingCollection } from "../types/housing";
-import type { UserLocation } from "../App";
+import type { UserLocation, AppStatusValue } from "../App";
 import { getAffordabilityTier } from "./PropertyCard";
 import { haversineKm, fmtDist } from "../lib/geo";
 import { rentRangeForTier, fmt, adjustedAmi } from "../lib/ami";
@@ -16,8 +16,10 @@ interface DetailPanelProps {
   userIncome?: number;
   userHhSize?: number;
   saved: boolean;
+  appStatus?: AppStatusValue;
   onClose: () => void;
   onSave: (id: string) => void;
+  onStatusChange?: (id: string, status: AppStatusValue | null) => void;
 }
 
 function bedroomRows(p: DisplayProperty) {
@@ -80,8 +82,10 @@ export function DetailPanel({
   userIncome = 0,
   userHhSize = 1,
   saved,
+  appStatus,
   onClose,
   onSave,
+  onStatusChange,
 }: DetailPanelProps) {
   const { t } = useTranslation();
   const tier = getAffordabilityTier(p);
@@ -411,6 +415,22 @@ export function DetailPanel({
         {/* Primary CTA */}
         {!hasWebsite && (
           <p className="detail-no-website-note">{t("ui.noWebsiteNote")}</p>
+        )}
+        {onStatusChange && (
+          <div className="detail-status-row">
+            <span className="detail-status-label">Track status:</span>
+            {(["interested", "applied", "waitlisted"] as AppStatusValue[]).map(s => (
+              <button
+                key={s}
+                className={`detail-status-btn${appStatus === s ? " active" : ""}`}
+                onClick={() => onStatusChange(p.id, appStatus === s ? null : s)}
+                type="button"
+                aria-pressed={appStatus === s}
+              >
+                {s.charAt(0).toUpperCase() + s.slice(1)}
+              </button>
+            ))}
+          </div>
         )}
         <button
           className="detail-apply-btn"
