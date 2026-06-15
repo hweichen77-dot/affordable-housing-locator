@@ -99,6 +99,10 @@
     "waitlistOpen": "Lista de espera abierta",
     "waitlistClosed": "Lista de espera cerrada"
   },
+  "detail": {
+    "shareLink": "Compartir",
+    "linkCopied": "¡Enlace copiado!"
+  },
   "data": {
     "freshness": {
       "lihtc": "Datos LIHTC · 2023",
