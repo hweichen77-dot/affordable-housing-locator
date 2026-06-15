@@ -198,6 +198,12 @@ export function PropertyCard({ property: p, userLocation, saved, appStatus, onSe
         {p.source === "public" && (
           <div className="prop-source-badge">Public Housing</div>
         )}
+        {p.source === "public" && p.waitlistStatus === "open" && (
+          <div className="prop-waitlist-badge prop-waitlist-open">{t("property.waitlistOpen")}</div>
+        )}
+        {p.source === "public" && p.waitlistStatus === "closed" && (
+          <div className="prop-waitlist-badge prop-waitlist-closed">{t("property.waitlistClosed")}</div>
+        )}
         {p.phone && (
           <a
             className="prop-phone"

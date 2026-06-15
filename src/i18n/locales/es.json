@@ -29,7 +29,9 @@
     "sortRent": "Menor precio",
     "sortMatch": "Mejor coincidencia",
     "showExpired": "Ver vencidos",
-    "hideExpired": "Ocultar vencidos"
+    "hideExpired": "Ocultar vencidos",
+    "clearAll": "Borrar todos los filtros",
+    "yearBuiltMin": "Año mínimo de construcción"
   },
   "ui": {
     "findHome": "Encuentra Tu Próximo Hogar",
@@ -93,7 +95,16 @@
     "saved": "Guardado",
     "share": "Compartir",
     "copied": "Copiado",
-    "expiredWarning": "El período de asequibilidad puede haber terminado"
+    "expiredWarning": "El período de asequibilidad puede haber terminado",
+    "waitlistOpen": "Lista de espera abierta",
+    "waitlistClosed": "Lista de espera cerrada"
+  },
+  "data": {
+    "freshness": {
+      "lihtc": "Datos LIHTC · 2023",
+      "public": "HUD ArcGIS · Live",
+      "all": "HUD data · 2023/Live"
+    }
   },
   "status": {
     "found": "{{count}} propiedades encontradas",
