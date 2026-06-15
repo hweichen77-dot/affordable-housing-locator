@@ -22,6 +22,7 @@ export interface FilterState {
   sortBy: "name" | "units" | "distance" | "rent" | "match";
   householdIncome: number;
   householdSize: number;
+  yearBuiltMin?: number;
 }
 
 export interface UserLocation { lng: number; lat: number; }
@@ -152,7 +153,16 @@ export default function App() {
   });
 
   // ── Filters (mostly for internal logic, income/hh exposed via UI state) ──
-  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState<FilterState>(() => {
+    try {
+      const saved = localStorage.getItem("housing-filters-v1");
+      if (saved) {
+        const parsed = JSON.parse(saved) as Partial<FilterState>;
+        return { ...DEFAULT_FILTERS, ...parsed };
+      }
+    } catch { /* */ }
+    return DEFAULT_FILTERS;
+  });
   const [showExpired, setShowExpired] = useState(false);
 
   const [_marketData, setMarketData] = useState<MarketData | null>(null);
@@ -183,6 +193,18 @@ export default function App() {
     });
     return () => { cancelled = true; };
   }, [selectedProperty?.zip]);
+
+  // ── Filter persistence ────────────────────────────────────────────────────
+  useEffect(() => {
+    try { localStorage.setItem("housing-filters-v1", JSON.stringify(filters)); } catch { /* */ }
+  }, [filters]);
+
+  const clearFilters = useCallback(() => {
+    setFilters(DEFAULT_FILTERS);
+    setIncomeValue(0);
+    setAmiCeiling(0);
+    try { localStorage.removeItem("housing-filters-v1"); } catch { /* */ }
+  }, []);
 
   // ── City / ZIP search ─────────────────────────────────────────────────────
   const handleSearch = useCallback(async (query: string) => {
@@ -405,6 +427,12 @@ export default function App() {
       items = items.filter(p => favorites.has(p.id));
     }
 
+    if (filters.yearBuiltMin != null) {
+      items = items.filter(p =>
+        p.source !== "lihtc" || (p.yearBuilt != null && p.yearBuilt >= filters.yearBuiltMin!)
+      );
+    }
+
     const dist = (p: DisplayProperty) =>
       userLocation && p.lat != null && p.lng != null
         ? haversineKm(userLocation.lat, userLocation.lng, p.lat, p.lng)
@@ -493,6 +521,10 @@ export default function App() {
           dataSource={dataSource}
           showExpired={showExpired}
           onToggleExpired={() => setShowExpired(v => !v)}
+          filters={filters}
+          onFiltersChange={setFilters}
+          onClearFilters={clearFilters}
+          hasPublicData={rawData.some(p => p.source === "public")}
         />
 
         {/* Map view (toggled) */}

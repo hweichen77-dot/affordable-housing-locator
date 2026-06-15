@@ -3807,3 +3807,75 @@ html, body, #root { height: 100%; overflow: hidden; }
   border-color: oklch(60% 0.16 55 / 0.5);
   color: oklch(80% 0.18 55);
 }
+
+/* Data freshness chip */
+.topbar-freshness {
+  font-size: 10px;
+  color: var(--text-muted);
+  background: oklch(20% 0.01 230);
+  border: 1px solid oklch(28% 0.01 230);
+  border-radius: 20px;
+  padding: 1px 7px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+/* Year built select */
+.topbar-year-select {
+  background: oklch(20% 0.01 230);
+  border: 1px solid oklch(32% 0.012 230);
+  color: var(--text-primary);
+  font-size: 10px;
+  font-family: inherit;
+  padding: 3px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.topbar-year-select:focus {
+  border-color: var(--accent-dim);
+}
+
+/* Clear all filters button */
+.topbar-clear-filters {
+  background: transparent;
+  border: 1px solid oklch(32% 0.012 230);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.topbar-clear-filters:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: oklch(42% 0.02 230);
+}
+
+/* Waitlist status badges */
+.prop-waitlist-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  margin-top: 3px;
+}
+.prop-waitlist-open {
+  background: oklch(20% 0.06 145);
+  color: oklch(72% 0.18 145);
+  border: 1px solid oklch(36% 0.1 145 / 0.5);
+}
+.prop-waitlist-closed {
+  background: oklch(20% 0.06 25);
+  color: oklch(70% 0.18 25);
+  border: 1px solid oklch(36% 0.1 25 / 0.5);
+}
