@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 import { TopBar } from "./components/TopBar";
 import { PropertyCard } from "./components/PropertyCard";
 import { DetailPanel } from "./components/DetailPanel";
+import { DeadlineWidget } from "./components/DeadlineWidget";
+import { ComparePanel } from "./components/ComparePanel";
 import { AmiSurvey, hasSurveyCompleted } from "./components/AmiSurvey";
 import type { HousingCollection, GeoLocation, DisplayProperty, MarketData, FmrData, AcsRentData, IlData, RentcastListing } from "./types/housing";
 import { normalizeFeatures, qualifiesForIncome, hasBedroomType, popMatches } from "./lib/normalize";
@@ -152,6 +154,11 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem("housing-app-status-v1") ?? "{}"); }
     catch { return {}; }
   });
+  const [deadlines, setDeadlines] = useState<Record<string, number>>(() => {
+    try { return JSON.parse(localStorage.getItem("housing-deadlines-v1") ?? "{}"); }
+    catch { return {}; }
+  });
+  const [compareIds, setCompareIds] = useState<Set<string>>(new Set());
 
   // ── Filters (mostly for internal logic, income/hh exposed via UI state) ──
   const [filters, setFilters] = useState<FilterState>(() => {
@@ -398,6 +405,36 @@ export default function App() {
     });
   }, []);
 
+  // ── Application deadlines ─────────────────────────────────────────────────
+  const setDeadline = useCallback((id: string, ms: number | null) => {
+    setDeadlines(prev => {
+      const next = { ...prev };
+      if (ms === null) {
+        delete next[id];
+      } else {
+        next[id] = ms;
+      }
+      try { localStorage.setItem("housing-deadlines-v1", JSON.stringify(next)); } catch { /* */ }
+      return next;
+    });
+  }, []);
+
+  // ── Property compare ──────────────────────────────────────────────────────
+  const toggleCompare = useCallback((id: string) => {
+    setCompareIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        if (next.size >= 3) return prev; // cap at 3, ignore adds beyond
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const clearCompare = useCallback(() => setCompareIds(new Set()), []);
+
   // ── Survey ────────────────────────────────────────────────────────────────
   const handleSurveyComplete = useCallback((filterPatch: Partial<FilterState>, locationQuery: string) => {
     setShowSurvey(false);
@@ -610,6 +647,14 @@ export default function App() {
               </div>
             )}
 
+            {hasSearched && !loading && (
+              <DeadlineWidget
+                properties={rawData}
+                deadlines={deadlines}
+                onSelect={setSelectedProperty}
+              />
+            )}
+
             {hasSearched && !loading && (() => {
               const savedCount = rawData.filter(p => favorites.has(p.id)).length;
               const trackingCount = rawData.filter(p => appStatuses[p.id]).length;
@@ -664,6 +709,8 @@ export default function App() {
                     onSelect={setSelectedProperty}
                     onSave={toggleFavorite}
                     onStatusChange={handleStatusChange}
+                    comparing={compareIds.has(p.id)}
+                    onToggleCompare={toggleCompare}
                   />
                 ))}
               </div>
@@ -680,12 +727,27 @@ export default function App() {
               userHhSize={hhSize}
               saved={favorites.has(selectedProperty.id)}
               appStatus={appStatuses[selectedProperty.id]}
+              deadline={deadlines[selectedProperty.id]}
               onClose={() => setSelectedProperty(null)}
               onSave={toggleFavorite}
               onStatusChange={handleStatusChange}
+              onSetDeadline={setDeadline}
             />
           )}
         </div>
+
+        {/* Compare panel — shown when 2+ properties selected for comparison */}
+        {compareIds.size >= 2 && (
+          <ComparePanel
+            properties={rawData.filter(p => compareIds.has(p.id))}
+            userLocation={userLocation}
+            appStatuses={appStatuses}
+            deadlines={deadlines}
+            onClear={clearCompare}
+            onRemove={toggleCompare}
+            onSelect={setSelectedProperty}
+          />
+        )}
       </div>
     </>
   );

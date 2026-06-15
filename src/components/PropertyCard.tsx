@@ -129,6 +129,8 @@ interface PropertyCardProps {
   onSelect: (p: DisplayProperty) => void;
   onSave: (id: string) => void;
   onStatusChange?: (id: string, status: AppStatusValue | null) => void;
+  comparing?: boolean;
+  onToggleCompare?: (id: string) => void;
 }
 
 const STATUS_LABELS: Record<AppStatusValue, string> = {
@@ -143,7 +145,7 @@ const STATUS_COLORS: Record<AppStatusValue, string> = {
   waitlisted: "#f59e0b",
 };
 
-export function PropertyCard({ property: p, userLocation, saved, appStatus, onSelect, onSave, onStatusChange }: PropertyCardProps) {
+export function PropertyCard({ property: p, userLocation, saved, appStatus, onSelect, onSave, onStatusChange, comparing, onToggleCompare }: PropertyCardProps) {
   const { t } = useTranslation();
   const tier = getAffordabilityTier(p);
   const dist = userLocation && p.lat != null && p.lng != null
@@ -189,6 +191,18 @@ export function PropertyCard({ property: p, userLocation, saved, appStatus, onSe
         >
           {saved ? "♥" : "♡"}
         </button>
+        {onToggleCompare && (
+          <button
+            className={`prop-compare-toggle${comparing ? " active" : ""}`}
+            onClick={e => { e.stopPropagation(); onToggleCompare(p.id); }}
+            aria-label={t("compare.add")}
+            aria-pressed={!!comparing}
+            type="button"
+          >
+            <span className="prop-compare-box" aria-hidden="true">{comparing ? "✓" : ""}</span>
+            {t("compare.add")}
+          </button>
+        )}
       </div>
 
       {/* Card body */}

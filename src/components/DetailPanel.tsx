@@ -17,9 +17,20 @@ interface DetailPanelProps {
   userHhSize?: number;
   saved: boolean;
   appStatus?: AppStatusValue;
+  deadline?: number;
   onClose: () => void;
   onSave: (id: string) => void;
   onStatusChange?: (id: string, status: AppStatusValue | null) => void;
+  onSetDeadline?: (id: string, ms: number | null) => void;
+}
+
+// Format an epoch-ms deadline as YYYY-MM-DD for a date input (local time)
+function toDateInputValue(ms: number): string {
+  const d = new Date(ms);
+  const yr = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${yr}-${mo}-${day}`;
 }
 
 function bedroomRows(p: DisplayProperty) {
@@ -83,9 +94,11 @@ export function DetailPanel({
   userHhSize = 1,
   saved,
   appStatus,
+  deadline,
   onClose,
   onSave,
   onStatusChange,
+  onSetDeadline,
 }: DetailPanelProps) {
   const { t } = useTranslation();
   const [showCopied, setShowCopied] = useState(false);
@@ -457,6 +470,41 @@ export function DetailPanel({
                 {s.charAt(0).toUpperCase() + s.slice(1)}
               </button>
             ))}
+          </div>
+        )}
+        {onSetDeadline && (
+          <div className="detail-deadline-row">
+            <label className="detail-deadline-label" htmlFor="detail-deadline-input">
+              {t("property.deadline")}
+            </label>
+            <div className="detail-deadline-controls">
+              <input
+                id="detail-deadline-input"
+                className="detail-deadline-input"
+                type="date"
+                value={deadline != null ? toDateInputValue(deadline) : ""}
+                onChange={e => {
+                  const v = e.target.value;
+                  if (!v) { onSetDeadline(p.id, null); return; }
+                  const [yr, mo, day] = v.split("-").map(Number);
+                  onSetDeadline(p.id, new Date(yr, mo - 1, day).getTime());
+                }}
+              />
+              {deadline != null && (
+                <button
+                  className="detail-deadline-clear"
+                  onClick={() => onSetDeadline(p.id, null)}
+                  type="button"
+                >
+                  {t("compare.clear")}
+                </button>
+              )}
+            </div>
+            {deadline != null && (
+              <p className="detail-deadline-set">
+                {new Date(deadline).toLocaleDateString(undefined, { weekday: "short", month: "long", day: "numeric", year: "numeric" })}
+              </p>
+            )}
           </div>
         )}
         <button
