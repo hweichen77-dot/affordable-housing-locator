@@ -97,7 +97,16 @@
     "copied": "Copiado",
     "expiredWarning": "El período de asequibilidad puede haber terminado",
     "waitlistOpen": "Lista de espera abierta",
-    "waitlistClosed": "Lista de espera cerrada"
+    "waitlistClosed": "Lista de espera cerrada",
+    "deadline": "Fecha límite de solicitud"
+  },
+  "compare": {
+    "add": "Comparar",
+    "title": "Comparar propiedades",
+    "clear": "Limpiar"
+  },
+  "deadline": {
+    "widgetTitle": "Fechas límite próximas"
   },
   "detail": {
     "shareLink": "Compartir",
