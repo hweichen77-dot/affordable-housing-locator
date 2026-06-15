@@ -151,6 +151,14 @@ function normalizeLIHTC(feature: HousingFeature): DisplayProperty | null {
 
 // ─── HUD Public Housing Buildings ────────────────────────────────────────────
 
+function mapWaitlistStatus(v: unknown): "open" | "closed" | "unknown" | undefined {
+  if (v == null || v === "") return undefined;
+  const s = str(v).toLowerCase().trim();
+  if (s === "open") return "open";
+  if (s === "closed" || s === "temporarily closed" || s === "temporary closed") return "closed";
+  return "unknown";
+}
+
 function normalizePublicHousing(feature: HousingFeature): DisplayProperty | null {
   const p = feature.properties;
   if (!p) return null;
@@ -162,6 +170,10 @@ function normalizePublicHousing(feature: HousingFeature): DisplayProperty | null
   const lng = coords ? coords[0] : (typeof p.LON === "number" ? p.LON : null);
   const objectId = str(p.OBJECTID);
   const units = num(p.ACC_UNITS) || num(p.TOTAL_DWELLING_UNITS);
+
+  // Check known HUD ArcGIS waitlist field names
+  const waitlistRaw = p.WAITLSTSTATUS ?? p.WAITLIST_STATUS ?? p.WTLST_STATUS ?? p.waitlistStatus;
+  const waitlistStatus = mapWaitlistStatus(waitlistRaw);
 
   return {
     id: `pub-${objectId || stableSlug(name, addr)}`,
@@ -184,6 +196,7 @@ function normalizePublicHousing(feature: HousingFeature): DisplayProperty | null
     populationTypes: [],
     hasRentalAssistance: true, // Direct federal subsidy
     yearBuilt: undefined,
+    waitlistStatus,
     raw: p,
   };
 }

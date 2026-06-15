@@ -1,6 +1,17 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n/config";
+import type { FilterState } from "../App";
+
+const YEAR_BUILT_OPTIONS = [
+  { label: "Any Year", value: undefined as number | undefined },
+  { label: "2000+", value: 2000 },
+  { label: "2005+", value: 2005 },
+  { label: "2010+", value: 2010 },
+  { label: "2015+", value: 2015 },
+  { label: "2018+", value: 2018 },
+  { label: "2020+", value: 2020 },
+];
 
 interface TopBarProps {
   searchDisplay?: string;
@@ -21,6 +32,10 @@ interface TopBarProps {
   dataSource: "sj" | "lihtc";
   showExpired: boolean;
   onToggleExpired: () => void;
+  filters: FilterState;
+  onFiltersChange: (f: FilterState) => void;
+  onClearFilters: () => void;
+  hasPublicData: boolean;
 }
 
 const HH_ICONS: { n: number; svg: React.ReactNode }[] = [
@@ -67,6 +82,7 @@ export function TopBar({
   incomeValue, onIncomeChange, amiCeiling, onAmiCeilingChange,
   onSearch, onNearMe, onGoHome, showMapView, onToggleMap, resultCount,
   dataSource, showExpired, onToggleExpired,
+  filters, onFiltersChange, onClearFilters, hasPublicData,
 }: TopBarProps) {
   const { t } = useTranslation();
   const [input, setInput] = useState("");
@@ -203,6 +219,37 @@ export function TopBar({
           </button>
         )}
 
+        {/* Year built filter — only for LIHTC data */}
+        {hasSearched && dataSource === "lihtc" && (
+          <div className="topbar-control-group">
+            <span className="topbar-control-label">{t("filters.yearBuiltMin")}</span>
+            <select
+              className="topbar-year-select"
+              value={filters.yearBuiltMin ?? ""}
+              onChange={e => {
+                const v = e.target.value === "" ? undefined : Number(e.target.value);
+                onFiltersChange({ ...filters, yearBuiltMin: v });
+              }}
+              aria-label={t("filters.yearBuiltMin")}
+            >
+              {YEAR_BUILT_OPTIONS.map(opt => (
+                <option key={opt.value ?? ""} value={opt.value ?? ""}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Clear all filters */}
+        {hasSearched && (
+          <button
+            className="topbar-clear-filters"
+            onClick={onClearFilters}
+            type="button"
+          >
+            {t("filters.clearAll")}
+          </button>
+        )}
+
         {/* Map toggle */}
         {hasSearched && (
           <button
@@ -235,6 +282,15 @@ export function TopBar({
         <div className="topbar-location-pill">
           <span>{searchDisplay.split(",").slice(0, 2).join(",")}</span>
           {resultCount > 0 && <span className="topbar-count">{resultCount} {t("ui.homes")}</span>}
+          {dataSource !== "sj" && (
+            <span className="topbar-freshness">
+              {dataSource === "lihtc" && hasPublicData
+                ? t("data.freshness.all")
+                : dataSource === "lihtc"
+                  ? t("data.freshness.lihtc")
+                  : t("data.freshness.public")}
+            </span>
+          )}
         </div>
       )}
     </header>

@@ -29,7 +29,9 @@
     "sortRent": "Giá thấp nhất",
     "sortMatch": "Phù hợp nhất",
     "showExpired": "Hiện đã hết hạn",
-    "hideExpired": "Ẩn đã hết hạn"
+    "hideExpired": "Ẩn đã hết hạn",
+    "clearAll": "Xóa tất cả bộ lọc",
+    "yearBuiltMin": "Năm xây tối thiểu"
   },
   "ui": {
     "findHome": "Tìm Ngôi Nhà Tiếp Theo",
@@ -93,7 +95,16 @@
     "saved": "Đã lưu",
     "share": "Chia sẻ",
     "copied": "Đã sao chép",
-    "expiredWarning": "Thời gian giá rẻ có thể đã hết"
+    "expiredWarning": "Thời gian giá rẻ có thể đã hết",
+    "waitlistOpen": "Danh sách chờ mở",
+    "waitlistClosed": "Danh sách chờ đóng"
+  },
+  "data": {
+    "freshness": {
+      "lihtc": "Dữ liệu LIHTC · 2023",
+      "public": "HUD ArcGIS · Live",
+      "all": "HUD data · 2023/Live"
+    }
   },
   "status": {
     "found": "{{count}} bất động sản tìm thấy",

@@ -29,7 +29,9 @@
     "sortRent": "Lowest rent",
     "sortMatch": "Best match",
     "showExpired": "Show expired",
-    "hideExpired": "Hide expired"
+    "hideExpired": "Hide expired",
+    "clearAll": "Clear all filters",
+    "yearBuiltMin": "Min Year Built"
   },
   "ui": {
     "findHome": "Find Your Next Home",
@@ -93,7 +95,16 @@
     "saved": "Saved",
     "share": "Share",
     "copied": "Copied",
-    "expiredWarning": "Affordability period may have ended"
+    "expiredWarning": "Affordability period may have ended",
+    "waitlistOpen": "Waitlist Open",
+    "waitlistClosed": "Waitlist Closed"
+  },
+  "data": {
+    "freshness": {
+      "lihtc": "LIHTC data · 2023",
+      "public": "HUD ArcGIS · Live",
+      "all": "HUD data · 2023/Live"
+    }
   },
   "status": {
     "found": "{{count}} properties found",
