@@ -97,7 +97,16 @@
     "copied": "Copied",
     "expiredWarning": "Affordability period may have ended",
     "waitlistOpen": "Waitlist Open",
-    "waitlistClosed": "Waitlist Closed"
+    "waitlistClosed": "Waitlist Closed",
+    "deadline": "Application deadline"
+  },
+  "compare": {
+    "add": "Compare",
+    "title": "Compare properties",
+    "clear": "Clear"
+  },
+  "deadline": {
+    "widgetTitle": "Upcoming deadlines"
   },
   "detail": {
     "shareLink": "Share",

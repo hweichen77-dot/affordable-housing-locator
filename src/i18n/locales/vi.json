@@ -97,7 +97,16 @@
     "copied": "Đã sao chép",
     "expiredWarning": "Thời gian giá rẻ có thể đã hết",
     "waitlistOpen": "Danh sách chờ mở",
-    "waitlistClosed": "Danh sách chờ đóng"
+    "waitlistClosed": "Danh sách chờ đóng",
+    "deadline": "Hạn nộp đơn"
+  },
+  "compare": {
+    "add": "So sánh",
+    "title": "So sánh bất động sản",
+    "clear": "Xóa"
+  },
+  "deadline": {
+    "widgetTitle": "Hạn sắp tới"
   },
   "detail": {
     "shareLink": "Chia sẻ",

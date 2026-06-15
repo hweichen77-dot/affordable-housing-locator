@@ -69,6 +69,7 @@ export interface DisplayProperty {
   ceilUnit?: number;          // units at lower AMI tier
   isLikelyExpired?: boolean;  // yearBuilt + 30 < currentYear — affordability period may have ended
   waitlistStatus?: "open" | "closed" | "unknown"; // public housing only
+  applicationDeadline?: number; // epoch ms — user-set application deadline
   raw: Record<string, unknown>;
 }
 
