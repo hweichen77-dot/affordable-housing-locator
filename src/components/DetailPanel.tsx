@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import type { DisplayProperty, HousingCollection } from "../types/housing";
@@ -88,6 +88,7 @@ export function DetailPanel({
   onStatusChange,
 }: DetailPanelProps) {
   const { t } = useTranslation();
+  const [showCopied, setShowCopied] = useState(false);
   const tier = getAffordabilityTier(p);
   const dist = userLocation && p.lat != null && p.lng != null
     ? fmtDist(haversineKm(userLocation.lat, userLocation.lng, p.lat, p.lng))
@@ -135,14 +136,40 @@ export function DetailPanel({
     <aside className="detail-panel" aria-label={`Details for ${p.name}`}>
       <div className="detail-header">
         <button className="detail-close-btn" onClick={onClose} aria-label={t("ui.closeDetails")} type="button">×</button>
-        <button
-          className={`detail-save-btn${saved ? " saved" : ""}`}
-          onClick={() => onSave(p.id)}
-          aria-pressed={saved}
-          type="button"
-        >
-          {saved ? t("ui.saved") : t("ui.saveHome")}
-        </button>
+        <div className="detail-header-actions">
+          {showCopied && (
+            <span className="detail-link-copied" aria-live="polite">{t("property.copied")}</span>
+          )}
+          <button
+            className="detail-share-btn"
+            type="button"
+            aria-label={t("property.share")}
+            onClick={async () => {
+              const url = window.location.href;
+              try {
+                if (navigator.clipboard) {
+                  await navigator.clipboard.writeText(url);
+                } else {
+                  window.prompt(t("property.share") + ":", url);
+                }
+                setShowCopied(true);
+                setTimeout(() => setShowCopied(false), 2000);
+              } catch {
+                window.prompt(t("property.share") + ":", url);
+              }
+            }}
+          >
+            {t("property.share")}
+          </button>
+          <button
+            className={`detail-save-btn${saved ? " saved" : ""}`}
+            onClick={() => onSave(p.id)}
+            aria-pressed={saved}
+            type="button"
+          >
+            {saved ? t("ui.saved") : t("ui.saveHome")}
+          </button>
+        </div>
       </div>
 
       {miniMapData && p.lat != null && p.lng != null && (

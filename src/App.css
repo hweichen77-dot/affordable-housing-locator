@@ -3030,6 +3030,40 @@ html, body, #root { height: 100%; overflow: hidden; }
 .detail-save-btn.saved { color: oklch(72% 0.18 20); background: oklch(20% 0.05 25); border-color: oklch(35% 0.1 25); }
 .detail-save-btn:hover:not(.saved) { background: var(--bg-hover); color: var(--text-secondary); }
 
+.detail-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-share-btn {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.detail-share-btn:hover { background: var(--bg-hover); color: var(--text-secondary); }
+
+.detail-link-copied {
+  font-size: 11px;
+  font-weight: 600;
+  color: oklch(72% 0.18 145);
+  animation: fade-in-out 2s ease forwards;
+}
+
+@keyframes fade-in-out {
+  0%   { opacity: 0; }
+  10%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 .detail-map-wrap {
   height: 200px;
   flex-shrink: 0;
