@@ -137,6 +137,7 @@ export default function App() {
 
   // ── UI state ─────────────────────────────────────────────────────────────
   const [selectedProperty, setSelectedProperty] = useState<DisplayProperty | null>(null);
+  const pendingSharedIdRef = useRef<string | null>(null);
   const [showMapView, setShowMapView] = useState(false);
   const [mapFly, setMapFly] = useState<{ lat: number; lng: number; zoom: number; bbox?: [number, number, number, number] } | null>(null);
   const [hhSize, setHhSize] = useState(1);
@@ -193,6 +194,42 @@ export default function App() {
     });
     return () => { cancelled = true; };
   }, [selectedProperty?.zip]);
+
+  // ── URL ?id= param: read on mount, store pending if data not yet loaded ──
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sharedId = params.get("id");
+    if (sharedId) {
+      pendingSharedIdRef.current = sharedId;
+    }
+  }, []);
+
+  // ── Apply pending shared ID once rawData is populated ────────────────────
+  useEffect(() => {
+    if (!pendingSharedIdRef.current || rawData.length === 0) return;
+    const id = pendingSharedIdRef.current;
+    pendingSharedIdRef.current = null;
+    const found = rawData.find(p => p.id === id);
+    if (found) setSelectedProperty(found);
+  }, [rawData]);
+
+  // ── Sync ?id= param when selectedProperty changes ────────────────────────
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const currentId = params.get("id");
+    if (selectedProperty) {
+      if (currentId !== selectedProperty.id) {
+        params.set("id", selectedProperty.id);
+        window.history.replaceState(null, "", "?" + params.toString());
+      }
+    } else {
+      if (currentId) {
+        params.delete("id");
+        const newSearch = params.toString();
+        window.history.replaceState(null, "", newSearch ? "?" + newSearch : window.location.pathname);
+      }
+    }
+  }, [selectedProperty]);
 
   // ── Filter persistence ────────────────────────────────────────────────────
   useEffect(() => {

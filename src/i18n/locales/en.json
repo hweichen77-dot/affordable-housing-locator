@@ -99,6 +99,10 @@
     "waitlistOpen": "Waitlist Open",
     "waitlistClosed": "Waitlist Closed"
   },
+  "detail": {
+    "shareLink": "Share",
+    "linkCopied": "Link copied!"
+  },
   "data": {
     "freshness": {
       "lihtc": "LIHTC data · 2023",

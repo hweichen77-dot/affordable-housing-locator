@@ -99,6 +99,10 @@
     "waitlistOpen": "Danh sách chờ mở",
     "waitlistClosed": "Danh sách chờ đóng"
   },
+  "detail": {
+    "shareLink": "Chia sẻ",
+    "linkCopied": "Đã sao chép liên kết!"
+  },
   "data": {
     "freshness": {
       "lihtc": "Dữ liệu LIHTC · 2023",
