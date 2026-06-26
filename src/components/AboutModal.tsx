@@ -8,11 +8,9 @@ export function AboutModal({ onClose }: AboutModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Close on Escape
     const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handleKey);
 
-    // Focus trap
     const modal = modalRef.current;
     if (modal) {
       const focusable = modal.querySelectorAll<HTMLElement>(

@@ -4,7 +4,6 @@ import type { DisplayProperty } from "../types/housing";
 import type { UserLocation, AppStatusValue } from "../App";
 import { haversineKm, fmtDist } from "../lib/geo";
 
-// ── Affordability tier from property data ─────────────────────────────────────
 
 export interface AffordabilityTier {
   label: string;
@@ -36,7 +35,6 @@ export function getAffordabilityTier(p: DisplayProperty): AffordabilityTier {
   return { label: "Income Assisted", sublabel: "Income limits apply", barPct: 45, colorClass: "tier-mod" };
 }
 
-// ── OSM Tile hero image ────────────────────────────────────────────────────────
 
 function latLngToTile(lat: number, lng: number, zoom: number) {
   const n = 2 ** zoom;
@@ -119,7 +117,6 @@ function plainAddress(p: DisplayProperty): string {
   return parts.join(", ");
 }
 
-// ── Card ─────────────────────────────────────────────────────────────────────
 
 interface PropertyCardProps {
   property: DisplayProperty;
@@ -166,7 +163,7 @@ export function PropertyCard({ property: p, userLocation, saved, appStatus, onSe
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(p); } }}
       aria-label={`${p.name}, ${p.city}, ${p.state}`}
     >
-      {/* Hero image */}
+      {}
       <div className="prop-card-hero">
         {p.lat != null && p.lng != null
           ? <PropertyHero lat={p.lat} lng={p.lng} name={p.name} />
@@ -205,7 +202,7 @@ export function PropertyCard({ property: p, userLocation, saved, appStatus, onSe
         )}
       </div>
 
-      {/* Card body */}
+      {}
       <div className="prop-card-body">
         <div className="prop-card-name">{p.name}</div>
         <div className="prop-card-address">{plainAddress(p)}</div>
@@ -229,7 +226,7 @@ export function PropertyCard({ property: p, userLocation, saved, appStatus, onSe
           </a>
         )}
 
-        {/* Affordability bar */}
+        {}
         <div className="prop-afford-row">
           <div className="prop-afford-bar-wrap" aria-label={`Affordability: ${tier.label}`}>
             <div className={`prop-afford-bar-fill ${tier.colorClass}`} style={{ width: `${tier.barPct}%` }} />
@@ -237,12 +234,12 @@ export function PropertyCard({ property: p, userLocation, saved, appStatus, onSe
           <span className="prop-afford-sublabel">{tier.sublabel}</span>
         </div>
 
-        {/* Apply Now note for properties without a website */}
+        {}
         {!hasWebsite && (
           <p className="prop-no-website-note">{t("ui.noWebsiteNote")}</p>
         )}
 
-        {/* CTAs */}
+        {}
         {onStatusChange && (
           <div className="prop-status-row" onClick={e => e.stopPropagation()}>
             {(["interested", "applied", "waitlisted"] as AppStatusValue[]).map(s => (

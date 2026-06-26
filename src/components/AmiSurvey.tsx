@@ -10,7 +10,7 @@ export function hasSurveyCompleted(): boolean {
 }
 
 export function saveSurvey(answers: SurveyAnswers): void {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(answers)); } catch { /* */ }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(answers)); } catch {  }
 }
 
 interface AmiSurveyProps {
@@ -145,7 +145,7 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
   return (
     <div className="survey-overlay" role="dialog" aria-modal="true" aria-labelledby="survey-title">
       <div className="survey-modal">
-        {/* Header */}
+        {}
         <div className="survey-header">
           <div className="survey-step-dots">
             {([1, 2, 3, 4] as Step[]).map(s => (
@@ -157,13 +157,13 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
           </button>
         </div>
 
-        {/* Step 1: Household + income */}
+        {}
         {step === 1 && (
           <div className="survey-step">
             <h2 id="survey-title" className="survey-title">Tell us about your household</h2>
             <p className="survey-sub">Enter your income and household size to see which programs and properties you qualify for.</p>
 
-            {/* AMI education callout */}
+            {}
             <div className="survey-ami-callout">
               <div className="survey-ami-callout-title">How affordable housing eligibility works</div>
               <p>
@@ -249,7 +249,7 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
               </div>
             </div>
 
-            {/* Live AMI tier preview */}
+            {}
             {result && (
               <div
                 className="survey-live-tier"
@@ -279,7 +279,7 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
           </div>
         )}
 
-        {/* Step 2: Housing needs */}
+        {}
         {step === 2 && (
           <div className="survey-step">
             <h2 className="survey-title">Your housing needs</h2>
@@ -324,7 +324,7 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
           </div>
         )}
 
-        {/* Step 3: Location */}
+        {}
         {step === 3 && (
           <div className="survey-step">
             <h2 className="survey-title">Where are you looking?</h2>
@@ -353,7 +353,7 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
           </div>
         )}
 
-        {/* Step 4: Results */}
+        {}
         {step === 4 && (
           <div className="survey-step survey-results">
             <h2 className="survey-title">Your housing profile</h2>
@@ -395,7 +395,7 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
                   )}
                 </div>
 
-                {/* Programs you qualify for */}
+                {}
                 {TIER_PROGRAMS[result.tier] && (
                   <div className="survey-programs-section">
                     <div className="survey-programs-title">Programs you likely qualify for</div>
@@ -411,7 +411,7 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
                   </div>
                 )}
 
-                {/* What AMI means in dollars */}
+                {}
                 <div className="survey-ami-note">
                   <strong>What does {result.amiPct}% AMI mean?</strong>
                   <p>

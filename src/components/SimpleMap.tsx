@@ -37,7 +37,6 @@ export function SimpleMap({ lat, lng, data }: SimpleMapProps) {
         data: data as GeoJSON.FeatureCollection,
       });
 
-      // Single glowing pin, no clusters
       map.addLayer({
         id: "simple-pin-halo",
         type: "circle",
