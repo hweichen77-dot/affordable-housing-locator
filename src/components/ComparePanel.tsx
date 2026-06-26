@@ -82,7 +82,7 @@ export function ComparePanel({
           </button>
         </div>
         <div className="compare-grid" style={{ gridTemplateColumns: `120px repeat(${properties.length}, minmax(0, 1fr))` }}>
-          {/* Header row: property names */}
+          {}
           <div className="compare-cell compare-row-label" />
           {properties.map(p => (
             <div key={`h-${p.id}`} className="compare-cell compare-col-head">

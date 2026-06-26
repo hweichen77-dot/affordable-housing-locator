@@ -1,6 +1,3 @@
-// 2024 HUD Area Median Income (4-person) by state — approximate state median
-// Source: HUD FY2024 Income Limits (area-weighted state averages)
-// For precise values by county/metro, HUD USER API token needed
 export const STATE_AMI_2024: Record<string, number> = {
   AL: 80100,  AK: 99400,  AZ: 85600,  AR: 72800,  CA: 117400,
   CO: 108300, CT: 109600, DE: 97000,  FL: 82300,  GA: 88200,
@@ -15,10 +12,7 @@ export const STATE_AMI_2024: Record<string, number> = {
   DC: 141300,
 };
 
-// Major metro overrides — HUD FY2024 Income Limits (4-person HMA)
-// Key = lowercase city name fragment; matched via includes() in getAmi()
 export const METRO_AMI_OVERRIDES: Record<string, number> = {
-  // California
   "san jose": 169600,
   "san francisco": 164000,
   "oakland": 164000,
@@ -45,14 +39,12 @@ export const METRO_AMI_OVERRIDES: Record<string, number> = {
   "napa": 117100,
   "chico": 76000,
   "visalia": 74100,
-  // Pacific Northwest
   "seattle": 135300,
   "tacoma": 115700,
   "bellevue": 135300,
   "portland": 103700,
   "spokane": 77800,
   "boise": 92400,
-  // Mountain
   "denver": 109200,
   "boulder": 126600,
   "fort collins": 101700,
@@ -63,14 +55,12 @@ export const METRO_AMI_OVERRIDES: Record<string, number> = {
   "tucson": 74500,
   "albuquerque": 76800,
   "las vegas": 74000,
-  // Texas
   "austin": 108700,
   "dallas": 96900,
   "fort worth": 96900,
   "houston": 89700,
   "san antonio": 76900,
   "el paso": 65900,
-  // Midwest
   "chicago": 101000,
   "minneapolis": 112300,
   "milwaukee": 88100,
@@ -85,7 +75,6 @@ export const METRO_AMI_OVERRIDES: Record<string, number> = {
   "des moines": 91100,
   "madison": 102900,
   "grand rapids": 86600,
-  // South
   "atlanta": 97200,
   "nashville": 100100,
   "charlotte": 89100,
@@ -107,7 +96,6 @@ export const METRO_AMI_OVERRIDES: Record<string, number> = {
   "little rock": 78000,
   "columbia": 85200,
   "greenville": 82500,
-  // Northeast
   "new york": 128500,
   "boston": 143000,
   "philadelphia": 100300,
@@ -125,12 +113,10 @@ export const METRO_AMI_OVERRIDES: Record<string, number> = {
   "manchester": 97800,
   "portland me": 105000,
   "burlington": 97200,
-  // Hawaii & Alaska
   "honolulu": 118500,
   "anchorage": 101900,
 };
 
-// HUD household-size adjustment factors (from HUD's published methodology)
 const SIZE_FACTOR: Record<number, number> = {
   1: 0.70, 2: 0.80, 3: 0.90, 4: 1.00,
   5: 1.08, 6: 1.16, 7: 1.24, 8: 1.32,
@@ -143,7 +129,7 @@ export function getAmi(state: string, cityName?: string): number {
       if (city.includes(key) || key.includes(city.split(",")[0].trim())) return val;
     }
   }
-  return STATE_AMI_2024[state.toUpperCase()] ?? 97800; // national median fallback
+  return STATE_AMI_2024[state.toUpperCase()] ?? 97800;
 }
 
 export function adjustedAmi(ami4: number, persons: number): number {

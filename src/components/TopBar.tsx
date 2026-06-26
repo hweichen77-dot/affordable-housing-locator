@@ -137,7 +137,7 @@ export function TopBar({
       </form>
 
       <div className="topbar-controls">
-        {/* Household size 1–8 */}
+        {}
         <div className="topbar-control-group">
           <span className="topbar-control-label">{t("ui.household")}</span>
           <div className="hh-picker" role="group" aria-label="Household size">
@@ -153,7 +153,7 @@ export function TopBar({
                 {svg}
               </button>
             ))}
-            {/* 6, 7, 8+ as numeric buttons */}
+            {}
             {[6, 7, 8].map(n => (
               <button
                 key={n}
@@ -169,7 +169,7 @@ export function TopBar({
           </div>
         </div>
 
-        {/* AMI ceiling slider */}
+        {}
         <div className="topbar-control-group topbar-income-group">
           <div className="topbar-income-label-row">
             <span className="topbar-control-label">{t("ui.amiLimit")}</span>
@@ -188,7 +188,7 @@ export function TopBar({
           />
         </div>
 
-        {/* Income slider */}
+        {}
         <div className="topbar-control-group topbar-income-group">
           <div className="topbar-income-label-row">
             <span className="topbar-control-label">{t("ui.myIncome")}</span>
@@ -207,7 +207,7 @@ export function TopBar({
           />
         </div>
 
-        {/* Expiry toggle — only for LIHTC data */}
+        {}
         {hasSearched && dataSource === "lihtc" && (
           <button
             className={`topbar-expiry-toggle${showExpired ? " active" : ""}`}
@@ -219,7 +219,7 @@ export function TopBar({
           </button>
         )}
 
-        {/* Year built filter — only for LIHTC data */}
+        {}
         {hasSearched && dataSource === "lihtc" && (
           <div className="topbar-control-group">
             <span className="topbar-control-label">{t("filters.yearBuiltMin")}</span>
@@ -239,7 +239,7 @@ export function TopBar({
           </div>
         )}
 
-        {/* Clear all filters */}
+        {}
         {hasSearched && (
           <button
             className="topbar-clear-filters"
@@ -250,7 +250,7 @@ export function TopBar({
           </button>
         )}
 
-        {/* Map toggle */}
+        {}
         {hasSearched && (
           <button
             className={`topbar-map-toggle${showMapView ? " active" : ""}`}
@@ -262,7 +262,7 @@ export function TopBar({
           </button>
         )}
 
-        {/* Language picker */}
+        {}
         <div className="topbar-lang-picker" role="group" aria-label="Language">
           {LANGS.map(({ code, label }) => (
             <button
@@ -297,7 +297,6 @@ export function TopBar({
   );
 }
 
-// ── People SVG icons ─────────────────────────────────────────────────────────
 
 function PersonSvg({ x = 0 }: { x?: number }) {
   return (
