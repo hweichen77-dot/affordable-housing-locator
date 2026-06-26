@@ -24,7 +24,6 @@ interface DetailPanelProps {
   onSetDeadline?: (id: string, ms: number | null) => void;
 }
 
-// Format an epoch-ms deadline as YYYY-MM-DD for a date input (local time)
 function toDateInputValue(ms: number): string {
   const d = new Date(ms);
   const yr = d.getFullYear();
@@ -107,7 +106,6 @@ export function DetailPanel({
     ? fmtDist(haversineKm(userLocation.lat, userLocation.lng, p.lat, p.lng))
     : null;
 
-  // Default LIHTC properties to 60% AMI (HUD standard for LIHTC programs)
   const ceilPct = p.incomeCeilingPct
     ?? (p.source === "sj"
       ? ((p.eliunits ?? 0) > 0 ? 30 : (p.vliunits ?? 0) > 0 ? 50 : (p.liunits ?? 0) > 0 ? 80 : 120)
@@ -115,7 +113,6 @@ export function DetailPanel({
 
   const rentRange = ceilPct !== undefined ? rentRangeForTier(ceilPct, ami) : null;
 
-  // Income qualification check against user's entered income
   const incomeLimit = ceilPct !== undefined
     ? Math.round(adjustedAmi(ami, userHhSize) * ceilPct / 100)
     : null;
@@ -194,14 +191,14 @@ export function DetailPanel({
       )}
 
       <div className="detail-body">
-        {/* Name + address */}
+        {}
         <div>
           <h2 className="detail-prop-name">{p.name}</h2>
           <p className="detail-address">{p.address}, {p.city}, {p.state} {p.zip}</p>
           {dist && <p className="detail-dist">{dist} from your location</p>}
         </div>
 
-        {/* Affordability tier card */}
+        {}
         <div className={`detail-tier-card ${tier.colorClass}`}>
           <div className="detail-tier-label">{tier.label}</div>
           <div className="detail-afford-bar-wrap" aria-label={`Affordability level: ${tier.barPct}%`}>
@@ -217,7 +214,7 @@ export function DetailPanel({
           )}
         </div>
 
-        {/* Qualification banner — only shown when user has entered income */}
+        {}
         {qualifies !== null && (
           <div className={`detail-qualify-banner ${qualifies ? "qualify-yes" : "qualify-no"}`}>
             <span className="qualify-icon">{qualifies ? "✓" : "✗"}</span>
@@ -241,7 +238,7 @@ export function DetailPanel({
           </div>
         )}
 
-        {/* Income & rent estimates */}
+        {}
         {(ceilPct !== undefined || rentRange) && (
           <div className="detail-section">
             <div className="detail-section-title">Income & Rent Estimates</div>

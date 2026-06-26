@@ -22,7 +22,6 @@
   --font-body: 'Public Sans', system-ui, -apple-system, sans-serif;
 }
 
-/* ─── Reset & Root ─── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
 :focus:not(:focus-visible) { outline: none; }
@@ -70,11 +69,9 @@ html, body, #root { height: 100%; overflow: hidden; }
 
 .content-region { display: contents; }
 
-/* ─── Layout ─── */
 .app-layout { display: flex; height: 100vh; background: var(--bg-deep); }
 .map-container { flex: 1; position: relative; }
 
-/* ─── Side Panel ─── */
 .side-panel {
   width: 368px;
   min-width: 368px;
@@ -86,7 +83,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   border-right: 1px solid var(--border);
 }
 
-/* ─── Header ─── */
 .side-panel-header {
   padding: 14px 14px 10px;
   border-bottom: 1px solid var(--border);
@@ -141,7 +137,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .fav-toggle-btn.active { color: var(--danger-text); background: oklch(20% 0.05 25); border-color: oklch(35% 0.1 25); }
 
-/* ─── Language Select ─── */
 .lang-select {
   font-size: 11px; font-weight: 600;
   padding: 4px 6px; min-height: 32px;
@@ -152,7 +147,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .lang-select:focus { border-color: var(--accent-dim); color: var(--accent); outline: none; }
 
-/* ─── City Search ─── */
 .city-search-form {
   display: flex;
   gap: 6px;
@@ -216,7 +210,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   border-radius: 20px;
 }
 
-/* ─── Filters ─── */
 .filters-section {
   padding: 9px 12px;
   border-bottom: 1px solid var(--border);
@@ -246,7 +239,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .toggle-pill.on { background: var(--accent-bg); border-color: var(--accent-dim); color: var(--accent); }
 
-/* ─── Income Calculator ─── */
 .income-calc {
   background: var(--bg-raised);
   border-radius: 8px;
@@ -321,7 +313,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .calc-none { font-size: 10px; color: var(--danger); }
 .qual-badge { font-size: 11px; font-weight: 700; }
 
-/* ─── Selects ─── */
 .filter-select {
   flex: 1;
   padding: 5px 8px;
@@ -369,7 +360,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   flex-shrink: 0;
 }
 
-/* ─── Status Bar ─── */
 .side-panel-status {
   padding: 5px 14px;
   border-bottom: 1px solid var(--border);
@@ -380,7 +370,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .status-error { font-size: 11px; color: var(--danger); flex: 1; }
 .results-count { font-size: 11px; color: var(--text-muted); }
 
-/* ─── Property List ─── */
 .property-list {
   flex: 1;
   overflow-y: auto;
@@ -407,7 +396,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .property-item:hover { background: var(--bg-hover); }
 
-/* Row 1: index + name + heart */
 .property-item-idx {
   grid-column: 1;
   grid-row: 1;
@@ -438,7 +426,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   letter-spacing: -0.01em;
 }
 
-/* Row 2: addr (spans cols 2-3) */
 .property-item-addr {
   grid-column: 2 / 4;
   grid-row: 2;
@@ -449,7 +436,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   margin-top: 1px;
 }
 
-/* Row 3: meta (spans cols 1-3) */
 .property-item-meta {
   grid-column: 1 / 4;
   grid-row: 3;
@@ -476,7 +462,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   padding: 0 4px;
 }
 
-/* ─── Heart Button ─── */
 .heart-btn {
   background: transparent; border: none; cursor: pointer;
   font-size: 14px; color: var(--text-muted);
@@ -486,7 +471,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .heart-btn.saved { color: var(--danger-text); }
 .heart-btn.large { font-size: 18px; }
 
-/* ─── Badges ─── */
 .badge {
   font-size: 10px;
   font-weight: 600;
@@ -502,7 +486,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .badge-match    { background: oklch(22% 0.06 280); color: oklch(70% 0.18 280); }
 .badge-section8 { background: oklch(20% 0.06 145); color: oklch(72% 0.18 145); }
 
-/* ─── Empty State ─── */
 .empty-state {
   padding: 32px 16px;
   text-align: center;
@@ -511,7 +494,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   line-height: 1.7;
 }
 
-/* ─── Tag Row ─── */
 .tag-row { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
 .tag {
   font-size: 10px;
@@ -525,7 +507,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .tag-blue     { color: var(--blue); background: var(--blue-bg); }
 .tag-section8 { color: oklch(72% 0.18 145); background: oklch(20% 0.06 145); border-color: oklch(30% 0.08 145); }
 
-/* ─── Detail Card ─── */
 .detail-card { flex: 1; overflow-y: auto; padding: 0 16px 28px; }
 
 .detail-top-bar {
@@ -567,7 +548,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 
 .detail-address { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5; }
 
-/* ─── Contact Actions ─── */
 .contact-actions { display: flex; gap: 7px; margin-bottom: 12px; flex-wrap: wrap; }
 .contact-btn {
   display: inline-flex; align-items: center; gap: 5px;
@@ -579,7 +559,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .phone-btn { background: var(--accent-bg); color: var(--accent); }
 .web-btn   { background: var(--bg-raised); color: var(--text-secondary); }
 
-/* ─── Apply Callout ─── */
 .apply-callout {
   display: flex;
   gap: 8px;
@@ -596,7 +575,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .apply-callout strong { color: var(--text-primary); }
 .apply-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
 
-/* ─── Unit Breakdown ─── */
 .unit-breakdown {
   margin-bottom: 14px;
   background: var(--bg-raised);
@@ -613,7 +591,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .breakdown-total { font-size: 11px; color: var(--text-muted); }
 
-/* ─── Rent Table ─── */
 .rent-table { display: flex; flex-direction: column; gap: 1px; margin-bottom: 9px; border-radius: 6px; overflow: hidden; }
 .rent-table-head {
   display: grid;
@@ -642,7 +619,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 
 .breakdown-note { font-size: 10px; color: var(--text-muted); line-height: 1.5; font-style: italic; }
 
-/* ─── Bedroom Breakdown (LIHTC) ─── */
 .bedroom-breakdown {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
@@ -663,13 +639,11 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .lihtc-rent-row strong { color: var(--text-primary); }
 
-/* ─── Detail Rows ─── */
 .detail-rows { display: flex; flex-direction: column; gap: 9px; margin-top: 4px; }
 .detail-row { display: flex; flex-direction: column; gap: 2px; }
 .detail-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); font-weight: 600; }
 .detail-value { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
 
-/* ─── Map source badge ─── */
 .map-source-badge {
   position: absolute;
   bottom: 36px;
@@ -688,7 +662,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   letter-spacing: 0.05em;
 }
 
-/* ─── Map Legend ─── */
 .map-legend {
   position: absolute;
   bottom: 36px;
@@ -708,7 +681,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .legend-selected { width: 12px; height: 12px; background: var(--map-amber); }
 .legend-active   { width: 12px; height: 12px; background: var(--accent); }
 
-/* ─── Locate Button ─── */
 .locate-btn {
   position: absolute; top: 10px; left: 10px; z-index: 10;
   width: 40px; height: 40px; border-radius: 8px;
@@ -723,7 +695,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .locate-btn:disabled { opacity: 0.6; cursor: wait; }
 .locate-btn.locating { color: var(--accent); }
 
-/* ─── User Location Marker ─── */
 .user-location-marker {
   width: 16px; height: 16px; border-radius: 50%;
   background: oklch(65% 0.2 240);
@@ -731,7 +702,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   box-shadow: 0 0 0 4px oklch(65% 0.2 240 / 0.3);
 }
 
-/* ─── MapLibre Popup ─── */
 .maplibregl-popup-content {
   background: var(--bg-panel) !important;
   border: 1px solid var(--border) !important;
@@ -755,7 +725,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .popup-phone { display: block; font-size: 11px; color: var(--accent); text-decoration: none; font-weight: 500; }
 .popup-phone:hover { text-decoration: underline; }
 
-/* ─── Skeleton Loading ─── */
 @keyframes shimmer {
   0%   { background-position: -400px 0; }
   100% { background-position: 400px 0; }
@@ -798,8 +767,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .skeleton-pill-sm { width: 36px; }
 
-/* ─── Clear Filters ─── */
-/* ─── Filter Count Badge ─── */
 .filter-count-row { display: flex; align-items: center; }
 .filter-count-badge {
   font-size: 10px;
@@ -811,7 +778,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   border-radius: 20px;
 }
 
-/* ─── Clear Filters ─── */
 .clear-filters-btn {
   font-size: 10px;
   font-weight: 600;
@@ -827,7 +793,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .clear-filters-btn:hover { opacity: 1; background: oklch(20% 0.05 25); }
 
-/* ─── Retry Button ─── */
 .retry-btn {
   font-size: 11px;
   font-weight: 600;
@@ -843,7 +808,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .retry-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
 
-/* ─── Empty State ─── */
 .empty-state {
   padding: 40px 20px;
   text-align: center;
@@ -878,7 +842,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .empty-action-secondary:hover { border-color: var(--accent-dim); color: var(--accent); background: var(--accent-bg); }
 
-/* ─── Copy Button ─── */
 .copy-btn {
   width: 24px; height: 24px;
   border-radius: 5px;
@@ -897,7 +860,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .copy-btn:hover { color: var(--text-secondary); border-color: var(--accent-dim); }
 .copy-btn.copied { color: var(--accent); border-color: var(--accent-dim); }
 
-/* ─── Detail Address Row ─── */
 .detail-address-row {
   display: flex;
   align-items: flex-start;
@@ -906,14 +868,12 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .detail-address-row .detail-address { margin-bottom: 0; flex: 1; }
 
-/* ─── Contact Item (phone + copy) ─── */
 .contact-item {
   display: flex;
   align-items: center;
   gap: 5px;
 }
 
-/* ─── Panel Toggle Button ─── */
 .panel-toggle-btn {
   position: absolute;
   top: 50%;
@@ -937,10 +897,8 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .panel-toggle-btn:hover { color: var(--accent); border-color: var(--accent-dim); }
 
-/* Panel hidden state — desktop */
 .panel-hidden .side-panel { display: none; }
 
-/* ─── Export Toast ─── */
 .export-toast {
   position: absolute;
   bottom: 80px;
@@ -965,7 +923,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   100% { opacity: 0; }
 }
 
-/* ─── Mobile Layout ─── */
 @media (max-width: 680px) {
   .app-layout {
     flex-direction: column;
@@ -1027,7 +984,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   .filter-row { gap: 4px; }
 }
 
-/* ─── Search Quick Row (near me + history chips) ─── */
 .search-quick-row {
   display: flex;
   gap: 5px;
@@ -1058,7 +1014,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 
 .history-chip { color: var(--text-secondary); }
 
-/* ─── AMI Tier Chart ─── */
 .ami-chart {
   background: var(--bg-deep);
   border-radius: 6px;
@@ -1114,7 +1069,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   white-space: nowrap;
 }
 
-/* ─── Share Button ─── */
 .share-btn {
   width: 26px;
   height: 26px;
@@ -1134,7 +1088,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .share-btn:hover { color: var(--text-secondary); border-color: var(--accent-dim); }
 .share-btn.copied { color: var(--accent); border-color: var(--accent-dim); }
 
-/* ─── Scrollbars ─── */
 .property-list::-webkit-scrollbar,
 .detail-card::-webkit-scrollbar { width: 4px; }
 .property-list::-webkit-scrollbar-track,
@@ -1142,11 +1095,9 @@ html, body, #root { height: 100%; overflow: hidden; }
 .property-list::-webkit-scrollbar-thumb,
 .detail-card::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-/* ─── Badge variants ─── */
 .badge-red  { background: oklch(25% 0.08 20); color: oklch(70% 0.18 20); }
 .badge-warn { background: oklch(25% 0.08 50); color: oklch(72% 0.18 50); }
 
-/* ─── Card rent estimate ─── */
 .card-rent {
   display: block;
   font-size: 10px;
@@ -1156,7 +1107,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   font-variant-numeric: tabular-nums;
 }
 
-/* ─── Welcome state ─── */
 .welcome-state {
   display: flex;
   flex-direction: column;
@@ -1220,7 +1170,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   box-sizing: border-box;
 }
 
-/* ─── Rent highlight row (detail view) ─── */
 .rent-highlight-row {
   display: flex;
   align-items: center;
@@ -1234,11 +1183,9 @@ html, body, #root { height: 100%; overflow: hidden; }
 .rent-highlight-label { font-size: 11px; color: var(--accent); font-weight: 600; }
 .rent-highlight-val { font-size: 16px; color: var(--accent); font-variant-numeric: tabular-nums; }
 
-/* ─── Breakdown note variants ─── */
 .breakdown-warn { color: oklch(72% 0.18 50) !important; }
 .breakdown-info { color: var(--text-secondary); font-style: italic; }
 
-/* ─── External listings buttons ─── */
 .listings-actions {
   display: flex;
   flex-direction: column;
@@ -1265,7 +1212,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .listings-btn-secondary { color: var(--text-muted); background: transparent; border-color: transparent; }
 .listings-btn-secondary:hover { background: var(--bg-raised); color: var(--text-secondary); }
 
-/* ─── About button ─── */
 .about-btn {
   font-size: 13px;
   font-weight: 700;
@@ -1285,13 +1231,11 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .about-btn:hover { color: var(--text-secondary); border-color: var(--accent-dim); }
 
-/* ─── Application status badges (card) ─── */
 .app-status-badge { font-weight: 600; }
 .app-status-interested { background: oklch(25% 0.06 220); color: oklch(70% 0.16 220); }
 .app-status-applied    { background: oklch(22% 0.07 145); color: oklch(68% 0.18 145); }
 .app-status-waitlisted { background: oklch(25% 0.06 50);  color: oklch(72% 0.18 50);  }
 
-/* ─── Application tracker (detail view) ─── */
 .app-tracker {
   display: flex;
   align-items: center;
@@ -1328,7 +1272,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .app-tracker-btn.active[data-status="applied"]    { background: oklch(22% 0.07 145); color: oklch(68% 0.18 145); border-color: var(--accent-dim); }
 .app-tracker-btn.active[data-status="waitlisted"] { background: oklch(25% 0.06 50);  color: oklch(72% 0.18 50);  border-color: oklch(40% 0.1 50); }
 
-/* ─── Application guide ─── */
 .app-guide {
   margin-top: 12px;
   border: 1px solid var(--border);
@@ -1380,7 +1323,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   margin: 0 0 4px;
 }
 
-/* ─── Modal overlay ─── */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -1441,7 +1383,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   gap: 20px;
 }
 
-/* ─── About modal content ─── */
 .about-section h3 {
   font-size: 13px;
   font-weight: 700;
@@ -1506,7 +1447,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   border-top: 1px solid var(--border);
 }
 
-/* welcome-stats replaced by welcome-fact (prose inline) */
 .welcome-error {
   font-size: 11px;
   color: oklch(72% 0.18 50);
@@ -1518,7 +1458,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   text-align: center;
 }
 
-/* ─── About modal keyboard shortcuts ─── */
 .shortcut-grid {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -1542,7 +1481,6 @@ kbd {
   min-width: 28px;
 }
 
-/* ─── Skip link (accessibility) ─── */
 .skip-link {
   position: absolute;
   top: 0;
@@ -1560,7 +1498,6 @@ kbd {
 }
 .skip-link:focus { transform: translateY(0); }
 
-/* ── Nearby Listings ───────────────────────────────────────────────────────── */
 .nearby-wrap {
   background: var(--bg-raised);
   border: 1px solid var(--border);
@@ -1659,7 +1596,6 @@ kbd {
   margin-top: 6px;
 }
 
-/* ── IL Rent Table ─────────────────────────────────────────────────────────── */
 .il-table-wrap {
   background: var(--bg-raised);
   border: 1px solid var(--border);
@@ -1721,7 +1657,6 @@ kbd {
   line-height: 1.4;
 }
 
-/* ── Savings Card ──────────────────────────────────────────────────────────── */
 .savings-card {
   background: var(--bg-raised);
   border: 1px solid var(--border);
@@ -1812,7 +1747,6 @@ kbd {
   font-style: italic;
 }
 
-/* ── Neighborhood Map Thumbnail ─────────────────────────────────────────────── */
 .prop-map-thumb {
   position: relative;
   width: calc(100% + 32px);
@@ -1879,7 +1813,6 @@ kbd {
   background: oklch(17% 0.007 200);
 }
 
-/* ── Map Links ───────────────────────────────────────────────────────────────── */
 .map-links {
   display: flex;
   flex-wrap: wrap;
@@ -1920,7 +1853,6 @@ kbd {
   text-overflow: ellipsis;
 }
 
-/* Walk Score gets its own row */
 .map-links-row2 {
   display: flex;
   gap: 6px;
@@ -1945,21 +1877,18 @@ kbd {
 }
 .map-link-pill:hover { border-color: var(--accent-dim); color: var(--accent); }
 
-/* ── Property detail section label ─────────────────────────────────────────── */
 .detail-section-rule {
   height: 1px;
   background: var(--border);
   margin: 14px 0 12px;
 }
 
-/* ── Welcome state: cleaner typography ─────────────────────────────────────── */
 .welcome-title {
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.03em;
 }
 
-/* ── Quick chips: less pill-y ────────────────────────────────────────────────── */
 .quick-chip {
   border-radius: 3px !important;
   font-size: 11px !important;
@@ -1970,7 +1899,6 @@ kbd {
   border-radius: 3px !important;
 }
 
-/* ── Filter selects: slightly tighter ──────────────────────────────────────── */
 .filter-select {
   border-radius: 3px !important;
 }
@@ -1978,7 +1906,6 @@ kbd {
   border-radius: 3px !important;
 }
 
-/* ── App tracker buttons: rectangular ──────────────────────────────────────── */
 .app-tracker-btn {
   border-radius: 3px !important;
 }
@@ -1986,19 +1913,16 @@ kbd {
   border-radius: 4px !important;
 }
 
-/* ── Contact buttons: rectangular ──────────────────────────────────────────── */
 .contact-btn {
   border-radius: 3px !important;
 }
 
-/* ── Apply callout: slightly different feel ─────────────────────────────────── */
 .apply-callout {
   border-radius: 4px !important;
   background: transparent !important;
   border-color: var(--border-light) !important;
 }
 
-/* ── Detail rows: cleaner data display ──────────────────────────────────────── */
 .detail-row {
   display: grid !important;
   grid-template-columns: 110px 1fr !important;
@@ -2018,7 +1942,6 @@ kbd {
   color: var(--text-primary) !important;
 }
 
-/* ── App guide: less bordered ───────────────────────────────────────────────── */
 .app-guide {
   border-radius: 4px !important;
 }
@@ -2030,7 +1953,6 @@ kbd {
   font-weight: 600 !important;
 }
 
-/* ── Nearby wrap: remove heavy card ────────────────────────────────────────── */
 .nearby-wrap {
   border-radius: 4px !important;
   background: transparent !important;
@@ -2038,12 +1960,10 @@ kbd {
   padding: 10px 0 !important;
 }
 
-/* ── Source badge: all-caps, no pill ────────────────────────────────────────── */
 .source-badge {
   border-radius: 3px !important;
 }
 
-/* ── Sequential property index counter ─────────────────────────────────────── */
 .property-item-idx::before {
   content: counter(prop-idx, decimal);
   font-size: 10px;
@@ -2053,7 +1973,6 @@ kbd {
   opacity: 0.6;
 }
 
-/* ─── AMI Onboarding Survey ─── */
 .survey-overlay {
   position: fixed;
   inset: 0;
@@ -2274,7 +2193,6 @@ kbd {
 .survey-location-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
 .survey-location-input::placeholder { color: var(--text-muted); }
 
-/* Results step */
 .survey-results { gap: 14px; }
 
 .survey-tier-card {
@@ -2326,7 +2244,6 @@ kbd {
 .survey-summary-row span { color: var(--text-muted); }
 .survey-summary-row strong { color: var(--text-primary); font-weight: 600; }
 
-/* Actions */
 .survey-actions { display: flex; justify-content: flex-end; margin-top: 4px; }
 .survey-actions-two { justify-content: space-between; }
 
@@ -2371,9 +2288,6 @@ kbd {
 }
 .survey-back-btn:hover { color: var(--text-secondary); background: var(--bg-hover); }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   NEW LAYOUT — v1.0 Redesign
-   ═══════════════════════════════════════════════════════════════════════════ */
 
 html, body, #root { height: 100%; overflow: hidden; }
 
@@ -2387,7 +2301,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   overflow: hidden;
 }
 
-/* ─── Top Bar ─── */
 .topbar {
   display: flex;
   align-items: center;
@@ -2499,7 +2412,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   color: var(--text-primary);
 }
 
-/* Household picker */
 .hh-picker {
   display: flex;
   gap: 4px;
@@ -2526,7 +2438,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   box-shadow: 0 0 0 1px var(--accent-dim) inset;
 }
 
-/* Income slider */
 .topbar-income-group { min-width: 180px; }
 
 .topbar-income-label-row {
@@ -2567,7 +2478,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .income-slider:focus { outline: none; }
 .income-slider:focus::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--accent-bg); }
 
-/* Map toggle button */
 .topbar-map-toggle {
   background: var(--bg-raised);
   border: 1px solid var(--border);
@@ -2584,7 +2494,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .topbar-map-toggle:hover { background: var(--bg-hover); color: var(--text-primary); }
 .topbar-map-toggle.active { background: var(--accent-bg); border-color: var(--accent-dim); color: var(--accent); }
 
-/* Location pill */
 .topbar-location-pill {
   width: 100%;
   display: flex;
@@ -2605,7 +2514,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   font-weight: 600;
 }
 
-/* ─── Map full view ─── */
 .map-fullview {
   height: 320px;
   flex-shrink: 0;
@@ -2618,7 +2526,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   background: var(--bg-deep);
 }
 
-/* ─── Content area ─── */
 .content-area {
   flex: 1;
   display: flex;
@@ -2634,7 +2541,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   scrollbar-color: var(--border) transparent;
 }
 
-/* ─── Property card grid ─── */
 .prop-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -2642,7 +2548,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   padding: 20px;
 }
 
-/* ─── Results filter bar (saved / tracking chips) ─── */
 .results-filter-bar {
   display: flex;
   align-items: center;
@@ -2678,7 +2583,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .results-filter-clear:hover { color: var(--text-primary); }
 
-/* ─── Property card ─── */
 .prop-card {
   background: var(--bg-panel);
   border: 1px solid var(--border);
@@ -2696,7 +2600,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .prop-card:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* Card hero */
 .prop-card-hero {
   position: relative;
   height: 180px;
@@ -2740,7 +2643,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   justify-content: center;
 }
 
-/* Tier badge overlay */
 .prop-tier-badge {
   position: absolute;
   top: 10px;
@@ -2758,7 +2660,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .prop-tier-badge.tier-good { background: oklch(22% 0.06 200 / 0.9); color: oklch(68% 0.16 200); }
 .prop-tier-badge.tier-mod  { background: oklch(22% 0.05 55 / 0.9);  color: oklch(72% 0.18 55); }
 
-/* Distance badge */
 .prop-ami-badge {
   position: absolute;
   bottom: 10px;
@@ -2788,7 +2689,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   z-index: 3;
 }
 
-/* Card body */
 .prop-card-body {
   padding: 14px 16px 16px;
   display: flex;
@@ -2835,7 +2735,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .prop-phone:hover { color: var(--accent); text-decoration: underline; }
 
-/* Affordability bar */
 .prop-afford-row {
   display: flex;
   flex-direction: column;
@@ -2863,7 +2762,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   letter-spacing: 0.02em;
 }
 
-/* Card CTAs */
 .prop-card-actions {
   display: flex;
   gap: 8px;
@@ -2900,7 +2798,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .prop-cta-info:hover { background: var(--bg-hover); border-color: var(--accent-dim); }
 
-/* App status tracking row on cards */
 .prop-status-row {
   display: flex;
   gap: 4px;
@@ -2923,7 +2820,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .prop-status-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
 
-/* App status tracking row in detail panel */
 .detail-status-row {
   display: flex;
   align-items: center;
@@ -2954,7 +2850,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .detail-status-btn:hover:not(.active) { border-color: var(--accent-dim); color: var(--text-primary); }
 
-/* Save icon overlaid on hero */
 .prop-save-icon {
   position: absolute;
   top: 10px;
@@ -2976,7 +2871,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .prop-save-icon:hover { background: oklch(10% 0.01 230 / 0.85); color: oklch(72% 0.18 20); }
 .prop-save-icon.saved { color: oklch(72% 0.18 20); }
 
-/* ─── Detail panel ─── */
 .has-detail .detail-panel {
   display: flex;
 }
@@ -3089,7 +2983,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .detail-dist { font-size: 11px; color: var(--text-muted); margin-top: -8px; }
 
-/* Tier card in detail */
 .detail-tier-card {
   border-radius: 10px;
   padding: 14px;
@@ -3128,7 +3021,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 
 .detail-tier-sub { font-size: 11px; color: var(--text-muted); }
 
-/* Fact rows */
 .detail-facts {
   background: var(--bg-raised);
   border: 1px solid var(--border-light);
@@ -3158,7 +3050,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   font-size: 10px;
 }
 
-/* Detail apply button */
 .detail-apply-btn {
   display: block;
   text-align: center;
@@ -3174,7 +3065,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .detail-apply-btn:hover { opacity: 0.88; }
 
-/* Secondary links */
 .detail-secondary-links {
   display: flex;
   flex-wrap: wrap;
@@ -3193,7 +3083,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .detail-link-pill:hover { background: var(--bg-hover); color: var(--text-primary); }
 
-/* ─── Welcome screen ─── */
 .welcome-screen {
   display: flex;
   align-items: center;
@@ -3274,7 +3163,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   line-height: 1.6;
 }
 
-/* ─── Empty state ─── */
 .empty-screen {
   display: flex;
   flex-direction: column;
@@ -3301,7 +3189,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .empty-reset-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 
-/* ─── Skeleton loading ─── */
 .loading-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -3348,7 +3235,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   100% { background-position: -200% 0; }
 }
 
-/* ─── Map locate button (used in FullMap) ─── */
 .locate-btn {
   position: absolute;
   bottom: 60px;
@@ -3381,7 +3267,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   pointer-events: none;
 }
 
-/* User location marker */
 .user-location-marker {
   width: 16px; height: 16px;
   border-radius: 50%;
@@ -3390,7 +3275,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   box-shadow: 0 2px 8px oklch(62% 0.17 235 / 0.6);
 }
 
-/* ─── Detail panel: new sections & elements ─── */
 .detail-prop-name {
   font-size: 16px;
   font-weight: 700;
@@ -3440,7 +3324,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .detail-fact-link:hover { text-decoration: underline; }
 
-/* Button-style link pills */
 .detail-link-pill {
   background: var(--bg-raised);
   border: 1px solid var(--border);
@@ -3455,7 +3338,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .detail-link-pill:hover { background: var(--bg-hover); color: var(--text-primary); }
 
-/* ─── Detail Panel: Qualification Banner ─── */
 .detail-qualify-banner {
   border-radius: 8px;
   padding: 12px 14px;
@@ -3474,7 +3356,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .qualify-detail { font-size: 11px; color: var(--text-secondary); margin-top: 3px; font-variant-numeric: tabular-nums; line-height: 1.5; }
 .qualify-tip { font-size: 10px; color: var(--text-muted); margin-top: 4px; line-height: 1.4; font-style: italic; }
 
-/* ─── Detail Panel: AMI Explainer ─── */
 .detail-ami-explainer {
   background: oklch(17% 0.04 235);
   border: 1px solid oklch(27% 0.06 235);
@@ -3494,7 +3375,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   margin-top: 1px;
 }
 
-/* ─── Detail Panel: Income table highlights ─── */
 .detail-fact-header {
   background: var(--bg-deep);
   border-bottom: 1px solid var(--border) !important;
@@ -3530,7 +3410,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   font-style: italic;
 }
 
-/* ─── Detail Panel: AMI Tier Guide ─── */
 .detail-ami-tiers { display: flex; flex-direction: column; gap: 3px; }
 .detail-ami-tier-row {
   display: flex;
@@ -3569,7 +3448,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   font-style: italic;
 }
 
-/* ─── Detail Panel: Application Checklist ─── */
 .detail-apply-intro {
   font-size: 11px;
   color: var(--text-secondary);
@@ -3603,7 +3481,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   margin-top: 4px;
 }
 
-/* ─── Survey: AMI Education Callout ─── */
 .survey-ami-callout {
   background: oklch(15% 0.04 235);
   border: 1px solid oklch(25% 0.06 235);
@@ -3640,7 +3517,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .tier-li  { background: oklch(18% 0.055 145); color: var(--accent); }
 .tier-mod { background: oklch(18% 0.05 220); color: oklch(68% 0.15 220); }
 
-/* ─── Survey: AMI example table ─── */
 .survey-ami-example-table {
   display: flex;
   flex-direction: column;
@@ -3666,10 +3542,8 @@ html, body, #root { height: 100%; overflow: hidden; }
 .survey-ami-ex-prog { color: var(--text-muted); }
 .survey-ami-note-small { font-size: 10px; color: var(--text-muted); margin: 0; line-height: 1.5; }
 
-/* ─── Survey: Label hint ─── */
 .survey-label-hint { font-size: 10px; color: var(--text-muted); font-weight: 400; margin-left: 4px; }
 
-/* ─── Survey: Live AMI Tier Preview ─── */
 .survey-live-tier {
   display: flex;
   gap: 14px;
@@ -3694,7 +3568,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .survey-live-tier-name { font-size: 12px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
 .survey-live-tier-desc { font-size: 10px; color: var(--text-muted); line-height: 1.5; }
 
-/* ─── Survey Step 4: Programs ─── */
 .survey-programs-section {
   background: var(--bg-raised);
   border: 1px solid var(--border);
@@ -3730,7 +3603,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   font-style: italic;
 }
 
-/* ─── Survey Step 4: AMI note ─── */
 .survey-ami-note {
   background: oklch(15% 0.04 235);
   border: 1px solid oklch(25% 0.06 235);
@@ -3746,9 +3618,7 @@ html, body, #root { height: 100%; overflow: hidden; }
 .survey-ami-note strong { color: oklch(68% 0.15 235); }
 .survey-ami-note p { margin: 0; }
 
-/* ── New styles for P0/P1 fixes ─────────────────────────────────────────── */
 
-/* Expired property badge on PropertyCard hero */
 .prop-expired-badge {
   position: absolute;
   bottom: 36px;
@@ -3765,7 +3635,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   backdrop-filter: blur(4px);
 }
 
-/* No-website note on PropertyCard */
 .prop-no-website-note {
   font-size: 10px;
   color: var(--text-muted);
@@ -3773,7 +3642,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   line-height: 1.4;
 }
 
-/* No-website note on DetailPanel */
 .detail-no-website-note {
   font-size: 11px;
   color: var(--text-muted);
@@ -3785,7 +3653,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   line-height: 1.5;
 }
 
-/* Household size numeric buttons (6, 7, 8+) */
 .hh-btn-num {
   font-size: 11px;
   font-weight: 600;
@@ -3794,7 +3661,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   font-family: inherit;
 }
 
-/* Language picker */
 .topbar-lang-picker {
   display: flex;
   gap: 2px;
@@ -3821,7 +3687,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   color: var(--accent);
 }
 
-/* Expiry toggle */
 .topbar-expiry-toggle {
   background: oklch(20% 0.01 230);
   border: 1px solid oklch(32% 0.012 230);
@@ -3842,7 +3707,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   color: oklch(80% 0.18 55);
 }
 
-/* Data freshness chip */
 .topbar-freshness {
   font-size: 10px;
   color: var(--text-muted);
@@ -3854,7 +3718,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   letter-spacing: 0.02em;
 }
 
-/* Year built select */
 .topbar-year-select {
   background: oklch(20% 0.01 230);
   border: 1px solid oklch(32% 0.012 230);
@@ -3872,7 +3735,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   border-color: var(--accent-dim);
 }
 
-/* Clear all filters button */
 .topbar-clear-filters {
   background: transparent;
   border: 1px solid oklch(32% 0.012 230);
@@ -3892,7 +3754,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   border-color: oklch(42% 0.02 230);
 }
 
-/* Waitlist status badges */
 .prop-waitlist-badge {
   display: inline-block;
   font-size: 9px;
@@ -3914,7 +3775,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   border: 1px solid oklch(36% 0.1 25 / 0.5);
 }
 
-/* ─── Compare toggle (on card hero) ─── */
 .prop-compare-toggle {
   position: absolute;
   bottom: 10px;
@@ -3952,7 +3812,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   line-height: 1;
 }
 
-/* ─── Deadline widget (sidebar) ─── */
 .deadline-widget {
   background: var(--bg-panel);
   border: 1px solid var(--border);
@@ -4009,7 +3868,6 @@ html, body, #root { height: 100%; overflow: hidden; }
 .deadline-widget-item.deadline-urgent .deadline-widget-date { color: var(--danger-text); }
 .deadline-widget-item.deadline-soon .deadline-widget-date { color: oklch(75% 0.15 75); }
 
-/* ─── Deadline input (detail panel) ─── */
 .detail-deadline-row {
   display: flex;
   flex-direction: column;
@@ -4055,7 +3913,6 @@ html, body, #root { height: 100%; overflow: hidden; }
   font-weight: 600;
 }
 
-/* ─── Compare panel (bottom sheet) ─── */
 .compare-panel {
   position: fixed;
   left: 0;

@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::f64::consts::PI;
 
-// ── App config (read from env vars at startup) ────────────────────────────────
 pub struct AppConfig {
     pub hud_token: Option<String>,
     pub census_key: String,
@@ -19,7 +18,6 @@ impl AppConfig {
     }
 }
 
-// ── Market data types (returned to frontend) ──────────────────────────────────
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FmrData {
     pub zip: String,
@@ -43,7 +41,6 @@ pub struct AcsRentData {
     pub four_br_plus: Option<i64>,
 }
 
-// ── HUD Income Limits (IL) types ─────────────────────────────────────────────
 
 /// Pre-computed LIHTC max rents by bedroom size at a given AMI tier.
 /// Formula: income_limit[occupancy] × 30% / 12
@@ -69,7 +66,6 @@ pub struct IlData {
     pub pct80: BrRents,
 }
 
-// ── HUD FMR API internal deserialization structs ──────────────────────────────
 #[derive(Deserialize)]
 struct FmrItem {
     #[serde(rename = "Efficiency")]
@@ -137,7 +133,7 @@ pub struct GeoLocation {
     pub lat: f64,
     pub lng: f64,
     pub display_name: String,
-    pub bbox: [f64; 4], // south, north, west, east
+    pub bbox: [f64; 4],
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -698,7 +694,6 @@ fn extract_il_field(item: &serde_json::Value, keys: &[&str]) -> u64 {
     0
 }
 
-// ── Rentcast: actual active rental listings ───────────────────────────────────
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RentcastListing {
@@ -781,7 +776,6 @@ pub async fn fetch_nearby_rentals(
         })
         .collect();
 
-    // Sort by bedrooms then price
     listings.sort_by(|a, b| a.bedrooms.cmp(&b.bedrooms).then(a.price.cmp(&b.price)));
     Ok(listings)
 }

@@ -11,7 +11,7 @@ interface MapFly {
   lat: number;
   lng: number;
   zoom: number;
-  bbox?: [number, number, number, number]; // south, north, west, east
+  bbox?: [number, number, number, number];
 }
 
 interface MapProps {
@@ -38,7 +38,6 @@ export function Map({ data, userLocation, mapFly, dataSource, selectedId, onSele
 
   useEffect(() => { onSelectRef.current = onSelectFeature; }, [onSelectFeature]);
 
-  // Init map once
   useEffect(() => {
     if (!containerRef.current) return;
     const map = new maplibregl.Map({
@@ -53,7 +52,6 @@ export function Map({ data, userLocation, mapFly, dataSource, selectedId, onSele
 
     map.on("load", () => {
       styleLoadedRef.current = true;
-      // Flush any data that arrived before style was ready
       if (pendingDataRef.current) {
         addOrUpdateSource(map, pendingDataRef.current);
         pendingDataRef.current = null;
@@ -69,13 +67,11 @@ export function Map({ data, userLocation, mapFly, dataSource, selectedId, onSele
     };
   }, []);
 
-  // Handle fly-to / fit-bounds when search changes
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapFly) return;
     if (mapFly.bbox) {
       const [s, n, w, e] = mapFly.bbox;
-      // Sanity check: bbox must not be degenerate
       if (n - s > 0.001 && e - w > 0.001) {
         map.fitBounds([[w, s], [e, n]], { padding: 40, maxZoom: 14, duration: 900 });
         return;
@@ -84,7 +80,6 @@ export function Map({ data, userLocation, mapFly, dataSource, selectedId, onSele
     map.flyTo({ center: [mapFly.lng, mapFly.lat], zoom: mapFly.zoom, duration: 900 });
   }, [mapFly]);
 
-  // User location marker
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !userLocation) return;
@@ -98,7 +93,6 @@ export function Map({ data, userLocation, mapFly, dataSource, selectedId, onSele
     map.flyTo({ center: [userLocation.lng, userLocation.lat], zoom: 13, duration: 1200 });
   }, [userLocation]);
 
-  // Data update — handles race with style load
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -109,7 +103,6 @@ export function Map({ data, userLocation, mapFly, dataSource, selectedId, onSele
     addOrUpdateSource(map, data);
   }, [data]);
 
-  // Highlight selected pin
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !styleLoadedRef.current) return;
@@ -164,7 +157,6 @@ function addOrUpdateSource(map: maplibregl.Map, data: HousingCollection) {
 function addMapLayers(map: maplibregl.Map, onSelectRef: React.MutableRefObject<(props: Record<string, unknown>) => void>, popupRef: React.MutableRefObject<maplibregl.Popup | null>) {
   if (map.getLayer("housing-heat")) return;
 
-  // Heatmap — visible at low zoom, fades out as user zooms in
   map.addLayer({
     id: "housing-heat",
     type: "heatmap",
@@ -186,7 +178,6 @@ function addMapLayers(map: maplibregl.Map, onSelectRef: React.MutableRefObject<(
     },
   });
 
-  // Individual pins — fade in as zoom increases
   map.addLayer({
     id: "housing-points",
     type: "circle",

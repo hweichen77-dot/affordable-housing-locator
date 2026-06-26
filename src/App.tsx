@@ -44,7 +44,6 @@ export const DEFAULT_FILTERS: FilterState = {
   householdSize: 1,
 };
 
-// Welcome screen shown when no search yet
 function WelcomeScreen({ onSearch, onNearMe, loading, error, searchHistory }: {
   onSearch: (q: string) => void;
   onNearMe: () => void;
@@ -106,7 +105,6 @@ function WelcomeScreen({ onSearch, onNearMe, loading, error, searchHistory }: {
   );
 }
 
-// Empty state after search with no results
 function EmptyState({ onReset }: { onReset: () => void }) {
   const { t } = useTranslation();
   return (
@@ -122,7 +120,6 @@ function EmptyState({ onReset }: { onReset: () => void }) {
 }
 
 export default function App() {
-  // ── Data state ────────────────────────────────────────────────────────────
   const [rawData, setRawData] = useState<DisplayProperty[]>([]);
   const [dataSource, setDataSource] = useState<"sj" | "lihtc">("sj");
   const [dataLoading, setDataLoading] = useState(false);
@@ -137,7 +134,6 @@ export default function App() {
     catch { return []; }
   });
 
-  // ── UI state ─────────────────────────────────────────────────────────────
   const [selectedProperty, setSelectedProperty] = useState<DisplayProperty | null>(null);
   const pendingSharedIdRef = useRef<string | null>(null);
   const [showMapView, setShowMapView] = useState(false);
@@ -160,7 +156,6 @@ export default function App() {
   });
   const [compareIds, setCompareIds] = useState<Set<string>>(new Set());
 
-  // ── Filters (mostly for internal logic, income/hh exposed via UI state) ──
   const [filters, setFilters] = useState<FilterState>(() => {
     try {
       const saved = localStorage.getItem("housing-filters-v1");
@@ -168,7 +163,7 @@ export default function App() {
         const parsed = JSON.parse(saved) as Partial<FilterState>;
         return { ...DEFAULT_FILTERS, ...parsed };
       }
-    } catch { /* */ }
+    } catch {  }
     return DEFAULT_FILTERS;
   });
   const [showExpired, setShowExpired] = useState(false);
@@ -178,7 +173,6 @@ export default function App() {
   const lastSearchRef = useRef<number>(0);
   const searchCounterRef = useRef<number>(0);
 
-  // Market data fetch on property select
   useEffect(() => {
     if (!selectedProperty?.zip) { setMarketData(null); return; }
     const zip = selectedProperty.zip.replace(/\D/g, "").slice(0, 5);
@@ -202,7 +196,6 @@ export default function App() {
     return () => { cancelled = true; };
   }, [selectedProperty?.zip]);
 
-  // ── URL ?id= param: read on mount, store pending if data not yet loaded ──
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const sharedId = params.get("id");
@@ -211,7 +204,6 @@ export default function App() {
     }
   }, []);
 
-  // ── Apply pending shared ID once rawData is populated ────────────────────
   useEffect(() => {
     if (!pendingSharedIdRef.current || rawData.length === 0) return;
     const id = pendingSharedIdRef.current;
@@ -220,7 +212,6 @@ export default function App() {
     if (found) setSelectedProperty(found);
   }, [rawData]);
 
-  // ── Sync ?id= param when selectedProperty changes ────────────────────────
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const currentId = params.get("id");
@@ -238,19 +229,17 @@ export default function App() {
     }
   }, [selectedProperty]);
 
-  // ── Filter persistence ────────────────────────────────────────────────────
   useEffect(() => {
-    try { localStorage.setItem("housing-filters-v1", JSON.stringify(filters)); } catch { /* */ }
+    try { localStorage.setItem("housing-filters-v1", JSON.stringify(filters)); } catch {  }
   }, [filters]);
 
   const clearFilters = useCallback(() => {
     setFilters(DEFAULT_FILTERS);
     setIncomeValue(0);
     setAmiCeiling(0);
-    try { localStorage.removeItem("housing-filters-v1"); } catch { /* */ }
+    try { localStorage.removeItem("housing-filters-v1"); } catch {  }
   }, []);
 
-  // ── City / ZIP search ─────────────────────────────────────────────────────
   const handleSearch = useCallback(async (query: string) => {
     if (!query.trim()) return;
     const myCount = ++searchCounterRef.current;
@@ -300,10 +289,9 @@ export default function App() {
       setHasSearched(true);
       setDataLoading(false);
       setSearchLoading(false);
-      // Save to search history (last 5 unique successful searches)
       setSearchHistory(prev => {
         const next = [query, ...prev.filter(q => q !== query)].slice(0, 5);
-        try { localStorage.setItem("housing-search-history", JSON.stringify(next)); } catch { /* */ }
+        try { localStorage.setItem("housing-search-history", JSON.stringify(next)); } catch {  }
         return next;
       });
     } catch (e) {
@@ -320,7 +308,6 @@ export default function App() {
     }
   }, []);
 
-  // ── Near me ───────────────────────────────────────────────────────────────
   const handleNearMe = useCallback(() => {
     if (!navigator.geolocation) {
       setSearchError("Geolocation is not available. Please search by city name.");
@@ -368,8 +355,6 @@ export default function App() {
     );
   }, []);
 
-  // ── Go home ───────────────────────────────────────────────────────────────
-  // handleGoHome defined after searchQuery state exists
   const handleGoHome = useCallback(() => {
     setRawData([]);
     setDataSource("sj");
@@ -381,7 +366,6 @@ export default function App() {
     setShowMapView(false);
   }, []);
 
-  // ── Favorites ─────────────────────────────────────────────────────────────
   const toggleFavorite = useCallback((id: string) => {
     setFavorites(prev => {
       const next = new Set(prev);
@@ -391,7 +375,6 @@ export default function App() {
     });
   }, []);
 
-  // ── App status tracking ───────────────────────────────────────────────────
   const handleStatusChange = useCallback((id: string, status: AppStatusValue | null) => {
     setAppStatuses(prev => {
       const next = { ...prev };
@@ -400,12 +383,11 @@ export default function App() {
       } else {
         next[id] = status;
       }
-      try { localStorage.setItem("housing-app-status-v1", JSON.stringify(next)); } catch { /* */ }
+      try { localStorage.setItem("housing-app-status-v1", JSON.stringify(next)); } catch {  }
       return next;
     });
   }, []);
 
-  // ── Application deadlines ─────────────────────────────────────────────────
   const setDeadline = useCallback((id: string, ms: number | null) => {
     setDeadlines(prev => {
       const next = { ...prev };
@@ -414,19 +396,18 @@ export default function App() {
       } else {
         next[id] = ms;
       }
-      try { localStorage.setItem("housing-deadlines-v1", JSON.stringify(next)); } catch { /* */ }
+      try { localStorage.setItem("housing-deadlines-v1", JSON.stringify(next)); } catch {  }
       return next;
     });
   }, []);
 
-  // ── Property compare ──────────────────────────────────────────────────────
   const toggleCompare = useCallback((id: string) => {
     setCompareIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
       } else {
-        if (next.size >= 3) return prev; // cap at 3, ignore adds beyond
+        if (next.size >= 3) return prev;
         next.add(id);
       }
       return next;
@@ -435,7 +416,6 @@ export default function App() {
 
   const clearCompare = useCallback(() => setCompareIds(new Set()), []);
 
-  // ── Survey ────────────────────────────────────────────────────────────────
   const handleSurveyComplete = useCallback((filterPatch: Partial<FilterState>, locationQuery: string) => {
     setShowSurvey(false);
     if (filterPatch.householdSize) setHhSize(filterPatch.householdSize);
@@ -450,10 +430,9 @@ export default function App() {
 
   const handleSurveySkip = useCallback(() => {
     setShowSurvey(false);
-    try { localStorage.setItem("housing-survey-v1", "skipped"); } catch { /* */ }
+    try { localStorage.setItem("housing-survey-v1", "skipped"); } catch {  }
   }, []);
 
-  // ── AMI for current location ──────────────────────────────────────────────
   const ami = useMemo(() => {
     if (!searchLocation) return 97800;
     const city = searchLocation.display_name.split(",")[0];
@@ -461,7 +440,6 @@ export default function App() {
     return getAmi(state, city);
   }, [searchLocation, rawData]);
 
-  // ── Filtered list ─────────────────────────────────────────────────────────
   const filtered = useMemo<DisplayProperty[]>(() => {
     let items = rawData;
 
@@ -469,7 +447,6 @@ export default function App() {
       items = items.filter(p => p.arstatus === "Active");
     }
 
-    // Filter out LIHTC properties whose 30-year affordability period has likely ended
     if (!showExpired && dataSource === "lihtc") {
       items = items.filter(p => !p.isLikelyExpired);
     }
@@ -484,7 +461,6 @@ export default function App() {
       );
     }
 
-    // P0 fix: apply previously-dead filters
     if (filters.bedroomSize) {
       items = items.filter(p => hasBedroomType(p, filters.bedroomSize));
     }
@@ -512,7 +488,6 @@ export default function App() {
         ? haversineKm(userLocation.lat, userLocation.lng, p.lat, p.lng)
         : Infinity;
 
-    // P0 fix: implement proper sortBy
     return [...items].sort((a, b) => {
       switch (filters.sortBy) {
         case "name":
@@ -524,7 +499,6 @@ export default function App() {
         case "rent":
           return (a.incomeCeilingPct ?? 999) - (b.incomeCeilingPct ?? 999);
         case "match": {
-          // Qualified first (if income set), then by distance
           if (incomeValue > 0) {
             const aQ = qualifiesForIncome(a, incomeValue, hhSize, ami);
             const bQ = qualifiesForIncome(b, incomeValue, hhSize, ami);
@@ -538,7 +512,6 @@ export default function App() {
     });
   }, [rawData, filters, dataSource, incomeValue, hhSize, ami, amiCeiling, userLocation, showExpired, favorites]);
 
-  // ── Map GeoJSON ───────────────────────────────────────────────────────────
   const mapData = useMemo<HousingCollection>(() => ({
     type: "FeatureCollection",
     features: filtered
@@ -601,7 +574,7 @@ export default function App() {
           hasPublicData={rawData.some(p => p.source === "public")}
         />
 
-        {/* Map view (toggled) */}
+        {}
         {showMapView && hasSearched && (
           <div className="map-fullview">
             <Suspense fallback={<div className="map-loading" />}>
@@ -618,9 +591,9 @@ export default function App() {
           </div>
         )}
 
-        {/* Card grid + detail panel */}
+        {}
         <div className={`content-area${selectedProperty ? " has-detail" : ""}`}>
-          {/* Left: card grid or welcome/empty */}
+          {}
           <div className="card-grid-area">
             {!hasSearched && (
               <WelcomeScreen
@@ -717,7 +690,7 @@ export default function App() {
             )}
           </div>
 
-          {/* Right: detail panel */}
+          {}
           {selectedProperty && (
             <DetailPanel
               property={selectedProperty}
@@ -736,7 +709,7 @@ export default function App() {
           )}
         </div>
 
-        {/* Compare panel — shown when 2+ properties selected for comparison */}
+        {}
         {compareIds.size >= 2 && (
           <ComparePanel
             properties={rawData.filter(p => compareIds.has(p.id))}

@@ -12,8 +12,6 @@ function emptyBedrooms(): BedroomCounts {
   return { studio: 0, br1: 0, br2: 0, br3: 0, br4plus: 0 };
 }
 
-// HUD LIHTC INC_CEIL / LOW_CEIL coded values:
-//   "1" = 50% AMI, "2" = 60% AMI, "9" = mixed tiers
 function decodeIncCeil(v: unknown): number | undefined {
   const s = String(v);
   if (s === "1") return 50;
@@ -21,7 +19,6 @@ function decodeIncCeil(v: unknown): number | undefined {
   return undefined;
 }
 
-// ─── SJ local dataset (HSG_HousingMapLayers) ─────────────────────────────────
 
 function normalizeSJ(feature: HousingFeature): DisplayProperty | null {
   const p = feature.properties;
@@ -41,7 +38,6 @@ function normalizeSJ(feature: HousingFeature): DisplayProperty | null {
   const arExpRaw = p.AREXP;
   const arExpiry = typeof arExpRaw === "number" && arExpRaw > 0 ? arExpRaw : undefined;
 
-  // Derive lowest AMI tier present (most affordable tier available)
   const eli = num(p.ELIUNITS);
   const vli = num(p.VLIUNITS);
   const li  = num(p.LIUNITS);
@@ -63,7 +59,6 @@ function normalizeSJ(feature: HousingFeature): DisplayProperty | null {
     website: str(p.WEBSITE) || undefined,
     developer: str(p.DEVELOPER) || undefined,
     isNonProfit: str(p.DEVTYPE) === "Non-Profit",
-    // SJ dataset only tracks affordable units; we don't have total building units
     totalUnits: 0,
     affordableUnits: num(p.TOTALAFFUNITS) || total,
     bedrooms: emptyBedrooms(),
@@ -87,7 +82,6 @@ function normalizeSJ(feature: HousingFeature): DisplayProperty | null {
   };
 }
 
-// ─── HUD LIHTC (nationwide) ───────────────────────────────────────────────────
 
 function normalizeLIHTC(feature: HousingFeature): DisplayProperty | null {
   const p = feature.properties;
@@ -149,7 +143,6 @@ function normalizeLIHTC(feature: HousingFeature): DisplayProperty | null {
   };
 }
 
-// ─── HUD Public Housing Buildings ────────────────────────────────────────────
 
 function mapWaitlistStatus(v: unknown): "open" | "closed" | "unknown" | undefined {
   if (v == null || v === "") return undefined;
@@ -171,7 +164,6 @@ function normalizePublicHousing(feature: HousingFeature): DisplayProperty | null
   const objectId = str(p.OBJECTID);
   const units = num(p.ACC_UNITS) || num(p.TOTAL_DWELLING_UNITS);
 
-  // Check known HUD ArcGIS waitlist field names
   const waitlistRaw = p.WAITLSTSTATUS ?? p.WAITLIST_STATUS ?? p.WTLST_STATUS ?? p.waitlistStatus;
   const waitlistStatus = mapWaitlistStatus(waitlistRaw);
 
@@ -192,16 +184,15 @@ function normalizePublicHousing(feature: HousingFeature): DisplayProperty | null
     totalUnits: num(p.TOTAL_DWELLING_UNITS),
     affordableUnits: units,
     bedrooms: emptyBedrooms(),
-    incomeCeilingPct: 30,      // Public housing is ELI (≤30% AMI) by statute
+    incomeCeilingPct: 30,
     populationTypes: [],
-    hasRentalAssistance: true, // Direct federal subsidy
+    hasRentalAssistance: true,
     yearBuilt: undefined,
     waitlistStatus,
     raw: p,
   };
 }
 
-// ─── Public API ───────────────────────────────────────────────────────────────
 
 export function normalizeFeatures(features: HousingFeature[], source: DataSource): DisplayProperty[] {
   const results: DisplayProperty[] = [];
@@ -219,7 +210,7 @@ export function hasBedroomType(p: DisplayProperty, size: "" | "0" | "1" | "2" | 
   if (!size) return true;
   const b = p.bedrooms;
   const hasAny = b.studio + b.br1 + b.br2 + b.br3 + b.br4plus > 0;
-  if (!hasAny) return true; // SJ has no bedroom data — always match
+  if (!hasAny) return true;
   if (size === "0") return b.studio > 0;
   if (size === "1") return b.br1 > 0;
   if (size === "2") return b.br2 > 0;
@@ -236,7 +227,7 @@ export function popMatches(p: DisplayProperty, filter: string): boolean {
 
 export function qualifiesForIncome(p: DisplayProperty, annualIncome: number, persons: number, ami4: number): boolean {
   if (!annualIncome) return true;
-  if (!p.incomeCeilingPct) return true; // unknown ceiling — always show
+  if (!p.incomeCeilingPct) return true;
   const adjAmi = adjustedAmi(ami4, persons);
   return annualIncome <= adjAmi * (p.incomeCeilingPct / 100);
 }

@@ -1,4 +1,3 @@
-// Raw GeoJSON shapes returned from the API
 export interface HousingFeature {
   type: "Feature";
   id?: number | string;
@@ -11,15 +10,13 @@ export interface HousingCollection {
   features: HousingFeature[];
 }
 
-// Geocode result from Nominatim via Rust backend
 export interface GeoLocation {
   lat: number;
   lng: number;
   display_name: string;
-  bbox: [number, number, number, number]; // south, north, west, east
+  bbox: [number, number, number, number];
 }
 
-// Unified display model — source-agnostic
 export type DataSource = "sj" | "lihtc" | "public";
 
 export interface BedroomCounts {
@@ -47,11 +44,10 @@ export interface DisplayProperty {
   totalUnits: number;
   affordableUnits: number;
   bedrooms: BedroomCounts;
-  incomeCeilingPct?: number;     // e.g. 50 = 50% AMI ceiling
-  populationTypes: string[];     // ['Family', 'Elderly', 'Disabled', ...]
+  incomeCeilingPct?: number;
+  populationTypes: string[];
   hasRentalAssistance: boolean;
   yearBuilt?: number;
-  // SJ-specific
   arstatus?: string;
   projdevstage?: string;
   tenuretype?: string;
@@ -63,17 +59,15 @@ export interface DisplayProperty {
   liunits?: number;
   moderateunits?: number;
   propertyManager?: string;
-  arExpiry?: number;          // Unix epoch ms — SJ affordability restriction expiry
-  // LIHTC-specific
-  lowCeil?: number;           // decoded lower AMI tier % (50 or 60) for mixed-tier properties
-  ceilUnit?: number;          // units at lower AMI tier
-  isLikelyExpired?: boolean;  // yearBuilt + 30 < currentYear — affordability period may have ended
-  waitlistStatus?: "open" | "closed" | "unknown"; // public housing only
-  applicationDeadline?: number; // epoch ms — user-set application deadline
+  arExpiry?: number;
+  lowCeil?: number;
+  ceilUnit?: number;
+  isLikelyExpired?: boolean;
+  waitlistStatus?: "open" | "closed" | "unknown";
+  applicationDeadline?: number;
   raw: Record<string, unknown>;
 }
 
-// ── Market data (HUD FMR + Census ACS) ───────────────────────────────────────
 
 export interface FmrData {
   zip: string;
