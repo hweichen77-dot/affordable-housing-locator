@@ -1,0 +1,35 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1811"/>
+      <stop offset="1" stop-color="#11100c"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F2B657"/>
+      <stop offset="1" stop-color="#E39A2E"/>
+    </linearGradient>
+  </defs>
+
+  <!-- rounded-square backdrop -->
+  <rect x="0" y="0" width="1024" height="1024" rx="230" fill="url(#bg)"/>
+
+  <!-- map pin (teardrop) that reads as "location" -->
+  <path fill="url(#amber)" d="M512 168
+    c-160 0 -290 128 -290 288
+    c0 200 250 400 290 452
+    c40 -52 290 -252 290 -452
+    c0 -160 -130 -288 -290 -288 z"/>
+
+  <!-- house cut out of the pin head -->
+  <path fill="#17140F" d="M512 300
+    L392 404
+    L392 560
+    L462 560
+    L462 476
+    L562 476
+    L562 560
+    L632 560
+    L632 404 z"/>
+  <!-- roof overhang accent -->
+  <path fill="#17140F" d="M512 286 L360 418 L392 452 L512 344 L632 452 L664 418 z"/>
+</svg>
