@@ -31,10 +31,12 @@
     "showExpired": "Ver vencidos",
     "hideExpired": "Ocultar vencidos",
     "clearAll": "Borrar todos los filtros",
-    "yearBuiltMin": "Año mínimo de construcción"
+    "yearBuiltMin": "Año mínimo de construcción",
+    "more": "Más filtros"
   },
   "ui": {
     "findHome": "Encuentra Tu Próximo Hogar",
+    "newSearch": "Nueva búsqueda",
     "household": "Hogar",
     "amiLimit": "Límite AMI",
     "myIncome": "Mi ingreso",
