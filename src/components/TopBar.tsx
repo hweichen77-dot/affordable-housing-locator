@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n/config";
 import type { FilterState } from "../App";
@@ -87,7 +87,24 @@ export function TopBar({
   const { t } = useTranslation();
   const [input, setInput] = useState("");
   const [lang, setLang] = useState(i18n.language.slice(0, 2));
+  const [moreOpen, setMoreOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const moreRef = useRef<HTMLDivElement>(null);
+
+  const secondaryActive = showExpired || filters.yearBuiltMin != null;
+  const filtersActive =
+    amiCeiling > 0 || incomeValue > 0 || hhSize !== 1 || secondaryActive ||
+    !!filters.incomeTier || !!filters.bedroomSize || filters.voucherOnly ||
+    filters.savedOnly || !!filters.populationType;
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [moreOpen]);
 
   const sliderIdx = INCOME_STOPS.findIndex(s => s >= incomeValue);
   const sliderVal = sliderIdx < 0 ? MAX_SLIDER : sliderIdx;
@@ -110,8 +127,9 @@ export function TopBar({
     <header className="topbar">
       <div className="topbar-brand">
         {onGoHome ? (
-          <button className="topbar-home-btn" onClick={onGoHome} aria-label="Start over">
-            {t("ui.findHome")}
+          <button className="topbar-home-btn" onClick={onGoHome} aria-label={t("ui.newSearch")} title={t("ui.newSearch")}>
+            <HomeGlyph />
+            <span>{t("ui.findHome")}</span>
           </button>
         ) : (
           <span className="topbar-title">{t("ui.findHome")}</span>
@@ -137,7 +155,7 @@ export function TopBar({
       </form>
 
       <div className="topbar-controls">
-        {}
+        <div className="topbar-filter-zone">
         <div className="topbar-control-group">
           <span className="topbar-control-label">{t("ui.household")}</span>
           <div className="hh-picker" role="group" aria-label="Household size">
@@ -206,76 +224,91 @@ export function TopBar({
             aria-valuetext={incomeLabel(incomeValue, t)}
           />
         </div>
+        </div>{/* /filter-zone */}
 
-        {}
-        {hasSearched && dataSource === "lihtc" && (
-          <button
-            className={`topbar-expiry-toggle${showExpired ? " active" : ""}`}
-            onClick={onToggleExpired}
-            type="button"
-            title="LIHTC properties built before 1996 may no longer be affordable"
-          >
-            {showExpired ? t("filters.hideExpired") : t("filters.showExpired")}
-          </button>
-        )}
+        <div className="topbar-tool-zone">
+          {/* secondary filters tucked into a disclosure to keep the bar scannable */}
+          {hasSearched && dataSource === "lihtc" && (
+            <div className="topbar-more" ref={moreRef}>
+              <button
+                className={`topbar-more-btn${secondaryActive ? " has-active" : ""}`}
+                onClick={() => setMoreOpen(v => !v)}
+                aria-expanded={moreOpen}
+                aria-haspopup="true"
+                type="button"
+              >
+                {t("filters.more")}
+                {secondaryActive && <span className="topbar-more-dot" aria-hidden="true" />}
+                <span className="topbar-more-caret" aria-hidden="true">▾</span>
+              </button>
+              {moreOpen && (
+                <div className="topbar-more-panel" role="group" aria-label={t("filters.more")}>
+                  <button
+                    className={`topbar-expiry-toggle${showExpired ? " active" : ""}`}
+                    onClick={onToggleExpired}
+                    type="button"
+                    title="LIHTC properties built before 1996 may no longer be affordable"
+                  >
+                    {showExpired ? t("filters.hideExpired") : t("filters.showExpired")}
+                  </button>
+                  <div className="topbar-control-group">
+                    <span className="topbar-control-label">{t("filters.yearBuiltMin")}</span>
+                    <select
+                      className="topbar-year-select"
+                      value={filters.yearBuiltMin ?? ""}
+                      onChange={e => {
+                        const v = e.target.value === "" ? undefined : Number(e.target.value);
+                        onFiltersChange({ ...filters, yearBuiltMin: v });
+                      }}
+                      aria-label={t("filters.yearBuiltMin")}
+                    >
+                      {YEAR_BUILT_OPTIONS.map(opt => (
+                        <option key={opt.value ?? ""} value={opt.value ?? ""}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
-        {}
-        {hasSearched && dataSource === "lihtc" && (
-          <div className="topbar-control-group">
-            <span className="topbar-control-label">{t("filters.yearBuiltMin")}</span>
-            <select
-              className="topbar-year-select"
-              value={filters.yearBuiltMin ?? ""}
-              onChange={e => {
-                const v = e.target.value === "" ? undefined : Number(e.target.value);
-                onFiltersChange({ ...filters, yearBuiltMin: v });
-              }}
-              aria-label={t("filters.yearBuiltMin")}
-            >
-              {YEAR_BUILT_OPTIONS.map(opt => (
-                <option key={opt.value ?? ""} value={opt.value ?? ""}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {}
-        {hasSearched && (
-          <button
-            className="topbar-clear-filters"
-            onClick={onClearFilters}
-            type="button"
-          >
-            {t("filters.clearAll")}
-          </button>
-        )}
-
-        {}
-        {hasSearched && (
-          <button
-            className={`topbar-map-toggle${showMapView ? " active" : ""}`}
-            onClick={onToggleMap}
-            aria-pressed={showMapView}
-            type="button"
-          >
-            {showMapView ? t("ui.list") : t("ui.map")}
-          </button>
-        )}
-
-        {}
-        <div className="topbar-lang-picker" role="group" aria-label="Language">
-          {LANGS.map(({ code, label }) => (
+          {hasSearched && filtersActive && (
             <button
-              key={code}
-              className={`topbar-lang-btn${lang === code ? " active" : ""}`}
-              onClick={() => switchLang(code)}
-              aria-pressed={lang === code}
+              className="topbar-clear-filters"
+              onClick={onClearFilters}
               type="button"
             >
-              {label}
+              {t("filters.clearAll")}
             </button>
-          ))}
-        </div>
+          )}
+
+          {hasSearched && (
+            <button
+              className={`topbar-map-toggle${showMapView ? " active" : ""}`}
+              onClick={onToggleMap}
+              aria-pressed={showMapView}
+              type="button"
+            >
+              {showMapView ? t("ui.list") : t("ui.map")}
+            </button>
+          )}
+
+          <span className="topbar-divider" aria-hidden="true" />
+
+          <div className="topbar-lang-picker" role="group" aria-label="Language">
+            {LANGS.map(({ code, label }) => (
+              <button
+                key={code}
+                className={`topbar-lang-btn${lang === code ? " active" : ""}`}
+                onClick={() => switchLang(code)}
+                aria-pressed={lang === code}
+                type="button"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>{/* /tool-zone */}
       </div>
 
       {hasSearched && searchDisplay && (
@@ -297,6 +330,15 @@ export function TopBar({
   );
 }
 
+
+function HomeGlyph() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <path d="M8 2.2 2 7v6.3c0 .3.2.5.5.5H6V10h4v3.8h3.5c.3 0 .5-.2.5-.5V7L8 2.2Z"
+        fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 function PersonSvg({ x = 0 }: { x?: number }) {
   return (

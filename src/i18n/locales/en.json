@@ -31,10 +31,12 @@
     "showExpired": "Show expired",
     "hideExpired": "Hide expired",
     "clearAll": "Clear all filters",
-    "yearBuiltMin": "Min Year Built"
+    "yearBuiltMin": "Min Year Built",
+    "more": "More filters"
   },
   "ui": {
     "findHome": "Find Your Next Home",
+    "newSearch": "New search",
     "household": "Household",
     "amiLimit": "AMI limit",
     "myIncome": "My income",

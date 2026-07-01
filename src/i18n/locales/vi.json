@@ -31,10 +31,12 @@
     "showExpired": "Hiện đã hết hạn",
     "hideExpired": "Ẩn đã hết hạn",
     "clearAll": "Xóa tất cả bộ lọc",
-    "yearBuiltMin": "Năm xây tối thiểu"
+    "yearBuiltMin": "Năm xây tối thiểu",
+    "more": "Bộ lọc khác"
   },
   "ui": {
     "findHome": "Tìm Ngôi Nhà Tiếp Theo",
+    "newSearch": "Tìm kiếm mới",
     "household": "Hộ gia đình",
     "amiLimit": "Giới hạn AMI",
     "myIncome": "Thu nhập của tôi",
