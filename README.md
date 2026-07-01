@@ -6,6 +6,18 @@ Built for the **Congressional App Challenge**.
 
 ---
 
+## Screenshots
+
+**Search 50,000+ income-limited homes across all 50 states — no account, completely free.**
+
+![Home screen — search by city, ZIP, or current location with household and income filters](docs/screenshots/welcome.png)
+
+**Built-in eligibility guide — understand AMI income limits before you search.**
+
+![Eligibility survey explaining how Area Median Income determines which programs you qualify for](docs/screenshots/eligibility.png)
+
+---
+
 ## The Problem
 
 Over **40 million Americans** pay more than they can afford for rent. Median rents have risen 30%+ since 2020. Finding eligible affordable housing programs is confusing, fragmented, and inaccessible to the people who need it most.
