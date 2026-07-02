@@ -57,7 +57,9 @@
     "requestInfo": "Yêu cầu thông tin",
     "applyOrInfo": "Đăng ký / Thông tin",
     "findAndApply": "Tìm & Đăng ký",
-    "noWebsiteNote": "Không có trang web — liên kết mở tìm kiếm trực tuyến."
+    "noWebsiteNote": "Không có trang web — liên kết mở tìm kiếm trực tuyến.",
+    "help": "Trợ giúp",
+    "exportSaved": "Xuất đã lưu"
   },
   "welcome": {
     "heading": "Tìm Ngôi Nhà Phù Hợp Với Ngân Sách",

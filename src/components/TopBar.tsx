@@ -36,6 +36,7 @@ interface TopBarProps {
   onFiltersChange: (f: FilterState) => void;
   onClearFilters: () => void;
   hasPublicData: boolean;
+  onOpenAbout: () => void;
 }
 
 const HH_ICONS: { n: number; svg: React.ReactNode }[] = [
@@ -82,7 +83,7 @@ export function TopBar({
   incomeValue, onIncomeChange, amiCeiling, onAmiCeilingChange,
   onSearch, onNearMe, onGoHome, showMapView, onToggleMap, resultCount,
   dataSource, showExpired, onToggleExpired,
-  filters, onFiltersChange, onClearFilters, hasPublicData,
+  filters, onFiltersChange, onClearFilters, hasPublicData, onOpenAbout,
 }: TopBarProps) {
   const { t } = useTranslation();
   const [input, setInput] = useState("");
@@ -292,6 +293,14 @@ export function TopBar({
               {showMapView ? t("ui.list") : t("ui.map")}
             </button>
           )}
+
+          <button
+            className="topbar-help-btn"
+            onClick={onOpenAbout}
+            type="button"
+            aria-label={t("ui.help")}
+            title={`${t("ui.help")} (?)`}
+          >?</button>
 
           <span className="topbar-divider" aria-hidden="true" />
 
