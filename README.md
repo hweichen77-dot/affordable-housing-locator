@@ -78,6 +78,14 @@ These rents are HUD-regulated maximums by federal law for LIHTC properties.
 
 ---
 
+## Download
+
+Prebuilt installers (no toolchain required) are on the
+[**Releases page**](https://github.com/hweichen77-dot/affordable-housing-locator/releases/latest) —
+grab the `.dmg` (macOS) or `.msi` / `.exe` (Windows).
+
+---
+
 ## Building from Source
 
 ```bash

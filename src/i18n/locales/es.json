@@ -57,7 +57,9 @@
     "requestInfo": "Solicitar info",
     "applyOrInfo": "Solicitar / Más info",
     "findAndApply": "Buscar y solicitar",
-    "noWebsiteNote": "Sin sitio web registrado — el enlace abre una búsqueda web."
+    "noWebsiteNote": "Sin sitio web registrado — el enlace abre una búsqueda web.",
+    "help": "Ayuda",
+    "exportSaved": "Exportar guardados"
   },
   "welcome": {
     "heading": "Encuentra un Hogar Dentro de Tu Presupuesto",
