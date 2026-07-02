@@ -36,9 +36,9 @@
   --bg-hover:     oklch(23% 0.010 75);
   --border:       oklch(27% 0.010 75);
   --border-light: oklch(22% 0.008 75);
-  --text-primary: oklch(94% 0.005 75);
-  --text-secondary: oklch(68% 0.012 75);
-  --text-muted:   oklch(46% 0.010 75);
+  --text-primary: oklch(95% 0.005 75);
+  --text-secondary: oklch(75% 0.014 75);
+  --text-muted:   oklch(56% 0.012 75);
   --accent:       oklch(76% 0.13 72);
   --accent-dim:   oklch(58% 0.11 70);
   --accent-bg:    oklch(24% 0.05 70);
@@ -2421,11 +2421,55 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 
 /* Left: eligibility filters (household / AMI / income) */
-.topbar-filter-zone {
+/* Primary filters live in a popover so the bar stays a clean search field */
+.topbar-filters { position: relative; }
+.topbar-filters-btn {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 7px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
+.topbar-filters-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.topbar-filters-btn.has-active { border-color: var(--accent-dim); color: var(--text-primary); }
+.topbar-filters-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 11px;
+  font-weight: 700;
+}
+.topbar-filter-zone {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 260px;
+  padding: 18px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px oklch(4% 0.01 75 / 0.55);
+}
+.topbar-filter-zone .topbar-income-group { min-width: 0; width: 100%; }
 
 /* Right: view + settings, pushed to the far edge and set apart */
 .topbar-tool-zone {
@@ -3193,19 +3237,98 @@ html, body, #root { height: 100%; overflow: hidden; }
 
 .welcome-screen {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  height: 100%;
-  padding: 32px;
+  min-height: 100%;
+  padding: clamp(40px, 9vh, 112px) 32px 56px;
+  overflow-y: auto;
 }
 .welcome-content {
-  max-width: 440px;
+  max-width: 620px;
   width: 100%;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  text-align: left;
+}
+.welcome-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.welcome-content .welcome-heading {
+  font-size: clamp(32px, 5vw, 46px);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  margin: -4px 0 0;
+}
+.welcome-content .welcome-sub {
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  max-width: 52ch;
+}
+.welcome-actions {
+  display: flex;
   align-items: center;
-  gap: 16px;
-  text-align: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.welcome-actions .welcome-nearme-btn {
+  width: auto;
+  border-radius: 8px;
+  padding: 12px 22px;
+}
+.welcome-actions-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.welcome-quickstart {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  width: 100%;
+}
+.welcome-quickstart-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.welcome-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-start;
+}
+.welcome-stats {
+  display: flex;
+  gap: 40px;
+  margin: 10px 0 0;
+  padding-top: 22px;
+  border-top: 1px solid var(--border-light);
+  width: 100%;
+}
+.welcome-stat { display: flex; flex-direction: column; gap: 3px; }
+.welcome-stat-num {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+.welcome-stat-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.35;
+  max-width: 15ch;
 }
 .welcome-icon-wrap { color: var(--accent); opacity: 0.7; }
 .welcome-svg { width: 48px; height: 44px; }
@@ -3256,15 +3379,15 @@ html, body, #root { height: 100%; overflow: hidden; }
 .welcome-chip {
   background: var(--bg-raised);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 8px;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 13px;
   font-family: inherit;
-  padding: 6px 14px;
+  padding: 8px 14px;
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
-.welcome-chip:hover { background: var(--bg-hover); color: var(--text-primary); }
+.welcome-chip:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--accent-dim); }
 .welcome-note {
   font-size: 11px;
   color: var(--text-muted);
@@ -3273,17 +3396,22 @@ html, body, #root { height: 100%; overflow: hidden; }
 
 .empty-screen {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  height: 100%;
-  gap: 12px;
-  padding: 32px;
-  text-align: center;
+  min-height: 100%;
+  padding: clamp(48px, 12vh, 140px) 32px 56px;
 }
-.empty-icon { font-size: 32px; color: var(--text-muted); }
-.empty-heading { font-size: 16px; font-weight: 600; color: var(--text-primary); }
-.empty-sub { font-size: 13px; color: var(--text-secondary); max-width: 300px; line-height: 1.5; }
+.empty-inner {
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+}
+.empty-mark { font-size: 40px; line-height: 1; color: var(--accent-dim); font-weight: 300; }
+.empty-heading { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); }
+.empty-sub { font-size: 14px; color: var(--text-secondary); max-width: 40ch; line-height: 1.55; }
 .empty-reset-btn {
   background: var(--bg-raised);
   border: 1px solid var(--border);

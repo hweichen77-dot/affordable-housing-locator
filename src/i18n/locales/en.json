@@ -62,19 +62,24 @@
     "exportSaved": "Export saved"
   },
   "welcome": {
-    "heading": "Find a Home That Fits Your Budget",
-    "sub": "Search 50,000+ subsidized rental properties across all 50 states. Filter by income level, household size, and bedroom count.",
+    "heading": "Find a home that fits your budget",
+    "sub": "Search income-limited rentals in every state. Filter by income, household size, and bedrooms — no account, completely free.",
     "findNearMe": "Find Homes Near Me",
     "findingNearMe": "Finding homes near you…",
     "recentSearches": "recent searches",
-    "searchCity": "or search a city",
+    "searchCity": "Popular cities",
     "note": "Over 50,000 income-limited homes across all 50 states. No account needed. Completely free.",
     "stat1num": "40M+",
     "stat1label": "Americans cost-burdened by rent",
     "stat2num": "50K+",
     "stat2label": "subsidized properties searchable",
     "stat3num": "50",
-    "stat3label": "states covered"
+    "stat3label": "states covered",
+    "kicker": "Affordable housing · nationwide",
+    "searchHint": "or search a city or ZIP in the bar above",
+    "statHomes": "income-limited homes",
+    "statStates": "states covered",
+    "statFree": "no account, ever"
   },
   "empty": {
     "heading": "No homes found in this area",
