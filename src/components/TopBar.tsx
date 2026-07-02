@@ -89,8 +89,10 @@ export function TopBar({
   const [input, setInput] = useState("");
   const [lang, setLang] = useState(i18n.language.slice(0, 2));
   const [moreOpen, setMoreOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
 
   const secondaryActive = showExpired || filters.yearBuiltMin != null;
   const filtersActive =
@@ -106,6 +108,18 @@ export function TopBar({
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, [moreOpen]);
+
+  useEffect(() => {
+    if (!filterOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [filterOpen]);
+
+  const activeFilterCount =
+    (hhSize !== 1 ? 1 : 0) + (amiCeiling > 0 ? 1 : 0) + (incomeValue > 0 ? 1 : 0);
 
   const sliderIdx = INCOME_STOPS.findIndex(s => s >= incomeValue);
   const sliderVal = sliderIdx < 0 ? MAX_SLIDER : sliderIdx;
@@ -156,7 +170,20 @@ export function TopBar({
       </form>
 
       <div className="topbar-controls">
-        <div className="topbar-filter-zone">
+        <div className="topbar-filters" ref={filterRef}>
+          <button
+            className={`topbar-filters-btn${activeFilterCount > 0 ? " has-active" : ""}`}
+            onClick={() => setFilterOpen(v => !v)}
+            aria-expanded={filterOpen}
+            aria-haspopup="true"
+            type="button"
+          >
+            {t("filters.title")}
+            {activeFilterCount > 0 && <span className="topbar-filters-count">{activeFilterCount}</span>}
+            <span className="topbar-more-caret" aria-hidden="true">▾</span>
+          </button>
+          {filterOpen && (
+        <div className="topbar-filter-zone" role="group" aria-label={t("filters.title")}>
         <div className="topbar-control-group">
           <span className="topbar-control-label">{t("ui.household")}</span>
           <div className="hh-picker" role="group" aria-label="Household size">
@@ -225,7 +252,9 @@ export function TopBar({
             aria-valuetext={incomeLabel(incomeValue, t)}
           />
         </div>
-        </div>{/* /filter-zone */}
+        </div>
+          )}
+        </div>
 
         <div className="topbar-tool-zone">
           {/* secondary filters tucked into a disclosure to keep the bar scannable */}

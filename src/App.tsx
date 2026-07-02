@@ -57,29 +57,27 @@ function WelcomeScreen({ onSearch, onNearMe, loading, error, searchHistory }: {
   return (
     <div className="welcome-screen">
       <div className="welcome-content">
-        <div className="welcome-icon-wrap">
-          <svg viewBox="0 0 40 36" fill="none" aria-hidden="true" className="welcome-svg">
-            <path d="M20 3L2 16h4v17h10V22h8v11h10V16h4L20 3z"
-              stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-          </svg>
-        </div>
-        <h2 className="welcome-heading">{t("welcome.heading")}</h2>
+        <span className="welcome-kicker">{t("welcome.kicker")}</span>
+        <h1 className="welcome-heading">{t("welcome.heading")}</h1>
         <p className="welcome-sub">{t("welcome.sub")}</p>
 
         {error && <p className="welcome-error" role="alert">{error}</p>}
 
-        <button
-          className="welcome-nearme-btn"
-          onClick={onNearMe}
-          disabled={loading}
-          type="button"
-        >
-          {loading ? t("welcome.findingNearMe") : t("welcome.findNearMe")}
-        </button>
+        <div className="welcome-actions">
+          <button
+            className="welcome-nearme-btn"
+            onClick={onNearMe}
+            disabled={loading}
+            type="button"
+          >
+            {loading ? t("welcome.findingNearMe") : t("welcome.findNearMe")}
+          </button>
+          <span className="welcome-actions-hint">{t("welcome.searchHint")}</span>
+        </div>
 
         {searchHistory.length > 0 && (
-          <>
-            <p className="welcome-or">{t("welcome.recentSearches")}</p>
+          <div className="welcome-quickstart">
+            <span className="welcome-quickstart-label">{t("welcome.recentSearches")}</span>
             <div className="welcome-chips">
               {searchHistory.map(q => (
                 <button key={q} className="welcome-chip welcome-chip-recent" onClick={() => onSearch(q)} type="button">
@@ -87,20 +85,34 @@ function WelcomeScreen({ onSearch, onNearMe, loading, error, searchHistory }: {
                 </button>
               ))}
             </div>
-          </>
+          </div>
         )}
 
-        <p className="welcome-or">{t("welcome.searchCity")}</p>
-
-        <div className="welcome-chips">
-          {cities.map(city => (
-            <button key={city} className="welcome-chip" onClick={() => onSearch(city)} type="button">
-              {city}
-            </button>
-          ))}
+        <div className="welcome-quickstart">
+          <span className="welcome-quickstart-label">{t("welcome.searchCity")}</span>
+          <div className="welcome-chips">
+            {cities.map(city => (
+              <button key={city} className="welcome-chip" onClick={() => onSearch(city)} type="button">
+                {city}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <p className="welcome-note">{t("welcome.note")}</p>
+        <dl className="welcome-stats">
+          <div className="welcome-stat">
+            <dt className="welcome-stat-num">50,000+</dt>
+            <dd className="welcome-stat-label">{t("welcome.statHomes")}</dd>
+          </div>
+          <div className="welcome-stat">
+            <dt className="welcome-stat-num">50</dt>
+            <dd className="welcome-stat-label">{t("welcome.statStates")}</dd>
+          </div>
+          <div className="welcome-stat">
+            <dt className="welcome-stat-num">$0</dt>
+            <dd className="welcome-stat-label">{t("welcome.statFree")}</dd>
+          </div>
+        </dl>
       </div>
     </div>
   );
@@ -110,12 +122,14 @@ function EmptyState({ onReset }: { onReset: () => void }) {
   const { t } = useTranslation();
   return (
     <div className="empty-screen">
-      <p className="empty-icon">○</p>
-      <p className="empty-heading">{t("empty.heading")}</p>
-      <p className="empty-sub">{t("empty.sub")}</p>
-      <button className="empty-reset-btn" onClick={onReset} type="button">
-        {t("empty.clearFilters")}
-      </button>
+      <div className="empty-inner">
+        <span className="empty-mark" aria-hidden="true">—</span>
+        <h2 className="empty-heading">{t("empty.heading")}</h2>
+        <p className="empty-sub">{t("empty.sub")}</p>
+        <button className="empty-reset-btn" onClick={onReset} type="button">
+          {t("empty.clearFilters")}
+        </button>
+      </div>
     </div>
   );
 }
