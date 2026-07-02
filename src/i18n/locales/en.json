@@ -57,7 +57,9 @@
     "requestInfo": "Request Info",
     "applyOrInfo": "Apply Now / Get Info",
     "findAndApply": "Find & Apply",
-    "noWebsiteNote": "No direct website on file — link opens a web search."
+    "noWebsiteNote": "No direct website on file — link opens a web search.",
+    "help": "Help & about",
+    "exportSaved": "Export saved"
   },
   "welcome": {
     "heading": "Find a Home That Fits Your Budget",

@@ -7,10 +7,11 @@ import { DetailPanel } from "./components/DetailPanel";
 import { DeadlineWidget } from "./components/DeadlineWidget";
 import { ComparePanel } from "./components/ComparePanel";
 import { AmiSurvey, hasSurveyCompleted } from "./components/AmiSurvey";
-import type { HousingCollection, GeoLocation, DisplayProperty, MarketData, FmrData, AcsRentData, IlData, RentcastListing } from "./types/housing";
+import type { HousingCollection, GeoLocation, DisplayProperty } from "./types/housing";
 import { normalizeFeatures, qualifiesForIncome, hasBedroomType, popMatches } from "./lib/normalize";
 import { haversineKm } from "./lib/geo";
-import { getAmi } from "./lib/ami";
+import { getAmi, maxRentFromAmi } from "./lib/ami";
+import { AboutModal } from "./components/AboutModal";
 
 const FullMap = lazy(() => import("./components/Map").then(m => ({ default: m.Map })));
 
@@ -127,7 +128,7 @@ export default function App() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [searchLocation, setSearchLocation] = useState<GeoLocation | null>(null);
-  const [_searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [searchHistory, setSearchHistory] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem("housing-search-history") ?? "[]"); }
@@ -168,41 +169,9 @@ export default function App() {
   });
   const [showExpired, setShowExpired] = useState(false);
 
-  const [_marketData, setMarketData] = useState<MarketData | null>(null);
-  const marketCacheRef = useRef<Record<string, MarketData>>({});
+  const [showAbout, setShowAbout] = useState(false);
   const lastSearchRef = useRef<number>(0);
   const searchCounterRef = useRef<number>(0);
-
-  useEffect(() => {
-    if (!selectedProperty?.zip) { setMarketData(null); return; }
-    const zip = selectedProperty.zip.replace(/\D/g, "").slice(0, 5);
-    if (zip.length !== 5) { setMarketData(null); return; }
-    if (marketCacheRef.current[zip]) { setMarketData(marketCacheRef.current[zip]); return; }
-    let cancelled = false;
-    const { lat, lng } = selectedProperty;
-    Promise.all([
-      invoke<FmrData | null>("fetch_fmr", { zip }).catch(() => null),
-      invoke<AcsRentData | null>("fetch_acs_rent", { zip }).catch(() => null),
-      invoke<IlData | null>("fetch_il", { zip }).catch(() => null),
-      lat != null && lng != null
-        ? invoke<RentcastListing[]>("fetch_nearby_rentals", { lat, lng }).catch(() => [])
-        : Promise.resolve([] as RentcastListing[]),
-    ]).then(([fmr, acs, il, nearby]) => {
-      if (cancelled) return;
-      const data: MarketData = { fmr, acs, il, nearby: nearby ?? [] };
-      marketCacheRef.current[zip] = data;
-      setMarketData(data);
-    });
-    return () => { cancelled = true; };
-  }, [selectedProperty?.zip]);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const sharedId = params.get("id");
-    if (sharedId) {
-      pendingSharedIdRef.current = sharedId;
-    }
-  }, []);
 
   useEffect(() => {
     if (!pendingSharedIdRef.current || rawData.length === 0) return;
@@ -216,6 +185,9 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     const currentId = params.get("id");
     if (selectedProperty) {
+      // Carry the search query too so a shared link can re-run the search and
+      // resolve the property for a recipient in a fresh session.
+      if (searchQuery) params.set("q", searchQuery);
       if (currentId !== selectedProperty.id) {
         params.set("id", selectedProperty.id);
         window.history.replaceState(null, "", "?" + params.toString());
@@ -227,7 +199,7 @@ export default function App() {
         window.history.replaceState(null, "", newSearch ? "?" + newSearch : window.location.pathname);
       }
     }
-  }, [selectedProperty]);
+  }, [selectedProperty, searchQuery]);
 
   useEffect(() => {
     try { localStorage.setItem("housing-filters-v1", JSON.stringify(filters)); } catch {  }
@@ -308,6 +280,27 @@ export default function App() {
     }
   }, []);
 
+  // Resolve a shared link (?id=&q=): re-run the search so rawData populates,
+  // then the effect below selects the shared property once it arrives.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sharedId = params.get("id");
+    const q = params.get("q");
+    if (sharedId) pendingSharedIdRef.current = sharedId;
+    if (q) handleSearch(q);
+  }, [handleSearch]);
+
+  // Open the help/about guide with "?" (matches the shortcut listed inside it).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const typing = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+      if (!typing && e.key === "?") { e.preventDefault(); setShowAbout(true); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const handleNearMe = useCallback(() => {
     if (!navigator.geolocation) {
       setSearchError("Geolocation is not available. Please search by city name.");
@@ -374,6 +367,34 @@ export default function App() {
       return next;
     });
   }, []);
+
+  // Export currently-loaded saved properties to a plain-text file.
+  const exportFavorites = useCallback(() => {
+    const saved = rawData.filter(p => favorites.has(p.id));
+    if (saved.length === 0) return;
+    const lines = saved.map(p => {
+      const parts = [
+        p.name,
+        [p.address, p.city, p.state, p.zip].filter(Boolean).join(", "),
+        p.phone ? `Phone: ${p.phone}` : "",
+        p.website ? `Website: ${p.website}` : "",
+        p.incomeCeilingPct != null ? `Income limit: <=${p.incomeCeilingPct}% AMI` : "",
+        p.affordableUnits ? `Affordable units: ${p.affordableUnits}` : "",
+        appStatuses[p.id] ? `Status: ${appStatuses[p.id]}` : "",
+      ].filter(Boolean);
+      return parts.join("\n");
+    });
+    const header = `Affordable Housing Locator — Saved Properties (${saved.length})\n${"=".repeat(48)}\n\n`;
+    const blob = new Blob([header + lines.join("\n\n" + "-".repeat(32) + "\n\n")], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "saved-housing.txt";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, [rawData, favorites, appStatuses]);
 
   const handleStatusChange = useCallback((id: string, status: AppStatusValue | null) => {
     setAppStatuses(prev => {
@@ -461,6 +482,13 @@ export default function App() {
       );
     }
 
+    // Income tier from the survey → keep properties the household is eligible
+    // for: their AMI% must be at or below the property's income ceiling.
+    if (filters.incomeTier) {
+      const tierPct = { ELI: 30, VLI: 50, LI: 80, Moderate: 120 }[filters.incomeTier];
+      items = items.filter(p => p.incomeCeilingPct == null || tierPct <= p.incomeCeilingPct);
+    }
+
     if (filters.bedroomSize) {
       items = items.filter(p => hasBedroomType(p, filters.bedroomSize));
     }
@@ -488,6 +516,11 @@ export default function App() {
         ? haversineKm(userLocation.lat, userLocation.lng, p.lat, p.lng)
         : Infinity;
 
+    // Estimated max monthly rent: 30% of the size-adjusted income limit at the
+    // property's AMI tier (default 60% AMI when the ceiling is unknown).
+    const estRent = (p: DisplayProperty) =>
+      maxRentFromAmi(ami * ((p.incomeCeilingPct ?? 60) / 100), hhSize);
+
     return [...items].sort((a, b) => {
       switch (filters.sortBy) {
         case "name":
@@ -497,7 +530,7 @@ export default function App() {
         case "units":
           return (b.affordableUnits || 0) - (a.affordableUnits || 0);
         case "rent":
-          return (a.incomeCeilingPct ?? 999) - (b.incomeCeilingPct ?? 999);
+          return estRent(a) - estRent(b);
         case "match": {
           if (incomeValue > 0) {
             const aQ = qualifiesForIncome(a, incomeValue, hhSize, ami);
@@ -548,6 +581,8 @@ export default function App() {
         <AmiSurvey onComplete={handleSurveyComplete} onSkip={handleSurveySkip} />
       )}
 
+      {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
+
       <div className="new-app-layout">
         <TopBar
           searchDisplay={searchLocation?.display_name}
@@ -572,6 +607,7 @@ export default function App() {
           onFiltersChange={setFilters}
           onClearFilters={clearFilters}
           hasPublicData={rawData.some(p => p.source === "public")}
+          onOpenAbout={() => setShowAbout(true)}
         />
 
         {}
@@ -660,6 +696,15 @@ export default function App() {
                       type="button"
                     >
                       Show all
+                    </button>
+                  )}
+                  {savedCount > 0 && (
+                    <button
+                      className="results-filter-clear"
+                      onClick={exportFavorites}
+                      type="button"
+                    >
+                      Export saved
                     </button>
                   )}
                 </div>

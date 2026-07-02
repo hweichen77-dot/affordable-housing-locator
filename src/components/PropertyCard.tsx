@@ -159,7 +159,7 @@ export function PropertyCard({ property: p, userLocation, saved, appStatus, onSe
   };
 
   return (
-    <article className="prop-card" onClick={() => onSelect(p)} tabIndex={0}
+    <article className="prop-card" onClick={() => onSelect(p)} tabIndex={0} role="button"
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(p); } }}
       aria-label={`${p.name}, ${p.city}, ${p.state}`}
     >

@@ -122,11 +122,15 @@ const SIZE_FACTOR: Record<number, number> = {
   5: 1.08, 6: 1.16, 7: 1.24, 8: 1.32,
 };
 
+// Longest keys first so multi-word metros ("portland me") win over the bare
+// city name ("portland") that would otherwise match the wrong state.
+const METRO_KEYS_BY_LEN = Object.keys(METRO_AMI_OVERRIDES).sort((a, b) => b.length - a.length);
+
 export function getAmi(state: string, cityName?: string): number {
   if (cityName) {
-    const city = cityName.toLowerCase().trim();
-    for (const [key, val] of Object.entries(METRO_AMI_OVERRIDES)) {
-      if (city.includes(key) || key.includes(city.split(",")[0].trim())) return val;
+    const city = cityName.toLowerCase().replace(/,/g, " ").replace(/\s+/g, " ").trim();
+    for (const key of METRO_KEYS_BY_LEN) {
+      if (city.includes(key)) return METRO_AMI_OVERRIDES[key];
     }
   }
   return STATE_AMI_2024[state.toUpperCase()] ?? 97800;

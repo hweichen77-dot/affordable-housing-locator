@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { SurveyAnswers, PopType, BedroomPref } from "../lib/surveyLogic";
 import { computeSurveyResult, tierToFilterValue } from "../lib/surveyLogic";
+import { parseLocationForAmi } from "../lib/location";
 import type { FilterState } from "../App";
 
 const STORAGE_KEY = "housing-survey-v1";
@@ -123,8 +124,9 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
     locationQuery,
   };
 
+  const loc = parseLocationForAmi(locationQuery);
   const result = annualIncome > 0
-    ? computeSurveyResult(answers)
+    ? computeSurveyResult(answers, loc.state ?? "", loc.city)
     : null;
 
   const handleComplete = () => {
