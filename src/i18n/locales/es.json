@@ -62,19 +62,24 @@
     "exportSaved": "Exportar guardados"
   },
   "welcome": {
-    "heading": "Encuentra un Hogar Dentro de Tu Presupuesto",
-    "sub": "Te conectamos con viviendas asequibles según tus ingresos — sin jerga, sin complicaciones.",
+    "heading": "Encuentra un hogar que se ajuste a tu presupuesto",
+    "sub": "Busca alquileres con límite de ingresos en todos los estados. Filtra por ingresos, tamaño del hogar y habitaciones — sin cuenta, totalmente gratis.",
     "findNearMe": "Buscar Cerca de Mí",
     "findingNearMe": "Buscando hogares cerca de ti…",
     "recentSearches": "búsquedas recientes",
-    "searchCity": "o busca una ciudad",
+    "searchCity": "Ciudades populares",
     "note": "Más de 50,000 hogares con límite de ingresos en los 50 estados. Sin cuenta. Completamente gratis.",
     "stat1num": "40M+",
     "stat1label": "Estadounidenses con carga de alquiler",
     "stat2num": "50K+",
     "stat2label": "propiedades subsidiadas disponibles",
     "stat3num": "50",
-    "stat3label": "estados cubiertos"
+    "stat3label": "estados cubiertos",
+    "kicker": "Vivienda asequible · a nivel nacional",
+    "searchHint": "o busca una ciudad o código postal en la barra de arriba",
+    "statHomes": "viviendas con límite de ingresos",
+    "statStates": "estados cubiertos",
+    "statFree": "nunca necesitas cuenta"
   },
   "empty": {
     "heading": "No se encontraron hogares en esta área",
