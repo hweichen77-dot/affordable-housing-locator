@@ -57,13 +57,13 @@
     "requestInfo": "Request Info",
     "applyOrInfo": "Apply Now / Get Info",
     "findAndApply": "Find & Apply",
-    "noWebsiteNote": "No direct website on file — link opens a web search.",
+    "noWebsiteNote": "No direct website on file. Link opens a web search.",
     "help": "Help & about",
     "exportSaved": "Export saved"
   },
   "welcome": {
     "heading": "Find a home that fits your budget",
-    "sub": "Search income-limited rentals in every state. Filter by income, household size, and bedrooms — no account, completely free.",
+    "sub": "Search income-limited rentals in every state. Filter by income, household size, and bedrooms. No account, completely free.",
     "findNearMe": "Find Homes Near Me",
     "findingNearMe": "Finding homes near you…",
     "recentSearches": "recent searches",

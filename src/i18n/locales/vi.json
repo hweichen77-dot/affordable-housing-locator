@@ -57,13 +57,13 @@
     "requestInfo": "Yêu cầu thông tin",
     "applyOrInfo": "Đăng ký / Thông tin",
     "findAndApply": "Tìm & Đăng ký",
-    "noWebsiteNote": "Không có trang web — liên kết mở tìm kiếm trực tuyến.",
+    "noWebsiteNote": "Không có trang web. Liên kết mở tìm kiếm trực tuyến.",
     "help": "Trợ giúp",
     "exportSaved": "Xuất đã lưu"
   },
   "welcome": {
     "heading": "Tìm ngôi nhà phù hợp với ngân sách của bạn",
-    "sub": "Tìm nhà cho thuê giới hạn thu nhập ở mọi tiểu bang. Lọc theo thu nhập, số người và số phòng ngủ — không cần tài khoản, hoàn toàn miễn phí.",
+    "sub": "Tìm nhà cho thuê giới hạn thu nhập ở mọi tiểu bang. Lọc theo thu nhập, số người và số phòng ngủ. Không cần tài khoản, hoàn toàn miễn phí.",
     "findNearMe": "Tìm Nhà Gần Tôi",
     "findingNearMe": "Đang tìm nhà gần bạn…",
     "recentSearches": "tìm kiếm gần đây",

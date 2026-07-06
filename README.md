@@ -1,6 +1,6 @@
 # Affordable Housing Locator
 
-> A free, open-source desktop app that helps anyone in the United States find affordable housing — by city, ZIP code, or current location.
+> A free, open-source desktop app that helps anyone in the United States find affordable housing by city, ZIP code, or current location.
 
 Built for the **Congressional App Challenge**.
 
@@ -8,11 +8,11 @@ Built for the **Congressional App Challenge**.
 
 ## Screenshots
 
-**Search 50,000+ income-limited homes across all 50 states — no account, completely free.**
+**Search 50,000+ income-limited homes across all 50 states. No account, completely free.**
 
-![Home screen — search by city, ZIP, or current location with household and income filters](docs/screenshots/welcome.png)
+![Home screen: search by city, ZIP, or current location with household and income filters](docs/screenshots/welcome.png)
 
-**Built-in eligibility guide — understand AMI income limits before you search.**
+**Built-in eligibility guide: understand AMI income limits before you search.**
 
 ![Eligibility survey explaining how Area Median Income determines which programs you qualify for](docs/screenshots/eligibility.png)
 
@@ -28,18 +28,18 @@ This app changes that.
 
 ## Features
 
-- **Nationwide coverage** — search any city or ZIP across all 50 states using the HUD LIHTC database (50,000+ properties)
-- **Enhanced local data** — supplemental housing inventory from city/county open data portals (currently includes San Jose GeoHub)
-- **Income eligibility calculator** — enter your household income and size to see which programs you qualify for based on HUD Area Median Income (AMI) limits
-- **Accurate rent estimates** — HUD-regulated maximum rents per bedroom type and AMI tier
-- **My Applications tracker** — mark properties as Interested, Applied, or Waitlisted; persists across sessions
-- **Application guide** — checklist of typical documents needed and what to expect from the process
-- **Near me** — one-tap search using your current location
-- **Filters** — by income tier (ELI/VLI/LI/Moderate), bedroom size, household type, rental assistance
-- **Sort** — by name, unit count, distance, or lowest rent
-- **Favorites + export** — save properties and export to a text file
-- **Affordability expiry alerts** — warns when a property's affordability restriction is expiring
-- **External listings links** — direct links to Affordable Housing Online and Socialserve for current availability
+- **Nationwide coverage**: search any city or ZIP across all 50 states using the HUD LIHTC database (50,000+ properties)
+- **Enhanced local data**: supplemental housing inventory from city/county open data portals (currently includes San Jose GeoHub)
+- **Income eligibility calculator**: enter your household income and size to see which programs you qualify for based on HUD Area Median Income (AMI) limits
+- **Accurate rent estimates**: HUD-regulated maximum rents per bedroom type and AMI tier
+- **My Applications tracker**: mark properties as Interested, Applied, or Waitlisted; persists across sessions
+- **Application guide**: checklist of typical documents needed and what to expect from the process
+- **Near me**: one-tap search using your current location
+- **Filters**: by income tier (ELI/VLI/LI/Moderate), bedroom size, household type, rental assistance
+- **Sort**: by name, unit count, distance, or lowest rent
+- **Favorites + export**: save properties and export to a text file
+- **Affordability expiry alerts**: warns when a property's affordability restriction is expiring
+- **External listings links**: direct links to Affordable Housing Online and Socialserve for current availability
 
 ---
 
@@ -57,9 +57,9 @@ This app changes that.
 ## Technical Stack
 
 - **Frontend**: React 18 + TypeScript + Vite
-- **Backend**: Rust (Tauri v2) — handles API fetching, geocoding, and data pagination
+- **Backend**: Rust (Tauri v2), handles API fetching, geocoding, and data pagination
 - **Map**: MapLibre GL JS
-- **Desktop**: Tauri — native macOS app (Windows/Linux supported)
+- **Desktop**: Tauri, native macOS app (Windows/Linux supported)
 
 ---
 
@@ -81,8 +81,7 @@ These rents are HUD-regulated maximums by federal law for LIHTC properties.
 ## Download
 
 Prebuilt installers (no toolchain required) are on the
-[**Releases page**](https://github.com/hweichen77-dot/affordable-housing-locator/releases/latest) —
-grab the `.dmg` (macOS) or `.msi` / `.exe` (Windows).
+[**Releases page**](https://github.com/hweichen77-dot/affordable-housing-locator/releases/latest). Grab the `.dmg` (macOS) or `.msi` / `.exe` (Windows).
 
 ---
 
