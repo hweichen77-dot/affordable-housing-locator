@@ -66,7 +66,7 @@ export function AboutModal({ onClose }: AboutModalProps) {
               <li>Over <strong>40 million Americans</strong> pay more than they can afford for rent</li>
               <li>National median rent rose <strong>30%+ since 2020</strong></li>
               <li>Affordable housing waitlists can span <strong>months to years</strong></li>
-              <li>Eligible programs are fragmented across dozens of agencies — hard to find</li>
+              <li>Eligible programs are fragmented across dozens of agencies, hard to find</li>
             </ul>
           </section>
 
@@ -85,31 +85,31 @@ export function AboutModal({ onClose }: AboutModalProps) {
             <div className="ami-legend">
               <div className="ami-row">
                 <span className="ami-dot" style={{ background: "var(--tier-eli)" }} />
-                <span><strong>ELI</strong> — Extremely Low Income: up to 30% AMI</span>
+                <span><strong>ELI</strong>, Extremely Low Income: up to 30% AMI</span>
               </div>
               <div className="ami-row">
                 <span className="ami-dot" style={{ background: "var(--tier-vli)" }} />
-                <span><strong>VLI</strong> — Very Low Income: up to 50% AMI</span>
+                <span><strong>VLI</strong>, Very Low Income: up to 50% AMI</span>
               </div>
               <div className="ami-row">
                 <span className="ami-dot" style={{ background: "var(--tier-li)" }} />
-                <span><strong>LI</strong> — Low Income: up to 80% AMI</span>
+                <span><strong>LI</strong>, Low Income: up to 80% AMI</span>
               </div>
               <div className="ami-row">
                 <span className="ami-dot" style={{ background: "var(--tier-mod)" }} />
-                <span><strong>Moderate</strong> — up to 120% AMI</span>
+                <span><strong>Moderate</strong>: up to 120% AMI</span>
               </div>
             </div>
-            <p className="about-note">By federal law, LIHTC rents are capped at 30% of the income limit — ensuring housing stays affordable.</p>
+            <p className="about-note">By federal law, LIHTC rents are capped at 30% of the income limit, so housing stays affordable.</p>
           </section>
 
           <section className="about-section">
             <h3>How to Apply</h3>
             <ol className="about-list">
               <li>Search your city and use the income calculator to find programs you qualify for</li>
-              <li>Contact properties directly about open waitlists — apply to several at once</li>
+              <li>Contact properties directly about open waitlists, and apply to several at once</li>
               <li>Gather documents: photo ID, Social Security cards, proof of income, bank statements, rental history</li>
-              <li>Submit and follow up periodically — waitlists move faster than expected</li>
+              <li>Submit and follow up periodically. Waitlists move faster than expected</li>
               <li>Use the status buttons on each property (Interested / Applied / Waitlisted) to track where you are</li>
             </ol>
             <p className="about-note">
@@ -128,19 +128,19 @@ export function AboutModal({ onClose }: AboutModalProps) {
             <ul className="about-list">
               <li>
                 <a className="about-link" href="https://data.sanjoseca.gov" target="_blank" rel="noopener noreferrer">City of San Jose GeoHub</a>
-                {" "}— local affordable housing inventory
+                {" "}covers local affordable housing inventory
               </li>
               <li>
                 <a className="about-link" href="https://www.huduser.gov/portal/datasets/lihtc.html" target="_blank" rel="noopener noreferrer">HUD National LIHTC Database (2024)</a>
-                {" "}— 50,000+ properties nationwide
+                {" "}covers 50,000+ properties nationwide
               </li>
               <li>
                 <a className="about-link" href="https://www.huduser.gov/portal/datasets/il.html" target="_blank" rel="noopener noreferrer">HUD FY2024 Income Limits</a>
-                {" "}— AMI and rent calculations
+                {" "}for AMI and rent calculations
               </li>
               <li>
                 <a className="about-link" href="https://nominatim.openstreetmap.org" target="_blank" rel="noopener noreferrer">OpenStreetMap / Nominatim</a>
-                {" "}— geocoding
+                {" "}for geocoding
               </li>
             </ul>
           </section>
