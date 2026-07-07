@@ -8,7 +8,7 @@ import { DeadlineWidget } from "./components/DeadlineWidget";
 import { ComparePanel } from "./components/ComparePanel";
 import { AmiSurvey, hasSurveyCompleted } from "./components/AmiSurvey";
 import type { HousingCollection, GeoLocation, DisplayProperty } from "./types/housing";
-import { normalizeFeatures, qualifiesForIncome, hasBedroomType, popMatches } from "./lib/normalize";
+import { normalizeFeatures, dedupeProperties, qualifiesForIncome, hasBedroomType, popMatches } from "./lib/normalize";
 import { haversineKm } from "./lib/geo";
 import { getAmi, maxRentFromAmi } from "./lib/ami";
 import { AboutModal } from "./components/AboutModal";
@@ -259,16 +259,22 @@ export default function App() {
         setRawData(normalizeFeatures(d.features, "sj"));
         setDataSource("sj");
       } else {
-        const [d, pubD] = await Promise.all([
+        const emptyC = () => ({ type: "FeatureCollection", features: [] } as HousingCollection);
+        const [d, pubD, mfaD, usdaD, insD] = await Promise.all([
           invoke<HousingCollection>("fetch_lihtc", { lat: loc.lat, lng: loc.lng, radiusKm: 25 }),
-          invoke<HousingCollection>("fetch_public_housing", { lat: loc.lat, lng: loc.lng, radiusKm: 25 })
-            .catch(() => ({ type: "FeatureCollection", features: [] } as HousingCollection)),
+          invoke<HousingCollection>("fetch_public_housing", { lat: loc.lat, lng: loc.lng, radiusKm: 25 }).catch(emptyC),
+          invoke<HousingCollection>("fetch_multifamily_assisted", { lat: loc.lat, lng: loc.lng, radiusKm: 25 }).catch(emptyC),
+          invoke<HousingCollection>("fetch_usda_rural", { lat: loc.lat, lng: loc.lng, radiusKm: 25 }).catch(emptyC),
+          invoke<HousingCollection>("fetch_insured_multifamily", { lat: loc.lat, lng: loc.lng, radiusKm: 25 }).catch(emptyC),
         ]);
         if (myCount !== searchCounterRef.current) return;
-        setRawData([
+        setRawData(dedupeProperties([
           ...normalizeFeatures(d.features, "lihtc"),
           ...normalizeFeatures(pubD.features, "public"),
-        ]);
+          ...normalizeFeatures(mfaD.features, "mfassist"),
+          ...normalizeFeatures(usdaD.features, "usda"),
+          ...normalizeFeatures(insD.features, "insured"),
+        ]));
         setDataSource("lihtc");
       }
 
@@ -330,17 +336,23 @@ export default function App() {
         setUserLocation({ lat, lng });
         setMapFly({ lat, lng, zoom: 12 });
         try {
-          const [loc, d, pubD] = await Promise.all([
+          const emptyC = () => ({ type: "FeatureCollection", features: [] } as HousingCollection);
+          const [loc, d, pubD, mfaD, usdaD, insD] = await Promise.all([
             invoke<GeoLocation>("reverse_geocode", { lat, lng }).catch(() => null),
             invoke<HousingCollection>("fetch_lihtc", { lat, lng, radiusKm: 25 }),
-            invoke<HousingCollection>("fetch_public_housing", { lat, lng, radiusKm: 25 })
-              .catch(() => ({ type: "FeatureCollection", features: [] } as HousingCollection)),
+            invoke<HousingCollection>("fetch_public_housing", { lat, lng, radiusKm: 25 }).catch(emptyC),
+            invoke<HousingCollection>("fetch_multifamily_assisted", { lat, lng, radiusKm: 25 }).catch(emptyC),
+            invoke<HousingCollection>("fetch_usda_rural", { lat, lng, radiusKm: 25 }).catch(emptyC),
+            invoke<HousingCollection>("fetch_insured_multifamily", { lat, lng, radiusKm: 25 }).catch(emptyC),
           ]);
           if (loc) setSearchLocation(loc);
-          setRawData([
+          setRawData(dedupeProperties([
             ...normalizeFeatures(d.features, "lihtc"),
             ...normalizeFeatures(pubD.features, "public"),
-          ]);
+            ...normalizeFeatures(mfaD.features, "mfassist"),
+            ...normalizeFeatures(usdaD.features, "usda"),
+            ...normalizeFeatures(insD.features, "insured"),
+          ]));
           setDataSource("lihtc");
           setHasSearched(true);
           setDataLoading(false);

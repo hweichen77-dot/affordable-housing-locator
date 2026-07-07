@@ -157,12 +157,11 @@ function normalizePublicHousing(feature: HousingFeature): DisplayProperty | null
   if (!p) return null;
   const coords = feature.geometry?.coordinates;
 
-  const name = str(p.PROJECT_NAME) || str(p.BUILDING_NAME) || "Public Housing";
+  const name = str(p.PROJECT_NAME) || "Public Housing";
   const addr = str(p.STD_ADDR).trim();
   const lat = coords ? coords[1] : (typeof p.LAT === "number" ? p.LAT : null);
   const lng = coords ? coords[0] : (typeof p.LON === "number" ? p.LON : null);
   const objectId = str(p.OBJECTID);
-  const units = num(p.ACC_UNITS) || num(p.TOTAL_DWELLING_UNITS);
 
   const waitlistRaw = p.WAITLSTSTATUS ?? p.WAITLIST_STATUS ?? p.WTLST_STATUS ?? p.waitlistStatus;
   const waitlistStatus = mapWaitlistStatus(waitlistRaw);
@@ -179,10 +178,10 @@ function normalizePublicHousing(feature: HousingFeature): DisplayProperty | null
     lng,
     phone: str(p.HA_PHN_NUM) || undefined,
     website: undefined,
-    developer: undefined,
+    developer: str(p.FORMAL_PARTICIPANT_NAME) || undefined,
     isNonProfit: false,
-    totalUnits: num(p.TOTAL_DWELLING_UNITS),
-    affordableUnits: units,
+    totalUnits: num(p.TOTAL_UNITS),
+    affordableUnits: num(p.TOTAL_DWELLING_UNITS) || num(p.TOTAL_UNITS),
     bedrooms: emptyBedrooms(),
     incomeCeilingPct: 30,
     populationTypes: [],
@@ -194,16 +193,200 @@ function normalizePublicHousing(feature: HousingFeature): DisplayProperty | null
 }
 
 
+// Map HUD CLIENT_GROUP_NAME free-text to normalized population type labels.
+function populationFromClientGroup(v: unknown): string[] {
+  const s = str(v).toLowerCase();
+  if (!s) return [];
+  const types: string[] = [];
+  if (s.includes("famil")) types.push("Family");
+  if (s.includes("elder") || s.includes("senior") || s.includes("62")) types.push("Elderly");
+  if (s.includes("disab") || s.includes("handicap")) types.push("Disabled");
+  if (s.includes("homeless")) types.push("Homeless");
+  if (types.length === 0) types.push(str(v).replace(/;$/, "").replace(/;/g, " · "));
+  return types;
+}
+
+// Shared normalizer for HUD Multifamily Assisted and FHA-Insured (same schema).
+function normalizeMultifamily(feature: HousingFeature, source: "mfassist" | "insured"): DisplayProperty | null {
+  const p = feature.properties;
+  if (!p) return null;
+  const coords = feature.geometry?.coordinates;
+
+  const name = str(p.PROPERTY_NAME_TEXT) || "Assisted Housing";
+  const addr = str(p.ADDRESS_LINE1_TEXT).trim();
+  const lat = coords ? coords[1] : (typeof p.LAT === "number" ? p.LAT : null);
+  const lng = coords ? coords[0] : (typeof p.LON === "number" ? p.LON : null);
+  const objectId = str(p.OBJECTID);
+  const prefix = source === "insured" ? "ins" : "mfa";
+
+  return {
+    id: `${prefix}-${objectId || stableSlug(name, addr)}`,
+    source: source as DataSource,
+    name,
+    address: addr,
+    city: str(p.STD_CITY).trim(),
+    state: str(p.STD_ST).trim(),
+    zip: str(p.STD_ZIP5).trim(),
+    lat,
+    lng,
+    phone: str(p.PROPERTY_ON_SITE_PHONE_NUMBER) || undefined,
+    website: undefined,
+    developer: undefined,
+    isNonProfit: false,
+    totalUnits: num(p.TOTAL_UNIT_COUNT),
+    affordableUnits: num(p.TOTAL_ASSISTED_UNIT_COUNT),
+    bedrooms: {
+      studio: num(p.BD0_CNT1),
+      br1: num(p.BD1_CNT1),
+      br2: num(p.BD2_CNT1),
+      br3: num(p.BD3_CNT1),
+      br4plus: num(p.BD4_CNT1),
+    },
+    incomeCeilingPct: 50,
+    populationTypes: populationFromClientGroup(p.CLIENT_GROUP_NAME),
+    hasRentalAssistance: flag(p.IS_SEC8_IND) || flag(p.IS_SUBSIDIZED_IND),
+    yearBuilt: undefined,
+    raw: p,
+  };
+}
+
+function normalizeUSDA(feature: HousingFeature): DisplayProperty | null {
+  const p = feature.properties;
+  if (!p) return null;
+  const coords = feature.geometry?.coordinates;
+
+  const name = str(p.PROJECT_NAME) || "Rural Housing";
+  const addr = str(p.PRJ_ADDRESS_LINE1).trim();
+  const lat = coords ? coords[1] : (typeof p.LAT === "number" ? p.LAT : null);
+  const lng = coords ? coords[0] : (typeof p.LON === "number" ? p.LON : null);
+  const objectId = str(p.OBJECTID);
+  const raUnits = num(p.RA_UNITS);
+  const zip = str(p.PRJ_ADDRESS_ZIP).trim();
+
+  return {
+    id: `usda-${objectId || stableSlug(name, addr)}`,
+    source: "usda" as DataSource,
+    name,
+    address: addr,
+    city: str(p.PRJ_ADDRESS_CITY).trim(),
+    state: str(p.PRJ_ADDRESS_STATE).trim(),
+    zip: zip.length > 5 ? zip.slice(0, 5) : zip,
+    lat,
+    lng,
+    phone: str(p.MGMT_AGENT_PH_NBR) || undefined,
+    website: undefined,
+    developer: str(p.MGMT_AGENT_NAME) || undefined,
+    isNonProfit: false,
+    totalUnits: num(p.TOTAL_UNITS),
+    affordableUnits: raUnits || num(p.TOTAL_UNITS),
+    bedrooms: {
+      studio: num(p.STUDIO_COUNT),
+      br1: num(p.BEDROOM1_COUNT),
+      br2: num(p.BEDROOM2_COUNT),
+      br3: num(p.BEDROOM3_COUNT),
+      br4plus: num(p.BEDROOM4_COUNT) + num(p.BEDROOM5_COUNT),
+    },
+    incomeCeilingPct: 50,
+    populationTypes: [],
+    hasRentalAssistance: raUnits > 0,
+    yearBuilt: undefined,
+    raw: p,
+  };
+}
+
+
 export function normalizeFeatures(features: HousingFeature[], source: DataSource): DisplayProperty[] {
   const results: DisplayProperty[] = [];
   for (const f of features) {
     let norm: DisplayProperty | null = null;
     if (source === "sj") norm = normalizeSJ(f);
     else if (source === "public") norm = normalizePublicHousing(f);
+    else if (source === "mfassist") norm = normalizeMultifamily(f, "mfassist");
+    else if (source === "insured") norm = normalizeMultifamily(f, "insured");
+    else if (source === "usda") norm = normalizeUSDA(f);
     else norm = normalizeLIHTC(f);
     if (norm && (norm.lat !== null || norm.address)) results.push(norm);
   }
   return results;
+}
+
+// Trust ranking for choosing the canonical name/address on a dedup collision.
+// Lower index = more trusted / richer source.
+const SOURCE_TRUST: DataSource[] = ["sj", "lihtc", "mfassist", "public", "usda", "insured"];
+function sourceRank(s: DataSource): number {
+  const i = SOURCE_TRUST.indexOf(s);
+  return i === -1 ? SOURCE_TRUST.length : i;
+}
+
+function bedroomTotal(b: BedroomCounts): number {
+  return b.studio + b.br1 + b.br2 + b.br3 + b.br4plus;
+}
+
+// Count populated fields to gauge which record is "richer" on a collision.
+function richness(p: DisplayProperty): number {
+  let n = 0;
+  if (p.name) n++;
+  if (p.address) n++;
+  if (p.city) n++;
+  if (p.state) n++;
+  if (p.zip) n++;
+  if (p.phone) n++;
+  if (p.website) n++;
+  if (p.developer) n++;
+  if (p.totalUnits) n++;
+  if (p.affordableUnits) n++;
+  if (p.incomeCeilingPct != null) n++;
+  if (p.populationTypes.length) n++;
+  if (bedroomTotal(p.bedrooms) > 0) n += 2; // prefer a bedroom breakdown
+  return n;
+}
+
+function dedupKey(p: DisplayProperty): string {
+  const lat = p.lat;
+  const lng = p.lng;
+  if (lat != null && lng != null && lat !== 0 && lng !== 0) {
+    return `geo:${lat.toFixed(4)},${lng.toFixed(4)}`;
+  }
+  const addr = p.address.toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+  return `addr:${addr}|${p.zip}`;
+}
+
+// Merge duplicate listings that appear in more than one federal dataset.
+// Keeps the richest record, unions population types, ORs rental-assistance
+// flags, and keeps the max affordable-unit count.
+export function dedupeProperties(props: DisplayProperty[]): DisplayProperty[] {
+  const byKey = new Map<string, DisplayProperty>();
+  for (const p of props) {
+    const key = dedupKey(p);
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, p);
+      continue;
+    }
+
+    // Decide which record is the base (name/address winner): richer wins,
+    // ties broken by source trust order.
+    const pIsBetter =
+      richness(p) > richness(existing) ||
+      (richness(p) === richness(existing) && sourceRank(p.source) < sourceRank(existing.source));
+    const base = pIsBetter ? p : existing;
+    const other = pIsBetter ? existing : p;
+
+    const merged: DisplayProperty = {
+      ...base,
+      populationTypes: Array.from(new Set([...base.populationTypes, ...other.populationTypes])),
+      hasRentalAssistance: base.hasRentalAssistance || other.hasRentalAssistance,
+      affordableUnits: Math.max(base.affordableUnits, other.affordableUnits),
+      totalUnits: Math.max(base.totalUnits, other.totalUnits),
+      bedrooms: bedroomTotal(base.bedrooms) >= bedroomTotal(other.bedrooms) ? base.bedrooms : other.bedrooms,
+      phone: base.phone || other.phone,
+      website: base.website || other.website,
+      developer: base.developer || other.developer,
+      incomeCeilingPct: base.incomeCeilingPct ?? other.incomeCeilingPct,
+    };
+    byKey.set(key, merged);
+  }
+  return Array.from(byKey.values());
 }
 
 export function hasBedroomType(p: DisplayProperty, size: "" | "0" | "1" | "2" | "3" | "4"): boolean {

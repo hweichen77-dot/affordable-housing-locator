@@ -17,7 +17,7 @@ export interface GeoLocation {
   bbox: [number, number, number, number];
 }
 
-export type DataSource = "sj" | "lihtc" | "public";
+export type DataSource = "sj" | "lihtc" | "public" | "mfassist" | "usda" | "insured";
 
 export interface BedroomCounts {
   studio: number;
