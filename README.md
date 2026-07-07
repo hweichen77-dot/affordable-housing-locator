@@ -2,8 +2,6 @@
 
 > A free, open-source desktop app that helps anyone in the United States find affordable housing by city, ZIP code, or current location.
 
-Built for the **Congressional App Challenge**.
-
 ---
 
 ## Screenshots
