@@ -94,8 +94,22 @@ const SJ_URL: &str =
 const LIHTC_URL: &str =
     "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/LIHTC/FeatureServer/0/query";
 
+// HUD Public Housing — switched to grouped Developments layer (6,223 projects)
+// from the building-level layer, and now paginates the full result set.
 const PUBLIC_HOUSING_URL: &str =
-    "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Public_Housing_Buildings/FeatureServer/0/query";
+    "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Public_Housing_Developments/FeatureServer/0/query";
+
+// HUD Multifamily Assisted properties (Section 8 / project-based, 23,781 recs).
+const MULTIFAMILY_ASSISTED_URL: &str =
+    "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Multifamily_Properties_Assisted/FeatureServer/0/query";
+
+// USDA Rural Development multifamily housing assets (13,262 recs).
+const USDA_RURAL_URL: &str =
+    "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/USDA_Rural_Housing_Assets/FeatureServer/0/query";
+
+// HUD FHA-insured multifamily properties (17,324 recs; filtered to subsidized).
+const INSURED_MULTIFAMILY_URL: &str =
+    "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/HUD_Insured_Multifamily_Properties/FeatureServer/0/query";
 
 const NOMINATIM_URL: &str = "https://nominatim.openstreetmap.org/search";
 const NOMINATIM_REVERSE_URL: &str = "https://nominatim.openstreetmap.org/reverse";
@@ -106,11 +120,29 @@ const LIHTC_FIELDS: &str =
      TRGT_DIS,TRGT_HML,RENTASSIST,NON_PROF,YR_PIS,CO_TEL,COMPANY,LAT,LON";
 
 const PUBLIC_HOUSING_FIELDS: &str =
-    "OBJECTID,PROJECT_NAME,BUILDING_NAME,STD_ADDR,STD_CITY,STD_ST,STD_ZIP5,\
-     LAT,LON,ACC_UNITS,TOTAL_DWELLING_UNITS,HA_PHN_NUM,BUILDING_STATUS_TYPE_CODE";
+    "PROJECT_NAME,STD_ADDR,STD_CITY,STD_ST,STD_ZIP5,LAT,LON,\
+     TOTAL_UNITS,TOTAL_DWELLING_UNITS,HA_PHN_NUM,FORMAL_PARTICIPANT_NAME";
+
+// Shared field set for both Multifamily Assisted and FHA-Insured (same schema).
+const MULTIFAMILY_FIELDS: &str =
+    "PROPERTY_NAME_TEXT,ADDRESS_LINE1_TEXT,STD_CITY,STD_ST,STD_ZIP5,LAT,LON,\
+     TOTAL_UNIT_COUNT,TOTAL_ASSISTED_UNIT_COUNT,PROPERTY_ON_SITE_PHONE_NUMBER,\
+     CLIENT_GROUP_NAME,BD0_CNT1,BD1_CNT1,BD2_CNT1,BD3_CNT1,BD4_CNT1,\
+     IS_SEC8_IND,IS_SUBSIDIZED_IND";
+
+const USDA_FIELDS: &str =
+    "PROJECT_NAME,PRJ_ADDRESS_LINE1,PRJ_ADDRESS_CITY,PRJ_ADDRESS_STATE,PRJ_ADDRESS_ZIP,\
+     LAT,LON,TOTAL_UNITS,RA_UNITS,STUDIO_COUNT,BEDROOM1_COUNT,BEDROOM2_COUNT,\
+     BEDROOM3_COUNT,BEDROOM4_COUNT,BEDROOM5_COUNT,MGMT_AGENT_NAME,MGMT_AGENT_PH_NBR";
+
+// Keep only subsidized / Section 8 stock, dropping market-rate FHA loans.
+const INSURED_WHERE: &str = "IS_SUBSIDIZED_IND='Y' OR IS_SEC8_IND='Y'";
 
 const LIHTC_PAGE: usize = 1000;
-const LIHTC_MAX: usize = 5000;
+const MULTIFAMILY_PAGE: usize = 2000;
+const USDA_PAGE: usize = 16000;
+const INSURED_PAGE: usize = 2000;
+const PUBLIC_HOUSING_PAGE: usize = 10000;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HousingFeature {
@@ -186,6 +218,71 @@ async fn fetch_geojson(
     let len = body.len();
     serde_json::from_slice::<HousingCollection>(&body)
         .map_err(|e| HousingError::Parse(format!("{e} (len={len})")))
+}
+
+/// Fetch an ArcGIS FeatureServer layer within radius_km of lat/lng, paginating
+/// the full result set (loops until a page returns fewer than `page` records).
+async fn fetch_arcgis_paginated(
+    client: &reqwest::Client,
+    url: &str,
+    fields: &str,
+    where_clause: Option<&str>,
+    page: usize,
+    lat: f64,
+    lng: f64,
+    radius_km: f64,
+) -> Result<HousingCollection, HousingError> {
+    let d_lat = radius_km / 111.0;
+    let d_lng = radius_km / (111.0 * (lat * PI / 180.0).cos());
+
+    let bbox = serde_json::json!({
+        "xmin": lng - d_lng,
+        "ymin": lat - d_lat,
+        "xmax": lng + d_lng,
+        "ymax": lat + d_lat,
+    })
+    .to_string();
+
+    let mut base_params: Vec<(&str, String)> = vec![
+        ("geometry", bbox),
+        ("geometryType", "esriGeometryEnvelope".into()),
+        ("inSR", "4326".into()),
+        ("outFields", fields.into()),
+        ("returnGeometry", "true".into()),
+        ("f", "geojson".into()),
+    ];
+    if let Some(w) = where_clause {
+        base_params.push(("where", w.into()));
+    }
+
+    let mut all_features: Vec<HousingFeature> = Vec::new();
+    let mut offset = 0usize;
+
+    loop {
+        let count_str = page.to_string();
+        let offset_str = offset.to_string();
+
+        let mut params: Vec<(&str, &str)> = base_params
+            .iter()
+            .map(|(k, v)| (*k, v.as_str()))
+            .collect();
+        params.push(("resultRecordCount", &count_str));
+        params.push(("resultOffset", &offset_str));
+
+        let pg = fetch_geojson(client, url, &params).await?;
+        let n = pg.features.len();
+        all_features.extend(pg.features);
+
+        if n < page {
+            break;
+        }
+        offset += page;
+    }
+
+    Ok(HousingCollection {
+        collection_type: "FeatureCollection".into(),
+        features: all_features,
+    })
 }
 
 /// Geocode a city, ZIP, or address via Nominatim (OpenStreetMap).
@@ -279,7 +376,7 @@ pub async fn fetch_lihtc(
         let n = page.features.len();
         all_features.extend(page.features);
 
-        if n < LIHTC_PAGE || all_features.len() >= LIHTC_MAX {
+        if n < LIHTC_PAGE {
             break;
         }
         offset += LIHTC_PAGE;
@@ -291,8 +388,9 @@ pub async fn fetch_lihtc(
     })
 }
 
-/// Fetch HUD Public Housing buildings within radius_km of lat/lng.
-/// Source: HUD Public Housing Buildings ArcGIS service (no API key required).
+/// Fetch HUD Public Housing developments within radius_km of lat/lng.
+/// Source: HUD Public Housing Developments ArcGIS service (no API key required).
+/// Grouped project-level layer; paginates the full result set.
 #[tauri::command]
 pub async fn fetch_public_housing(
     client: tauri::State<'_, reqwest::Client>,
@@ -300,29 +398,59 @@ pub async fn fetch_public_housing(
     lng: f64,
     radius_km: f64,
 ) -> Result<HousingCollection, HousingError> {
-    let d_lat = radius_km / 111.0;
-    let d_lng = radius_km / (111.0 * (lat * PI / 180.0).cos());
+    fetch_arcgis_paginated(
+        &client, PUBLIC_HOUSING_URL, PUBLIC_HOUSING_FIELDS, None,
+        PUBLIC_HOUSING_PAGE, lat, lng, radius_km,
+    )
+    .await
+}
 
-    let bbox = serde_json::json!({
-        "xmin": lng - d_lng,
-        "ymin": lat - d_lat,
-        "xmax": lng + d_lng,
-        "ymax": lat + d_lat,
-    })
-    .to_string();
+/// Fetch HUD Multifamily Assisted (project-based Section 8) properties
+/// within radius_km of lat/lng. No API key required.
+#[tauri::command]
+pub async fn fetch_multifamily_assisted(
+    client: tauri::State<'_, reqwest::Client>,
+    lat: f64,
+    lng: f64,
+    radius_km: f64,
+) -> Result<HousingCollection, HousingError> {
+    fetch_arcgis_paginated(
+        &client, MULTIFAMILY_ASSISTED_URL, MULTIFAMILY_FIELDS, None,
+        MULTIFAMILY_PAGE, lat, lng, radius_km,
+    )
+    .await
+}
 
-    let params: Vec<(&str, &str)> = vec![
-        ("geometry", bbox.as_str()),
-        ("geometryType", "esriGeometryEnvelope"),
-        ("inSR", "4326"),
-        ("outFields", PUBLIC_HOUSING_FIELDS),
-        ("where", "BUILDING_STATUS_TYPE_CODE='A'"),
-        ("returnGeometry", "true"),
-        ("f", "geojson"),
-        ("resultRecordCount", "2000"),
-    ];
+/// Fetch USDA Rural Development multifamily housing assets within radius_km.
+/// No API key required.
+#[tauri::command]
+pub async fn fetch_usda_rural(
+    client: tauri::State<'_, reqwest::Client>,
+    lat: f64,
+    lng: f64,
+    radius_km: f64,
+) -> Result<HousingCollection, HousingError> {
+    fetch_arcgis_paginated(
+        &client, USDA_RURAL_URL, USDA_FIELDS, None,
+        USDA_PAGE, lat, lng, radius_km,
+    )
+    .await
+}
 
-    fetch_geojson(&client, PUBLIC_HOUSING_URL, &params).await
+/// Fetch HUD FHA-Insured Multifamily properties within radius_km, filtered to
+/// subsidized / Section 8 stock only (drops market-rate FHA loans). No API key.
+#[tauri::command]
+pub async fn fetch_insured_multifamily(
+    client: tauri::State<'_, reqwest::Client>,
+    lat: f64,
+    lng: f64,
+    radius_km: f64,
+) -> Result<HousingCollection, HousingError> {
+    fetch_arcgis_paginated(
+        &client, INSURED_MULTIFAMILY_URL, MULTIFAMILY_FIELDS, Some(INSURED_WHERE),
+        INSURED_PAGE, lat, lng, radius_km,
+    )
+    .await
 }
 
 /// Reverse geocode lat/lng to a location display name via Nominatim.
