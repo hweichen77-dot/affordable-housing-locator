@@ -494,6 +494,43 @@ pub async fn reverse_geocode(
     Ok(GeoLocation { lat: lat_f, lng: lng_f, display_name: r.display_name, bbox })
 }
 
+#[derive(Debug, Deserialize)]
+struct IpWhoResult {
+    #[serde(default)]
+    success: bool,
+    latitude: Option<f64>,
+    longitude: Option<f64>,
+    city: Option<String>,
+    region: Option<String>,
+}
+
+/// Approximate the user's location from their IP address. Used as a fallback
+/// for "Near me" when the browser Geolocation API is unavailable or denied —
+/// notably in the macOS WKWebview, which does not reliably surface CoreLocation.
+/// City-level accuracy is enough to seed a nearby-housing search.
+#[tauri::command]
+pub async fn ip_locate(
+    client: tauri::State<'_, reqwest::Client>,
+) -> Result<GeoLocation, HousingError> {
+    let body = get_bytes(&client, "https://ipwho.is/", &[]).await?;
+    let r: IpWhoResult = serde_json::from_slice(&body)
+        .map_err(|e| HousingError::Parse(e.to_string()))?;
+    let lat = r
+        .latitude
+        .filter(|_| r.success)
+        .ok_or_else(|| HousingError::Network("IP geolocation unavailable".into()))?;
+    let lng = r
+        .longitude
+        .ok_or_else(|| HousingError::Network("IP geolocation unavailable".into()))?;
+    let label = match (r.city.as_deref(), r.region.as_deref()) {
+        (Some(c), Some(s)) => format!("{c}, {s}"),
+        (Some(c), None) => c.to_string(),
+        _ => "Your area".to_string(),
+    };
+    let bbox = [lat - 0.15, lat + 0.15, lng - 0.15, lng + 0.15];
+    Ok(GeoLocation { lat, lng, display_name: label, bbox })
+}
+
 /// Fetch San Jose local affordable housing (detailed local dataset).
 #[tauri::command]
 pub async fn fetch_housing(
