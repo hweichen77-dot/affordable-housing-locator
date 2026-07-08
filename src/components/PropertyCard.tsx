@@ -4,7 +4,6 @@ import type { DisplayProperty } from "../types/housing";
 import type { UserLocation, AppStatusValue } from "../App";
 import { haversineKm, fmtDist } from "../lib/geo";
 
-
 export interface AffordabilityTier {
   label: string;
   sublabel: string;
@@ -34,7 +33,6 @@ export function getAffordabilityTier(p: DisplayProperty): AffordabilityTier {
   }
   return { label: "Income Assisted", sublabel: "Income limits apply", barPct: 45, colorClass: "tier-mod" };
 }
-
 
 function latLngToTile(lat: number, lng: number, zoom: number) {
   const n = 2 ** zoom;
@@ -116,7 +114,6 @@ function plainAddress(p: DisplayProperty): string {
   if (p.zip) parts.push(p.zip);
   return parts.join(", ");
 }
-
 
 interface PropertyCardProps {
   property: DisplayProperty;

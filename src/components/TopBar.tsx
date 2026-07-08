@@ -257,7 +257,7 @@ export function TopBar({
         </div>
 
         <div className="topbar-tool-zone">
-          {/* secondary filters tucked into a disclosure to keep the bar scannable */}
+          {}
           {hasSearched && dataSource === "lihtc" && (
             <div className="topbar-more" ref={moreRef}>
               <button
@@ -346,7 +346,7 @@ export function TopBar({
               </button>
             ))}
           </div>
-        </div>{/* /tool-zone */}
+        </div>{}
       </div>
 
       {hasSearched && searchDisplay && (
@@ -367,7 +367,6 @@ export function TopBar({
     </header>
   );
 }
-
 
 function HomeGlyph() {
   return (

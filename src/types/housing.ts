@@ -68,7 +68,6 @@ export interface DisplayProperty {
   raw: Record<string, unknown>;
 }
 
-
 export interface FmrData {
   zip: string;
   area_name: string;

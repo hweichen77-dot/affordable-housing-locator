@@ -45,8 +45,6 @@ export const DEFAULT_FILTERS: FilterState = {
   householdSize: 1,
 };
 
-// Count a number up to its target once on mount (ease-out cubic). Honors
-// prefers-reduced-motion by jumping straight to the final value.
 function useCountUp(target: number, ms = 1100): number {
   const [val, setVal] = useState(0);
   useEffect(() => {
@@ -230,8 +228,7 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     const currentId = params.get("id");
     if (selectedProperty) {
-      // Carry the search query too so a shared link can re-run the search and
-      // resolve the property for a recipient in a fresh session.
+
       if (searchQuery) params.set("q", searchQuery);
       if (currentId !== selectedProperty.id) {
         params.set("id", selectedProperty.id);
@@ -331,8 +328,6 @@ export default function App() {
     }
   }, []);
 
-  // Resolve a shared link (?id=&q=): re-run the search so rawData populates,
-  // then the effect below selects the shared property once it arrives.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const sharedId = params.get("id");
@@ -341,7 +336,6 @@ export default function App() {
     if (q) handleSearch(q);
   }, [handleSearch]);
 
-  // Open the help/about guide with "?" (matches the shortcut listed inside it).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
@@ -352,8 +346,6 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Load nearby housing around a resolved coordinate. Shared by both the
-  // browser-geolocation path and the IP fallback so they behave identically.
   const loadNearby = useCallback(async (lat: number, lng: number) => {
     setUserLocation({ lat, lng });
     setMapFly({ lat, lng, zoom: 12 });
@@ -385,8 +377,6 @@ export default function App() {
     }
   }, []);
 
-  // IP-based approximate location — the reliable fallback when the browser
-  // Geolocation API is missing, denied, or times out (macOS WKWebview).
   const nearMeByIp = useCallback(async () => {
     try {
       const loc = await invoke<GeoLocation>("ip_locate");
@@ -403,15 +393,14 @@ export default function App() {
     setSelectedProperty(null);
 
     if (!navigator.geolocation) {
-      // No browser geolocation at all → go straight to IP fallback.
+
       void nearMeByIp();
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       (pos) => { void loadNearby(pos.coords.latitude, pos.coords.longitude); },
-      // Any failure (denied / unsupported / timeout) → IP fallback rather than
-      // dead-ending with an error, so "Near me" still returns results.
+
       () => { void nearMeByIp(); },
       { enableHighAccuracy: false, timeout: 7000, maximumAge: 300000 }
     );
@@ -437,7 +426,6 @@ export default function App() {
     });
   }, []);
 
-  // Export currently-loaded saved properties to a plain-text file.
   const exportFavorites = useCallback(() => {
     const saved = rawData.filter(p => favorites.has(p.id));
     if (saved.length === 0) return;
@@ -551,8 +539,6 @@ export default function App() {
       );
     }
 
-    // Income tier from the survey → keep properties the household is eligible
-    // for: their AMI% must be at or below the property's income ceiling.
     if (filters.incomeTier) {
       const tierPct = { ELI: 30, VLI: 50, LI: 80, Moderate: 120 }[filters.incomeTier];
       items = items.filter(p => p.incomeCeilingPct == null || tierPct <= p.incomeCeilingPct);
@@ -585,8 +571,6 @@ export default function App() {
         ? haversineKm(userLocation.lat, userLocation.lng, p.lat, p.lng)
         : Infinity;
 
-    // Estimated max monthly rent: 30% of the size-adjusted income limit at the
-    // property's AMI tier (default 60% AMI when the ceiling is unknown).
     const estRent = (p: DisplayProperty) =>
       maxRentFromAmi(ami * ((p.incomeCeilingPct ?? 60) / 100), hhSize);
 

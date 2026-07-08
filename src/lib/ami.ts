@@ -122,8 +122,6 @@ const SIZE_FACTOR: Record<number, number> = {
   5: 1.08, 6: 1.16, 7: 1.24, 8: 1.32,
 };
 
-// Longest keys first so multi-word metros ("portland me") win over the bare
-// city name ("portland") that would otherwise match the wrong state.
 const METRO_KEYS_BY_LEN = Object.keys(METRO_AMI_OVERRIDES).sort((a, b) => b.length - a.length);
 
 export function getAmi(state: string, cityName?: string): number {
