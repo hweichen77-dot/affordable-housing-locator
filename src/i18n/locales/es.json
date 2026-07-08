@@ -4,7 +4,11 @@
     "button": "Buscar",
     "nearMe": "Cerca de mí",
     "searching": "Buscando...",
-    "clear": "Limpiar"
+    "clear": "Limpiar",
+    "noResults": "No hay resultados para \"{{query}}\". Prueba con otra ciudad o código postal.",
+    "failed": "La búsqueda falló. Revisa tu conexión e inténtalo de nuevo.",
+    "nearMeFailed": "No se encontraron viviendas cerca de tu ubicación. Intenta buscar por ciudad o código postal.",
+    "locateFailed": "No se pudo determinar tu ubicación. Busca por ciudad o código postal."
   },
   "filters": {
     "title": "Filtros",
@@ -138,5 +142,9 @@
     "en": "English",
     "es": "Español",
     "vi": "Tiếng Việt"
+  },
+  "results": {
+    "saved": "Guardados ({{count}})",
+    "tracking": "Siguiendo ({{count}})"
   }
 }

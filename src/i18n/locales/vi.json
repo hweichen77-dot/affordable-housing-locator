@@ -4,7 +4,11 @@
     "button": "Tìm kiếm",
     "nearMe": "Gần tôi",
     "searching": "Đang tìm...",
-    "clear": "Xóa"
+    "clear": "Xóa",
+    "noResults": "Không có kết quả cho \"{{query}}\". Hãy thử thành phố hoặc mã ZIP khác.",
+    "failed": "Tìm kiếm thất bại. Kiểm tra kết nối của bạn và thử lại.",
+    "nearMeFailed": "Không tìm thấy nhà ở gần vị trí của bạn. Hãy thử tìm theo thành phố hoặc mã ZIP.",
+    "locateFailed": "Không thể xác định vị trí của bạn. Vui lòng tìm theo thành phố hoặc mã ZIP."
   },
   "filters": {
     "title": "Bộ lọc",
@@ -138,5 +142,9 @@
     "en": "English",
     "es": "Español",
     "vi": "Tiếng Việt"
+  },
+  "results": {
+    "saved": "Đã lưu ({{count}})",
+    "tracking": "Đang theo dõi ({{count}})"
   }
 }
