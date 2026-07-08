@@ -4,7 +4,11 @@
     "button": "Search",
     "nearMe": "Near Me",
     "searching": "Searching...",
-    "clear": "Clear"
+    "clear": "Clear",
+    "noResults": "No results for \"{{query}}\". Try a different city or ZIP code.",
+    "failed": "Search failed. Check your connection and try again.",
+    "nearMeFailed": "Couldn't find homes near your location. Try searching by city or ZIP code.",
+    "locateFailed": "Couldn't determine your location. Please search by city or ZIP code."
   },
   "filters": {
     "title": "Filters",
@@ -138,5 +142,9 @@
     "en": "English",
     "es": "Español",
     "vi": "Tiếng Việt"
+  },
+  "results": {
+    "saved": "Saved ({{count}})",
+    "tracking": "Tracking ({{count}})"
   }
 }

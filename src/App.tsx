@@ -165,6 +165,7 @@ function EmptyState({ onReset }: { onReset: () => void }) {
 }
 
 export default function App() {
+  const { t } = useTranslation();
   const [rawData, setRawData] = useState<DisplayProperty[]>([]);
   const [dataSource, setDataSource] = useState<"sj" | "lihtc">("sj");
   const [dataLoading, setDataLoading] = useState(false);
@@ -320,9 +321,9 @@ export default function App() {
       if (myCount !== searchCounterRef.current) return;
       const msg = typeof e === "string" ? e : JSON.stringify(e);
       if (msg.includes("Not found") || msg.includes("No results")) {
-        setSearchError(`No results for "${query}". Try a different city or ZIP code.`);
+        setSearchError(t("search.noResults", { query }));
       } else {
-        setSearchError("Search failed. Check your connection and try again.");
+        setSearchError(t("search.failed"));
       }
       setHasSearched(true);
       setSearchLoading(false);
@@ -377,7 +378,7 @@ export default function App() {
       setDataSource("lihtc");
       setHasSearched(true);
     } catch {
-      setSearchError("Couldn't find homes near your location. Try searching by city or ZIP code.");
+      setSearchError(t("search.nearMeFailed"));
       setHasSearched(true);
     } finally {
       setDataLoading(false);
@@ -392,7 +393,7 @@ export default function App() {
       await loadNearby(loc.lat, loc.lng);
     } catch {
       setDataLoading(false);
-      setSearchError("Couldn't determine your location. Please search by city or ZIP code.");
+      setSearchError(t("search.locateFailed"));
     }
   }, [loadNearby]);
 
@@ -744,7 +745,7 @@ export default function App() {
                       onClick={() => setFilters(f => ({ ...f, savedOnly: !f.savedOnly }))}
                       type="button"
                     >
-                      Saved ({savedCount})
+                      {t("results.saved", { count: savedCount })}
                     </button>
                   )}
                   {trackingCount > 0 && (
@@ -754,7 +755,7 @@ export default function App() {
                       type="button"
                       style={{ opacity: 0.7 }}
                     >
-                      Tracking ({trackingCount})
+                      {t("results.tracking", { count: trackingCount })}
                     </button>
                   )}
                   {(filters.savedOnly) && (
