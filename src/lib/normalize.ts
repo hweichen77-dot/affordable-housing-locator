@@ -19,7 +19,6 @@ function decodeIncCeil(v: unknown): number | undefined {
   return undefined;
 }
 
-
 function normalizeSJ(feature: HousingFeature): DisplayProperty | null {
   const p = feature.properties;
   if (!p) return null;
@@ -82,7 +81,6 @@ function normalizeSJ(feature: HousingFeature): DisplayProperty | null {
   };
 }
 
-
 function normalizeLIHTC(feature: HousingFeature): DisplayProperty | null {
   const p = feature.properties;
   if (!p) return null;
@@ -143,7 +141,6 @@ function normalizeLIHTC(feature: HousingFeature): DisplayProperty | null {
   };
 }
 
-
 function mapWaitlistStatus(v: unknown): "open" | "closed" | "unknown" | undefined {
   if (v == null || v === "") return undefined;
   const s = str(v).toLowerCase().trim();
@@ -192,8 +189,6 @@ function normalizePublicHousing(feature: HousingFeature): DisplayProperty | null
   };
 }
 
-
-// Map HUD CLIENT_GROUP_NAME free-text to normalized population type labels.
 function populationFromClientGroup(v: unknown): string[] {
   const s = str(v).toLowerCase();
   if (!s) return [];
@@ -206,7 +201,6 @@ function populationFromClientGroup(v: unknown): string[] {
   return types;
 }
 
-// Shared normalizer for HUD Multifamily Assisted and FHA-Insured (same schema).
 function normalizeMultifamily(feature: HousingFeature, source: "mfassist" | "insured"): DisplayProperty | null {
   const p = feature.properties;
   if (!p) return null;
@@ -294,7 +288,6 @@ function normalizeUSDA(feature: HousingFeature): DisplayProperty | null {
   };
 }
 
-
 export function normalizeFeatures(features: HousingFeature[], source: DataSource): DisplayProperty[] {
   const results: DisplayProperty[] = [];
   for (const f of features) {
@@ -310,8 +303,6 @@ export function normalizeFeatures(features: HousingFeature[], source: DataSource
   return results;
 }
 
-// Trust ranking for choosing the canonical name/address on a dedup collision.
-// Lower index = more trusted / richer source.
 const SOURCE_TRUST: DataSource[] = ["sj", "lihtc", "mfassist", "public", "usda", "insured"];
 function sourceRank(s: DataSource): number {
   const i = SOURCE_TRUST.indexOf(s);
@@ -322,7 +313,6 @@ function bedroomTotal(b: BedroomCounts): number {
   return b.studio + b.br1 + b.br2 + b.br3 + b.br4plus;
 }
 
-// Count populated fields to gauge which record is "richer" on a collision.
 function richness(p: DisplayProperty): number {
   let n = 0;
   if (p.name) n++;
@@ -337,7 +327,7 @@ function richness(p: DisplayProperty): number {
   if (p.affordableUnits) n++;
   if (p.incomeCeilingPct != null) n++;
   if (p.populationTypes.length) n++;
-  if (bedroomTotal(p.bedrooms) > 0) n += 2; // prefer a bedroom breakdown
+  if (bedroomTotal(p.bedrooms) > 0) n += 2;
   return n;
 }
 
@@ -351,9 +341,6 @@ function dedupKey(p: DisplayProperty): string {
   return `addr:${addr}|${p.zip}`;
 }
 
-// Merge duplicate listings that appear in more than one federal dataset.
-// Keeps the richest record, unions population types, ORs rental-assistance
-// flags, and keeps the max affordable-unit count.
 export function dedupeProperties(props: DisplayProperty[]): DisplayProperty[] {
   const byKey = new Map<string, DisplayProperty>();
   for (const p of props) {
@@ -364,8 +351,6 @@ export function dedupeProperties(props: DisplayProperty[]): DisplayProperty[] {
       continue;
     }
 
-    // Decide which record is the base (name/address winner): richer wins,
-    // ties broken by source trust order.
     const pIsBetter =
       richness(p) > richness(existing) ||
       (richness(p) === richness(existing) && sourceRank(p.source) < sourceRank(existing.source));

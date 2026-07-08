@@ -41,10 +41,6 @@ pub struct AcsRentData {
     pub four_br_plus: Option<i64>,
 }
 
-
-/// Pre-computed LIHTC max rents by bedroom size at a given AMI tier.
-/// Formula: income_limit[occupancy] × 30% / 12
-/// Occupancy: studio→1p, 1BR→1.5p, 2BR→3p, 3BR→4.5p, 4BR→6p
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BrRents {
     pub studio: u32,
@@ -94,20 +90,15 @@ const SJ_URL: &str =
 const LIHTC_URL: &str =
     "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/LIHTC/FeatureServer/0/query";
 
-// HUD Public Housing — switched to grouped Developments layer (6,223 projects)
-// from the building-level layer, and now paginates the full result set.
 const PUBLIC_HOUSING_URL: &str =
     "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Public_Housing_Developments/FeatureServer/0/query";
 
-// HUD Multifamily Assisted properties (Section 8 / project-based, 23,781 recs).
 const MULTIFAMILY_ASSISTED_URL: &str =
     "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/Multifamily_Properties_Assisted/FeatureServer/0/query";
 
-// USDA Rural Development multifamily housing assets (13,262 recs).
 const USDA_RURAL_URL: &str =
     "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/USDA_Rural_Housing_Assets/FeatureServer/0/query";
 
-// HUD FHA-insured multifamily properties (17,324 recs; filtered to subsidized).
 const INSURED_MULTIFAMILY_URL: &str =
     "https://services.arcgis.com/VTyQ9soqVukalItT/arcgis/rest/services/HUD_Insured_Multifamily_Properties/FeatureServer/0/query";
 
@@ -123,7 +114,6 @@ const PUBLIC_HOUSING_FIELDS: &str =
     "PROJECT_NAME,STD_ADDR,STD_CITY,STD_ST,STD_ZIP5,LAT,LON,\
      TOTAL_UNITS,TOTAL_DWELLING_UNITS,HA_PHN_NUM,FORMAL_PARTICIPANT_NAME";
 
-// Shared field set for both Multifamily Assisted and FHA-Insured (same schema).
 const MULTIFAMILY_FIELDS: &str =
     "PROPERTY_NAME_TEXT,ADDRESS_LINE1_TEXT,STD_CITY,STD_ST,STD_ZIP5,LAT,LON,\
      TOTAL_UNIT_COUNT,TOTAL_ASSISTED_UNIT_COUNT,PROPERTY_ON_SITE_PHONE_NUMBER,\
@@ -135,7 +125,6 @@ const USDA_FIELDS: &str =
      LAT,LON,TOTAL_UNITS,RA_UNITS,STUDIO_COUNT,BEDROOM1_COUNT,BEDROOM2_COUNT,\
      BEDROOM3_COUNT,BEDROOM4_COUNT,BEDROOM5_COUNT,MGMT_AGENT_NAME,MGMT_AGENT_PH_NBR";
 
-// Keep only subsidized / Section 8 stock, dropping market-rate FHA loans.
 const INSURED_WHERE: &str = "IS_SUBSIDIZED_IND='Y' OR IS_SEC8_IND='Y'";
 
 const LIHTC_PAGE: usize = 1000;
@@ -220,8 +209,6 @@ async fn fetch_geojson(
         .map_err(|e| HousingError::Parse(format!("{e} (len={len})")))
 }
 
-/// Fetch an ArcGIS FeatureServer layer within radius_km of lat/lng, paginating
-/// the full result set (loops until a page returns fewer than `page` records).
 async fn fetch_arcgis_paginated(
     client: &reqwest::Client,
     url: &str,
@@ -285,7 +272,6 @@ async fn fetch_arcgis_paginated(
     })
 }
 
-/// Geocode a city, ZIP, or address via Nominatim (OpenStreetMap).
 #[tauri::command]
 pub async fn geocode(
     client: tauri::State<'_, reqwest::Client>,
@@ -329,8 +315,6 @@ pub async fn geocode(
     Ok(GeoLocation { lat, lng, display_name: r.display_name, bbox })
 }
 
-/// Fetch LIHTC affordable housing within radius_km of lat/lng (nationwide).
-/// Paginates until no more results or LIHTC_MAX features reached.
 #[tauri::command]
 pub async fn fetch_lihtc(
     client: tauri::State<'_, reqwest::Client>,
@@ -388,9 +372,6 @@ pub async fn fetch_lihtc(
     })
 }
 
-/// Fetch HUD Public Housing developments within radius_km of lat/lng.
-/// Source: HUD Public Housing Developments ArcGIS service (no API key required).
-/// Grouped project-level layer; paginates the full result set.
 #[tauri::command]
 pub async fn fetch_public_housing(
     client: tauri::State<'_, reqwest::Client>,
@@ -405,8 +386,6 @@ pub async fn fetch_public_housing(
     .await
 }
 
-/// Fetch HUD Multifamily Assisted (project-based Section 8) properties
-/// within radius_km of lat/lng. No API key required.
 #[tauri::command]
 pub async fn fetch_multifamily_assisted(
     client: tauri::State<'_, reqwest::Client>,
@@ -421,8 +400,6 @@ pub async fn fetch_multifamily_assisted(
     .await
 }
 
-/// Fetch USDA Rural Development multifamily housing assets within radius_km.
-/// No API key required.
 #[tauri::command]
 pub async fn fetch_usda_rural(
     client: tauri::State<'_, reqwest::Client>,
@@ -437,8 +414,6 @@ pub async fn fetch_usda_rural(
     .await
 }
 
-/// Fetch HUD FHA-Insured Multifamily properties within radius_km, filtered to
-/// subsidized / Section 8 stock only (drops market-rate FHA loans). No API key.
 #[tauri::command]
 pub async fn fetch_insured_multifamily(
     client: tauri::State<'_, reqwest::Client>,
@@ -453,7 +428,6 @@ pub async fn fetch_insured_multifamily(
     .await
 }
 
-/// Reverse geocode lat/lng to a location display name via Nominatim.
 #[tauri::command]
 pub async fn reverse_geocode(
     client: tauri::State<'_, reqwest::Client>,
@@ -504,10 +478,6 @@ struct IpWhoResult {
     region: Option<String>,
 }
 
-/// Approximate the user's location from their IP address. Used as a fallback
-/// for "Near me" when the browser Geolocation API is unavailable or denied —
-/// notably in the macOS WKWebview, which does not reliably surface CoreLocation.
-/// City-level accuracy is enough to seed a nearby-housing search.
 #[tauri::command]
 pub async fn ip_locate(
     client: tauri::State<'_, reqwest::Client>,
@@ -531,7 +501,6 @@ pub async fn ip_locate(
     Ok(GeoLocation { lat, lng, display_name: label, bbox })
 }
 
-/// Fetch San Jose local affordable housing (detailed local dataset).
 #[tauri::command]
 pub async fn fetch_housing(
     client: tauri::State<'_, reqwest::Client>,
@@ -554,8 +523,6 @@ pub async fn fetch_housing(
         .map_err(|e| HousingError::Parse(format!("{e} (body len={len})")))
 }
 
-/// Fetch HUD Fair Market Rents for a ZIP code (requires HUD_API_TOKEN env var).
-/// Returns None if no token configured or ZIP not found.
 #[tauri::command]
 pub async fn fetch_fmr(
     client: tauri::State<'_, reqwest::Client>,
@@ -617,8 +584,6 @@ pub async fn fetch_fmr(
     }))
 }
 
-/// Fetch Census ACS median gross rent by bedroom for a ZIP/ZCTA.
-/// Uses DEMO_KEY if CENSUS_API_KEY env var is unset (rate-limited but functional).
 #[tauri::command]
 pub async fn fetch_acs_rent(
     client: tauri::State<'_, reqwest::Client>,
@@ -630,8 +595,6 @@ pub async fn fetch_acs_rent(
         return Ok(None);
     }
 
-    // B25031: Median Gross Rent by Bedrooms
-    // _001E=all, _002E=studio, _003E=1BR, _004E=2BR, _005E=3BR, _006E=4BR+
     let fields = "B25031_001E,B25031_002E,B25031_003E,B25031_004E,B25031_005E,B25031_006E";
     let url = format!(
         "https://api.census.gov/data/2023/acs/acs5?get={}&for=zip%20code%20tabulation%20area:{}&key={}",
@@ -653,7 +616,6 @@ pub async fn fetch_acs_rent(
         .await
         .map_err(|e| HousingError::Network(e.to_string()))?;
 
-    // Response: [[header0,...,headerN], [val0,...,valN]]
     let rows: Vec<Vec<serde_json::Value>> = serde_json::from_slice(&body)
         .map_err(|e| HousingError::Parse(e.to_string()))?;
 
@@ -682,11 +644,6 @@ pub async fn fetch_acs_rent(
     }))
 }
 
-/// Fetch HUD Income Limits for a ZIP, compute exact LIHTC max rents per bedroom.
-/// Uses the same HUD_API_TOKEN as fetch_fmr. Returns None if no token or ZIP unknown.
-///
-/// HUD formula: max_rent = income_limit[occupancy] × 30% / 12
-/// Occupancy mapping: studio→1p, 1BR→avg(1p+2p), 2BR→3p, 3BR→avg(4p+5p), 4BR→6p
 #[tauri::command]
 pub async fn fetch_il(
     client: tauri::State<'_, reqwest::Client>,
@@ -724,12 +681,9 @@ pub async fn fetch_il(
         .await
         .map_err(|e| HousingError::Network(e.to_string()))?;
 
-    // Parse as generic JSON — HUD IL response has varied field naming across years.
-    // We extract income limits by household size at various AMI percentages.
     let v: serde_json::Value = serde_json::from_slice(&body)
         .map_err(|e| HousingError::Parse(e.to_string()))?;
 
-    // Navigate to data array: try several known response shapes
     let item = v.get("data")
         .and_then(|d| d.get("basicdata").or_else(|| d.get("data")))
         .and_then(|arr| arr.as_array())
@@ -742,7 +696,6 @@ pub async fn fetch_il(
         None => return Ok(None),
     };
 
-    // Extract area metadata
     let area_name = item.get("area_name")
         .or_else(|| item.get("areaname"))
         .and_then(|v| v.as_str())
@@ -755,9 +708,6 @@ pub async fn fetch_il(
 
     let median_income = extract_il_field(&item, &["median_income", "MedInc", "median"]) as u32;
 
-    // Extract income limits by person size at each AMI percentage.
-    // HUD field names vary: "l50_1" / "lim50_1" / "50Pct_1" / "il50_p1"
-    // We try multiple patterns; first non-zero wins.
     fn il(item: &serde_json::Value, pct: u32, size: u32) -> u64 {
         let pct_s = pct.to_string();
         let sz_s = size.to_string();
@@ -776,7 +726,6 @@ pub async fn fetch_il(
         0
     }
 
-    // Build per-size income limit arrays [1..8 persons] for each tier
     let limits = |pct: u32| -> [u64; 8] {
         [
             il(&item, pct, 1), il(&item, pct, 2), il(&item, pct, 3), il(&item, pct, 4),
@@ -784,15 +733,12 @@ pub async fn fetch_il(
         ]
     };
 
-    // If we got no data (all zeros), try deriving from median income
-    // HUD publishes 50%/80% of median; 30%=60%ofVLI, 60%=120%ofVLI
     let l50 = limits(50);
     let l80 = limits(80);
 
-    // Fallback: if all zeros, derive from median_income using HUD standard factors
     let l50 = if l50.iter().all(|&x| x == 0) && median_income > 0 {
         let m = median_income as f64;
-        // HUD 50% AMI family-size adjustments (approximate)
+
         let factors = [0.70, 0.80, 0.90, 1.00, 1.08, 1.16, 1.24, 1.32];
         std::array::from_fn(|i| (m * 0.50 * factors[i]) as u64)
     } else { l50 };
@@ -803,7 +749,6 @@ pub async fn fetch_il(
         std::array::from_fn(|i| (m * 0.80 * factors[i]) as u64)
     } else { l80 };
 
-    // Derive other tiers from 50% baseline (standard HUD ratios)
     let derive = |base: &[u64; 8], ratio: f64| -> [u64; 8] {
         std::array::from_fn(|i| (base[i] as f64 * ratio) as u64)
     };
@@ -813,8 +758,6 @@ pub async fn fetch_il(
     let l60 = limits(60);
     let l60 = if l60.iter().all(|&x| x == 0) { derive(&l50, 1.20) } else { l60 };
 
-    // LIHTC rent formula: income_limit[occupancy] × 30% / 12
-    // Occupancy: 0BR=1p, 1BR=avg(1+2), 2BR=3p, 3BR=avg(4+5), 4BR=6p
     fn br_rents(lims: &[u64; 8]) -> BrRents {
         fn rent(lims: &[u64; 8], idx_a: usize, idx_b: Option<usize>) -> u32 {
             let limit = match idx_b {
@@ -832,7 +775,6 @@ pub async fn fetch_il(
         }
     }
 
-    // If all derived rents are zero, the API didn't return usable data
     let pct50 = br_rents(&l50);
     if pct50.studio == 0 && pct50.one_br == 0 {
         return Ok(None);
@@ -859,7 +801,6 @@ fn extract_il_field(item: &serde_json::Value, keys: &[&str]) -> u64 {
     0
 }
 
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RentcastListing {
     pub address: String,
@@ -871,9 +812,6 @@ pub struct RentcastListing {
     pub days_on_market: Option<u32>,
 }
 
-/// Fetch active rental listings within 0.5 miles of lat/lng via Rentcast API.
-/// Returns empty vec if RENTCAST_API_KEY env var not set (graceful degradation).
-/// Free tier: 50 calls/month — results are cached per property in the frontend.
 #[tauri::command]
 pub async fn fetch_nearby_rentals(
     client: tauri::State<'_, reqwest::Client>,

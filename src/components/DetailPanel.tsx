@@ -309,7 +309,7 @@ export function DetailPanel({
           </div>
         )}
 
-        {/* AMI tier guide */}
+        {}
         {ceilPct !== undefined && (
           <div className="detail-section">
             <div className="detail-section-title">What AMI % means for you</div>
@@ -338,7 +338,7 @@ export function DetailPanel({
           </div>
         )}
 
-        {/* Unit details */}
+        {}
         {(brRows.length > 0 || p.affordableUnits > 0 || p.totalUnits > 0) && (
           <div className="detail-section">
             <div className="detail-section-title">Unit Details</div>
@@ -377,7 +377,7 @@ export function DetailPanel({
           </div>
         )}
 
-        {/* Property info */}
+        {}
         <div className="detail-section">
           <div className="detail-section-title">Property Information</div>
           <div className="detail-facts">
@@ -425,7 +425,7 @@ export function DetailPanel({
           </div>
         </div>
 
-        {/* Application guide */}
+        {}
         <div className="detail-section">
           <div className="detail-section-title">How to Apply</div>
           <p className="detail-apply-intro">
@@ -449,7 +449,7 @@ export function DetailPanel({
           </p>
         </div>
 
-        {/* Primary CTA */}
+        {}
         {!hasWebsite && (
           <p className="detail-no-website-note">{t("ui.noWebsiteNote")}</p>
         )}
@@ -513,7 +513,7 @@ export function DetailPanel({
           {hasWebsite ? t("ui.applyOrInfo") : t("ui.findAndApply")}
         </button>
 
-        {/* Secondary links */}
+        {}
         <div className="detail-secondary-links">
           {p.lat != null && p.lng != null && (
             <>

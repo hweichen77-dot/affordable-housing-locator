@@ -67,7 +67,7 @@ export function SimpleMap({ lat, lng, data }: SimpleMapProps) {
       loadedRef.current = false;
       map.remove();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   return (

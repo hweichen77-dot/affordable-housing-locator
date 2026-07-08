@@ -1,9 +1,4 @@
-// Parse a free-text location query ("Austin, TX", "78701", "Portland, ME")
-// into a { state, city } pair usable by getAmi(). Fully offline — no geocode.
-// Needed so the onboarding AMI survey computes eligibility against the user's
-// actual metro/state instead of a hardcoded default.
 
-// USPS ZIP prefix (first 3 digits) → state, encoded as inclusive ranges.
 const ZIP3_RANGES: { lo: number; hi: number; state: string }[] = [
   { lo: 5,   hi: 5,   state: "NY" },
   { lo: 10,  hi: 27,  state: "MA" },
@@ -89,7 +84,7 @@ const STATE_NAMES: Record<string, string> = {
 
 export interface ParsedLocation {
   state?: string;
-  /** Original query text, passed through so getAmi can match metro overrides. */
+
   city?: string;
 }
 
@@ -97,14 +92,12 @@ export function parseLocationForAmi(query: string): ParsedLocation {
   const q = query.trim();
   if (!q) return {};
 
-  // Pure ZIP code
   if (/^\d{5}(-\d{4})?$/.test(q)) {
     return { state: stateFromZip(q) };
   }
 
   const lower = q.toLowerCase();
 
-  // State abbreviation as a standalone token (e.g. "Austin, TX")
   let state: string | undefined;
   const tokens = lower.replace(/,/g, " ").split(/\s+/).filter(Boolean);
   for (const tok of tokens) {
@@ -112,14 +105,11 @@ export function parseLocationForAmi(query: string): ParsedLocation {
     if (STATE_ABBRS.has(up)) { state = up; break; }
   }
 
-  // Full state name fallback (check longer names first)
   if (!state) {
     for (const name of Object.keys(STATE_NAMES).sort((a, b) => b.length - a.length)) {
       if (lower.includes(name)) { state = STATE_NAMES[name]; break; }
     }
   }
 
-  // Pass the full query through as the city so getAmi can match metro overrides
-  // (it normalizes and disambiguates, e.g. "Portland, ME" vs "Portland, OR").
   return { state, city: q };
 }

@@ -52,8 +52,7 @@ const TIER_INFO: Record<AmiTier, { label: string; description: string; color: st
 
 export function computeSurveyResult(
   answers: SurveyAnswers,
-  // Empty state → getAmi falls back to the national median (not CA) when the
-  // user hasn't entered a location yet.
+
   state = "",
   cityName?: string,
 ): SurveyResult {
