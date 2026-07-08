@@ -4255,3 +4255,46 @@ html, body, #root { height: 100%; overflow: hidden; }
 }
 .compare-remove-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
 .compare-value { font-weight: 500; }
+
+/* ─── Editorial entrance + tactile micro-interactions (CodeFlow-grade polish) ─── */
+@keyframes welcome-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* Staggered reveal of the hero content so it composes in, not snaps in. */
+.welcome-content > * { animation: welcome-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.welcome-content > *:nth-child(1) { animation-delay: 0.02s; }
+.welcome-content > *:nth-child(2) { animation-delay: 0.08s; }
+.welcome-content > *:nth-child(3) { animation-delay: 0.15s; }
+.welcome-content > *:nth-child(4) { animation-delay: 0.22s; }
+.welcome-content > *:nth-child(5) { animation-delay: 0.29s; }
+.welcome-content > *:nth-child(6) { animation-delay: 0.36s; }
+.welcome-content > *:nth-child(7) { animation-delay: 0.43s; }
+
+/* Primary CTA: lift + warm glow on hover, tactile press on active. */
+.welcome-nearme-btn {
+  transition: transform 0.18s cubic-bezier(0.16,1,0.3,1), box-shadow 0.18s ease, opacity 0.15s ease;
+}
+.welcome-actions .welcome-nearme-btn:hover:not(:disabled) {
+  opacity: 1;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -8px oklch(76% 0.13 72 / 0.5);
+}
+.welcome-actions .welcome-nearme-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 3px 10px -6px oklch(76% 0.13 72 / 0.45);
+}
+
+/* City / recent chips: rise + soft shadow on hover, press feedback. */
+.welcome-chip {
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+              transform 0.15s cubic-bezier(0.16,1,0.3,1), box-shadow 0.15s ease;
+}
+.welcome-chip:hover { transform: translateY(-2px); box-shadow: 0 6px 16px -10px oklch(0% 0 0 / 0.7); }
+.welcome-chip:active { transform: translateY(0); box-shadow: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-content > * { animation: none; }
+  .welcome-actions .welcome-nearme-btn:hover:not(:disabled),
+  .welcome-chip:hover { transform: none; box-shadow: none; }
+}
