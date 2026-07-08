@@ -321,58 +321,70 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const handleNearMe = useCallback(() => {
-    if (!navigator.geolocation) {
-      setSearchError("Geolocation is not available. Please search by city name.");
-      return;
+  // Load nearby housing around a resolved coordinate. Shared by both the
+  // browser-geolocation path and the IP fallback so they behave identically.
+  const loadNearby = useCallback(async (lat: number, lng: number) => {
+    setUserLocation({ lat, lng });
+    setMapFly({ lat, lng, zoom: 12 });
+    try {
+      const emptyC = () => ({ type: "FeatureCollection", features: [] } as HousingCollection);
+      const [loc, d, pubD, mfaD, usdaD, insD] = await Promise.all([
+        invoke<GeoLocation>("reverse_geocode", { lat, lng }).catch(() => null),
+        invoke<HousingCollection>("fetch_lihtc", { lat, lng, radiusKm: 25 }),
+        invoke<HousingCollection>("fetch_public_housing", { lat, lng, radiusKm: 25 }).catch(emptyC),
+        invoke<HousingCollection>("fetch_multifamily_assisted", { lat, lng, radiusKm: 25 }).catch(emptyC),
+        invoke<HousingCollection>("fetch_usda_rural", { lat, lng, radiusKm: 25 }).catch(emptyC),
+        invoke<HousingCollection>("fetch_insured_multifamily", { lat, lng, radiusKm: 25 }).catch(emptyC),
+      ]);
+      if (loc) setSearchLocation(loc);
+      setRawData(dedupeProperties([
+        ...normalizeFeatures(d.features, "lihtc"),
+        ...normalizeFeatures(pubD.features, "public"),
+        ...normalizeFeatures(mfaD.features, "mfassist"),
+        ...normalizeFeatures(usdaD.features, "usda"),
+        ...normalizeFeatures(insD.features, "insured"),
+      ]));
+      setDataSource("lihtc");
+      setHasSearched(true);
+    } catch {
+      setSearchError("Couldn't find homes near your location. Try searching by city or ZIP code.");
+      setHasSearched(true);
+    } finally {
+      setDataLoading(false);
     }
+  }, []);
+
+  // IP-based approximate location — the reliable fallback when the browser
+  // Geolocation API is missing, denied, or times out (macOS WKWebview).
+  const nearMeByIp = useCallback(async () => {
+    try {
+      const loc = await invoke<GeoLocation>("ip_locate");
+      await loadNearby(loc.lat, loc.lng);
+    } catch {
+      setDataLoading(false);
+      setSearchError("Couldn't determine your location. Please search by city or ZIP code.");
+    }
+  }, [loadNearby]);
+
+  const handleNearMe = useCallback(() => {
     setDataLoading(true);
     setSearchError(null);
     setSelectedProperty(null);
 
+    if (!navigator.geolocation) {
+      // No browser geolocation at all → go straight to IP fallback.
+      void nearMeByIp();
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        setUserLocation({ lat, lng });
-        setMapFly({ lat, lng, zoom: 12 });
-        try {
-          const emptyC = () => ({ type: "FeatureCollection", features: [] } as HousingCollection);
-          const [loc, d, pubD, mfaD, usdaD, insD] = await Promise.all([
-            invoke<GeoLocation>("reverse_geocode", { lat, lng }).catch(() => null),
-            invoke<HousingCollection>("fetch_lihtc", { lat, lng, radiusKm: 25 }),
-            invoke<HousingCollection>("fetch_public_housing", { lat, lng, radiusKm: 25 }).catch(emptyC),
-            invoke<HousingCollection>("fetch_multifamily_assisted", { lat, lng, radiusKm: 25 }).catch(emptyC),
-            invoke<HousingCollection>("fetch_usda_rural", { lat, lng, radiusKm: 25 }).catch(emptyC),
-            invoke<HousingCollection>("fetch_insured_multifamily", { lat, lng, radiusKm: 25 }).catch(emptyC),
-          ]);
-          if (loc) setSearchLocation(loc);
-          setRawData(dedupeProperties([
-            ...normalizeFeatures(d.features, "lihtc"),
-            ...normalizeFeatures(pubD.features, "public"),
-            ...normalizeFeatures(mfaD.features, "mfassist"),
-            ...normalizeFeatures(usdaD.features, "usda"),
-            ...normalizeFeatures(insD.features, "insured"),
-          ]));
-          setDataSource("lihtc");
-          setHasSearched(true);
-          setDataLoading(false);
-        } catch {
-          setSearchError("Couldn't find homes near your location. Try searching by city or ZIP code.");
-          setDataLoading(false);
-          setHasSearched(true);
-        }
-      },
-      (err) => {
-        setDataLoading(false);
-        const msg =
-          err.code === 1 ? "Location access was denied. Please search by city or ZIP code." :
-          err.code === 3 ? "Location request timed out. Try searching by city name." :
-          "Couldn't get your location. Try searching by city name.";
-        setSearchError(msg);
-      },
-      { enableHighAccuracy: true, timeout: 8500 }
+      (pos) => { void loadNearby(pos.coords.latitude, pos.coords.longitude); },
+      // Any failure (denied / unsupported / timeout) → IP fallback rather than
+      // dead-ending with an error, so "Near me" still returns results.
+      () => { void nearMeByIp(); },
+      { enableHighAccuracy: false, timeout: 7000, maximumAge: 300000 }
     );
-  }, []);
+  }, [loadNearby, nearMeByIp]);
 
   const handleGoHome = useCallback(() => {
     setRawData([]);
