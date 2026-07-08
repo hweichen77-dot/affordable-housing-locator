@@ -45,6 +45,36 @@ export const DEFAULT_FILTERS: FilterState = {
   householdSize: 1,
 };
 
+// Count a number up to its target once on mount (ease-out cubic). Honors
+// prefers-reduced-motion by jumping straight to the final value.
+function useCountUp(target: number, ms = 1100): number {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    const reduce = typeof window !== "undefined"
+      && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) { setVal(target); return; }
+    let raf = 0;
+    let start = 0;
+    const tick = (now: number) => {
+      if (!start) start = now;
+      const p = Math.min(1, (now - start) / ms);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setVal(Math.round(target * eased));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, ms]);
+  return val;
+}
+
+function CountStat({ to, prefix = "", suffix = "", comma = false }: {
+  to: number; prefix?: string; suffix?: string; comma?: boolean;
+}) {
+  const n = useCountUp(to);
+  return <>{prefix}{comma ? n.toLocaleString("en-US") : n}{suffix}</>;
+}
+
 function WelcomeScreen({ onSearch, onNearMe, loading, error, searchHistory }: {
   onSearch: (q: string) => void;
   onNearMe: () => void;
@@ -101,11 +131,11 @@ function WelcomeScreen({ onSearch, onNearMe, loading, error, searchHistory }: {
 
         <dl className="welcome-stats">
           <div className="welcome-stat">
-            <dt className="welcome-stat-num">50,000+</dt>
+            <dt className="welcome-stat-num"><CountStat to={50000} suffix="+" comma /></dt>
             <dd className="welcome-stat-label">{t("welcome.statHomes")}</dd>
           </div>
           <div className="welcome-stat">
-            <dt className="welcome-stat-num">50</dt>
+            <dt className="welcome-stat-num"><CountStat to={50} /></dt>
             <dd className="welcome-stat-label">{t("welcome.statStates")}</dd>
           </div>
           <div className="welcome-stat">
