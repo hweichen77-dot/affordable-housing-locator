@@ -93,17 +93,17 @@ function PropertyHero({ lat, lng, name }: { lat: number; lng: number; name: stri
 
 function GradientHero({ name }: { name: string }) {
   const hash = name.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  const hues = [210, 220, 230, 200, 190, 240];
+  const hues = [50, 38, 72, 28, 86, 60]; // warm gold/amber/clay placeholders
   const h = hues[hash % hues.length];
   return (
     <div
       className="prop-hero-gradient"
-      style={{ background: `linear-gradient(135deg, oklch(20% 0.06 ${h}), oklch(16% 0.03 ${h + 25}))` }}
+      style={{ background: `linear-gradient(135deg, oklch(90% 0.045 ${h}), oklch(82% 0.06 ${h + 18}))` }}
       aria-hidden="true"
     >
       <svg width="48" height="44" viewBox="0 0 40 36" fill="none" aria-hidden="true">
         <path d="M20 3L2 16h4v17h10V22h8v11h10V16h4L20 3z"
-          stroke="oklch(40% 0.08 220)" strokeWidth="2" strokeLinejoin="round" />
+          stroke="oklch(52% 0.10 58)" strokeWidth="2" strokeLinejoin="round" />
       </svg>
     </div>
   );
@@ -134,9 +134,9 @@ const STATUS_LABELS: Record<AppStatusValue, string> = {
 };
 
 const STATUS_COLORS: Record<AppStatusValue, string> = {
-  interested: "#3b82f6",
-  applied: "#10b981",
-  waitlisted: "#f59e0b",
+  interested: "var(--status-interested)",
+  applied: "var(--status-applied)",
+  waitlisted: "var(--status-waitlisted)",
 };
 
 export function PropertyCard({ property: p, userLocation, saved, appStatus, onSelect, onSave, onStatusChange, comparing, onToggleCompare }: PropertyCardProps) {

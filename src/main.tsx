@@ -45,6 +45,14 @@ class ErrorBoundary extends React.Component<
   }
 }
 
+// Apply saved theme before first paint (avoids flash). Default: light (civic).
+(() => {
+  try {
+    const t = localStorage.getItem("theme") || "light";
+    document.documentElement.dataset.theme = t;
+  } catch { /* ignore */ }
+})();
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <ErrorBoundary>

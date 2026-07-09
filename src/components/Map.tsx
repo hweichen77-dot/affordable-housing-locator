@@ -188,7 +188,7 @@ function addMapLayers(map: maplibregl.Map, onSelectRef: React.MutableRefObject<(
       "circle-color": [
         "case",
         ["==", ["get", "ARSTATUS"], "Active"], "#16a34a",
-        "#3b82f6",
+        "#9a5b1e",
       ],
       "circle-stroke-width": 2,
       "circle-stroke-color": "#fff",
@@ -203,7 +203,7 @@ function addMapLayers(map: maplibregl.Map, onSelectRef: React.MutableRefObject<(
     filter: ["==", ["get", "_displayId"], ""],
     paint: {
       "circle-radius": 13,
-      "circle-color": "#f59e0b",
+      "circle-color": "#c07a1e",
       "circle-stroke-width": 3,
       "circle-stroke-color": "#fff",
       "circle-opacity": 1,
