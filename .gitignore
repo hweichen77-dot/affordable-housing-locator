@@ -31,3 +31,14 @@ src-tauri/gen/
 .env
 .env.local
 .env.*.local
+
+# AI tool files
+.claude/
+CLAUDE.md
+.cursor/
+.clinerules
+AGENTS.md
+.windsurf/
+.codex/
+.claude-mem/
+.aider*
