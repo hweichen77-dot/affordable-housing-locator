@@ -233,7 +233,7 @@ function addMapLayers(map: maplibregl.Map, onSelectRef: React.MutableRefObject<(
 function affordabilityLabel(incCeil: number | undefined): string {
   if (!incCeil) return "Income-assisted housing";
   if (incCeil <= 30) return "Very Affordable";
-  if (incCeil <= 50) return "Affordable";
+  if (incCeil <= 60) return "Affordable";
   if (incCeil <= 80) return "Good Fit";
   return "Moderately Assisted";
 }
@@ -245,7 +245,7 @@ function buildPopupHTML(p: Record<string, unknown>): string {
   const units = Number(p.LI_UNITS ?? p.TOTALAFFUNITS ?? 0);
   const phone = String(p.CO_TEL ?? p.PHONE ?? "");
   const arstatus = String(p.ARSTATUS ?? "");
-  const incCeil = p.INC_CEIL ? Number(p.INC_CEIL) : undefined;
+  const incCeil = typeof p._ceilPct === "number" ? p._ceilPct : undefined;
   const tierLabel = arstatus === "Active" ? "● Available now" : affordabilityLabel(incCeil);
 
   return `<div class="popup-content">

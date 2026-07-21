@@ -606,7 +606,7 @@ export default function App() {
         type: "Feature" as const,
         id: p.id,
         geometry: { type: "Point" as const, coordinates: [p.lng!, p.lat!] },
-        properties: { ...p.raw, _displayId: p.id },
+        properties: { ...p.raw, _displayId: p.id, _ceilPct: p.incomeCeilingPct ?? null },
       })),
   }), [filtered]);
 
