@@ -164,7 +164,7 @@ export function rentRangeForTier(
     studio:   maxRentFromAmi(tieredAmi, 1),
     oneBed:   Math.round((maxRentFromAmi(tieredAmi, 1) + maxRentFromAmi(tieredAmi, 2)) / 2),
     twoBed:   maxRentFromAmi(tieredAmi, 3),
-    threeBed: maxRentFromAmi(tieredAmi, 4),
+    threeBed: Math.round((maxRentFromAmi(tieredAmi, 4) + maxRentFromAmi(tieredAmi, 5)) / 2),
   };
 }
 
