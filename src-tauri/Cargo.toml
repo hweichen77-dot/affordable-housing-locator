@@ -1,6 +1,6 @@
 [package]
 name = "affordable-housing-locator"
-version = "1.12.4"
+version = "1.12.5"
 description = "Affordable Housing Locator — nationwide HUD/LIHTC search with market comparison"
 edition = "2021"
 
