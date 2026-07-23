@@ -284,7 +284,7 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
         {}
         {step === 2 && (
           <div className="survey-step">
-            <h2 className="survey-title">Your housing needs</h2>
+            <h2 id="survey-title" className="survey-title">Your housing needs</h2>
             <p className="survey-sub">Filter results by your specific housing needs.</p>
 
             <div className="survey-field">
@@ -329,7 +329,7 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
         {}
         {step === 3 && (
           <div className="survey-step">
-            <h2 className="survey-title">Where are you looking?</h2>
+            <h2 id="survey-title" className="survey-title">Where are you looking?</h2>
             <p className="survey-sub">Enter a city or ZIP code, or skip to search from the main screen.</p>
 
             <div className="survey-field">
@@ -358,7 +358,7 @@ export function AmiSurvey({ onComplete, onSkip }: AmiSurveyProps) {
         {}
         {step === 4 && (
           <div className="survey-step survey-results">
-            <h2 className="survey-title">Your housing profile</h2>
+            <h2 id="survey-title" className="survey-title">Your housing profile</h2>
 
             {result ? (
               <>
