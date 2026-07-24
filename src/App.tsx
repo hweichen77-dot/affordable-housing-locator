@@ -82,10 +82,27 @@ function WelcomeScreen({ onSearch, onNearMe, loading, error, searchHistory }: {
 }) {
   const { t } = useTranslation();
   const cities = ["San Jose, CA", "Austin, TX", "Chicago, IL", "Seattle, WA", "Miami, FL", "Denver, CO"];
+  const screenRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = screenRef.current;
+    if (!el) return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0;
+    const onMove = (e: PointerEvent) => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const r = el.getBoundingClientRect();
+        el.style.setProperty("--wx", `${((e.clientX - r.left) / r.width) * 100}%`);
+        el.style.setProperty("--wy", `${((e.clientY - r.top) / r.height) * 100}%`);
+      });
+    };
+    el.addEventListener("pointermove", onMove);
+    return () => { el.removeEventListener("pointermove", onMove); if (raf) cancelAnimationFrame(raf); };
+  }, []);
   return (
-    <div className="welcome-screen">
+    <div className="welcome-screen" ref={screenRef}>
       <div className="welcome-content">
-        <span className="welcome-kicker">{t("welcome.kicker")}</span>
         <h1 className="welcome-heading">{t("welcome.heading")}</h1>
         <p className="welcome-sub">{t("welcome.sub")}</p>
 
